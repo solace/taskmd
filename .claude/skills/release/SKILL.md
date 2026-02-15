@@ -48,7 +48,7 @@ The user's input is in `$ARGUMENTS` (a semver version like `1.2.3` or `v1.2.3`, 
     ```bash
     scripts/release.sh --notes-file /tmp/taskmd-release-notes-X.Y.Z.md X.Y.Z
     ```
-    The script handles everything: version bumps, commit, tag, push, draft release creation, CI workflow monitoring, and re-applying release notes after CI publishes.
+    The script handles everything: version bumps, commit, tag, push, CI workflow monitoring, and applying release notes after CI creates the release.
 
 9. **Report success** with the release tag and a link to the GitHub releases page.
 

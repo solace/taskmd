@@ -348,26 +348,7 @@ All binaries include the embedded web dashboard."
     log_success "Created tag $tag"
 }
 
-# Create a draft GitHub release (before pushing the tag)
-create_draft_release() {
-    local version="$1"
-    local tag="v$version"
-    local notes_file="$2"
-
-    if ! command -v gh &> /dev/null; then
-        log_warning "gh CLI not available - skipping draft release creation"
-        return 0
-    fi
-
-    log_step "Creating draft GitHub release"
-
-    gh release create "$tag" --draft --target "$(git rev-parse --abbrev-ref HEAD)" \
-        --title "$tag" --notes-file "$notes_file"
-
-    log_success "Created draft release for $tag"
-}
-
-# Re-apply release notes after CI workflow publishes the release
+# Apply release notes to the GitHub release created by CI
 update_release_notes() {
     local version="$1"
     local tag="v$version"
@@ -558,9 +539,6 @@ main() {
         create_git_tag "$clean_version"
 
         if [[ "$NO_PUSH" == "false" ]]; then
-            # Create draft release before pushing the tag so CI attaches binaries to it
-            create_draft_release "$clean_version" "$NOTES_FILE"
-
             push_changes "$clean_version"
 
             # Monitor workflow
@@ -568,7 +546,7 @@ main() {
                 workflow_failed=true
             fi
 
-            # Re-apply release notes (CI may overwrite them when publishing)
+            # Apply release notes to the CI-created release
             if [[ "$workflow_failed" == "false" ]]; then
                 update_release_notes "$clean_version" "$NOTES_FILE"
             fi
