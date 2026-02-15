@@ -246,7 +246,7 @@ All new CLI features must include comprehensive tests. See [CLAUDE.md](CLAUDE.md
 
 ## License
 
-[License information needed - please add LICENSE file]
+MIT License - see [LICENSE](LICENSE) for details.
 
 ## Support
 
@@ -281,14 +281,6 @@ claude plugin install taskmd-mcp@taskmd-marketplace --scope project
 ```
 
 See [`claude-code-plugin/README.md`](claude-code-plugin/README.md) for full details.
-
-## Roadmap
-
-- [x] Homebrew installation - Available via `brew tap driangle/tap`
-- [ ] GitHub Pages documentation site (see [tasks/046](tasks/046-documentation-site.md))
-- [ ] Task templates and scaffolding
-- [ ] Git integration features
-- [ ] Team collaboration features
 
 ---
 
