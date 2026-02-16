@@ -1,7 +1,7 @@
 ---
 id: "124"
 title: "Add CLI 'add' command for quick task creation"
-status: pending
+status: in-progress
 priority: high
 effort: medium
 tags:

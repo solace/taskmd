@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
+	"github.com/driangle/taskmd/apps/cli/internal/slug"
 	"github.com/driangle/taskmd/apps/cli/internal/taskfile"
 )
 
@@ -16,8 +16,8 @@ func WriteTaskFile(dir, id string, mapped MappedTask, externalID, sourceName str
 		return "", fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	slug := slugify(mapped.Title)
-	filename := fmt.Sprintf("%s-%s.md", id, slug)
+	s := slug.Slugify(mapped.Title)
+	filename := fmt.Sprintf("%s-%s.md", id, s)
 	path := filepath.Join(dir, filename)
 
 	content := renderTaskFile(id, mapped, externalID, sourceName)
@@ -75,17 +75,4 @@ func renderTaskFile(id string, mapped MappedTask, externalID, sourceName string)
 	}
 
 	return b.String()
-}
-
-var nonAlphanumeric = regexp.MustCompile(`[^a-z0-9]+`)
-
-func slugify(s string) string {
-	s = strings.ToLower(s)
-	s = nonAlphanumeric.ReplaceAllString(s, "-")
-	s = strings.Trim(s, "-")
-	if len(s) > 50 {
-		s = s[:50]
-		s = strings.TrimRight(s, "-")
-	}
-	return s
 }
