@@ -1,7 +1,7 @@
 ---
 id: "137"
 title: "Add commit-msg command for generating commit messages from tasks"
-status: pending
+status: completed
 priority: medium
 effort: medium
 tags: [cli, git, dx]
