@@ -1,7 +1,7 @@
 ---
 id: "132"
 title: "Improve contrast of medium and low priority pills"
-status: in-progress
+status: completed
 priority: medium
 effort: small
 tags:
