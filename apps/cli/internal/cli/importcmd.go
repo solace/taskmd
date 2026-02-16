@@ -290,14 +290,18 @@ func wizardSourceConfig(sourceName string) (sync.SourceConfig, error) {
 	if err := promptInput("Project identifier", projectHint(sourceName), "", &cfg.Project); err != nil {
 		return cfg, err
 	}
-	if err := promptInput("Auth token env var", "Name of the environment variable holding your API token", "GITHUB_TOKEN", &cfg.TokenEnv); err != nil {
-		return cfg, err
-	}
 	if sourceName == "jira" {
 		if err := promptInput("Base URL", "Your Jira instance URL (e.g. https://company.atlassian.net)", "", &cfg.BaseURL); err != nil {
 			return cfg, err
 		}
+		if err := promptInput("Auth token env var", "Name of the environment variable holding your Jira API token", "JIRA_TOKEN", &cfg.TokenEnv); err != nil {
+			return cfg, err
+		}
 		if err := promptInput("Username env var", "Name of the environment variable holding your Jira username", "JIRA_USER", &cfg.UserEnv); err != nil {
+			return cfg, err
+		}
+	} else {
+		if err := promptInput("Auth token env var", "Name of the environment variable holding your API token", "", &cfg.TokenEnv); err != nil {
 			return cfg, err
 		}
 	}
@@ -306,10 +310,8 @@ func wizardSourceConfig(sourceName string) (sync.SourceConfig, error) {
 
 func wizardGitHubConfig(cfg sync.SourceConfig) (sync.SourceConfig, error) {
 	// Auto-detect repo from git remote
-	detected := github.DetectRepo()
 	placeholder := "owner/repo"
-	if detected != "" {
-		cfg.Project = detected
+	if detected := github.DetectRepo(); detected != "" {
 		placeholder = detected
 	}
 
@@ -317,7 +319,6 @@ func wizardGitHubConfig(cfg sync.SourceConfig) (sync.SourceConfig, error) {
 		return cfg, err
 	}
 
-	cfg.TokenEnv = "GITHUB_TOKEN"
 	if err := promptInput("Auth token env var", "Name of the environment variable holding your GitHub token", "GITHUB_TOKEN", &cfg.TokenEnv); err != nil {
 		return cfg, err
 	}
@@ -412,6 +413,10 @@ func promptInput(title, description, placeholder string, value *string) error {
 	}
 	if err := input.Run(); err != nil {
 		return fmt.Errorf("wizard cancelled: %w", err)
+	}
+	// Apply placeholder as default when user submits empty input
+	if *value == "" && placeholder != "" {
+		*value = placeholder
 	}
 	return nil
 }
