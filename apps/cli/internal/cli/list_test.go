@@ -319,15 +319,70 @@ func TestListCommand_SeparatorAlignment(t *testing.T) {
 	}
 }
 
-// splitTableColumns splits a tabwriter-formatted line into columns.
-// tabwriter uses 2+ spaces as column gaps.
+func TestListCommand_ColorAlignmentMatchesPlain(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task One", Status: model.StatusInProgress, Priority: model.PriorityHigh, FilePath: "a.md"},
+		{ID: "002", Title: "Task Two", Status: model.StatusPending, Priority: model.PriorityCritical, FilePath: "b.md"},
+	}
+
+	// Capture with no color
+	resetListFlags()
+	noColor = true
+	plainOutput := captureListTableOutput(t, tasks, "id,title,status,priority,file")
+
+	// Capture with color
+	resetListFlags()
+	noColor = false
+	forceColor = true
+	defer func() { forceColor = false }()
+	os.Unsetenv("NO_COLOR")
+	colorOutput := captureListTableOutput(t, tasks, "id,title,status,priority,file")
+
+	plainLines := strings.Split(strings.TrimRight(plainOutput, "\n"), "\n")
+	colorLines := strings.Split(strings.TrimRight(colorOutput, "\n"), "\n")
+
+	if len(plainLines) != len(colorLines) {
+		t.Fatalf("Line count mismatch: plain=%d, color=%d", len(plainLines), len(colorLines))
+	}
+
+	// Strip ANSI codes and compare visible widths per line
+	for i := range plainLines {
+		plainLen := len(strings.TrimRight(plainLines[i], " "))
+		strippedColor := stripANSI(colorLines[i])
+		colorLen := len(strings.TrimRight(strippedColor, " "))
+		if plainLen != colorLen {
+			t.Errorf("Line %d visible width mismatch: plain=%d, color(stripped)=%d\n  plain: %q\n  color: %q",
+				i, plainLen, colorLen, plainLines[i], strippedColor)
+		}
+	}
+}
+
+// stripANSI removes ANSI escape sequences from a string.
+func stripANSI(s string) string {
+	var result strings.Builder
+	i := 0
+	for i < len(s) {
+		if s[i] == '\x1b' && i+1 < len(s) && s[i+1] == '[' {
+			// Skip until we find the terminating letter
+			j := i + 2
+			for j < len(s) && !((s[j] >= 'A' && s[j] <= 'Z') || (s[j] >= 'a' && s[j] <= 'z')) {
+				j++
+			}
+			if j < len(s) {
+				j++ // skip the terminator
+			}
+			i = j
+		} else {
+			result.WriteByte(s[i])
+			i++
+		}
+	}
+	return result.String()
+}
+
+// splitTableColumns splits a table-formatted line into columns.
+// Columns are separated by 2+ spaces.
 func splitTableColumns(line string) []string {
-	// Split on runs of 2+ spaces (tabwriter padding)
 	parts := strings.Fields(line)
-	// Fields splits on any whitespace, but multi-word values get split too.
-	// For separator lines (all dashes), Fields works fine.
-	// For headers (single words), Fields also works.
-	// We need a smarter approach for data rows with spaces, but for
-	// headers and separators this is sufficient.
 	return parts
 }

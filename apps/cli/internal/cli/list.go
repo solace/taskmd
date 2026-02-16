@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"text/tabwriter"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
@@ -199,30 +198,40 @@ func outputTable(tasks []*model.Task, columnsStr string) error {
 		}
 	}
 
-	// Create tab writer
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	defer w.Flush()
+	const colGap = "  "
 
 	// Write header
-	fmt.Fprintln(w, strings.Join(columns, "\t"))
+	printPaddedRow(os.Stdout, columns, colWidths, colGap)
 
-	// Write separator with dynamic widths
+	// Write separator
 	separators := make([]string, len(columns))
 	for i, width := range colWidths {
 		separators[i] = strings.Repeat("-", width)
 	}
-	fmt.Fprintln(w, strings.Join(separators, "\t"))
+	printPaddedRow(os.Stdout, separators, colWidths, colGap)
 
-	// Write rows
+	// Write rows — pad using plain-text widths so ANSI codes don't break alignment
 	for _, task := range tasks {
-		row := make([]string, len(columns))
+		cells := make([]string, len(columns))
 		for i, col := range columns {
-			row[i] = colorizeColumn(task, col, r)
+			plain := getColumnValue(task, col)
+			colored := colorizeColumn(task, col, r)
+			padding := colWidths[i] - len(plain)
+			cells[i] = colored + strings.Repeat(" ", padding)
 		}
-		fmt.Fprintln(w, strings.Join(row, "\t"))
+		fmt.Fprintln(os.Stdout, strings.Join(cells, colGap))
 	}
 
 	return nil
+}
+
+// printPaddedRow writes a row of plain-text values padded to colWidths.
+func printPaddedRow(w *os.File, values []string, colWidths []int, gap string) {
+	padded := make([]string, len(values))
+	for i, v := range values {
+		padded[i] = v + strings.Repeat(" ", colWidths[i]-len(v))
+	}
+	fmt.Fprintln(w, strings.Join(padded, gap))
 }
 
 // colorizeColumn returns the column value with color formatting applied.
