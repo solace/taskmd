@@ -1,7 +1,7 @@
 ---
 id: "131"
 title: "Fix list command table column alignment"
-status: pending
+status: completed
 priority: low
 effort: small
 tags: [cli, output, ux]
@@ -16,10 +16,10 @@ Fix the misaligned separator line in the `list` command's table output. Currentl
 
 ## Tasks
 
-- [ ] Update `outputTable()` in `internal/cli/list.go` to generate dynamic-width separator dashes that match the column header lengths (at minimum)
-- [ ] Verify alignment looks correct for all default columns (`id`, `title`, `status`, `priority`, `file`)
-- [ ] Add a test case validating separator alignment matches header widths
-- [ ] Check that colored output (ANSI codes) doesn't break alignment
+- [x] Update `outputTable()` in `internal/cli/list.go` to generate dynamic-width separator dashes that match the column header lengths (at minimum)
+- [x] Verify alignment looks correct for all default columns (`id`, `title`, `status`, `priority`, `file`)
+- [x] Add a test case validating separator alignment matches header widths
+- [x] Check that colored output (ANSI codes) doesn't break alignment
 
 ## Acceptance Criteria
 

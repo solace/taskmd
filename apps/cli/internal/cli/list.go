@@ -185,6 +185,20 @@ func outputTable(tasks []*model.Task, columnsStr string) error {
 
 	r := getRenderer()
 
+	// Compute max visible width per column (header vs data)
+	colWidths := make([]int, len(columns))
+	for i, col := range columns {
+		colWidths[i] = len(col)
+	}
+	for _, task := range tasks {
+		for i, col := range columns {
+			value := getColumnValue(task, col)
+			if len(value) > colWidths[i] {
+				colWidths[i] = len(value)
+			}
+		}
+	}
+
 	// Create tab writer
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	defer w.Flush()
@@ -192,10 +206,10 @@ func outputTable(tasks []*model.Task, columnsStr string) error {
 	// Write header
 	fmt.Fprintln(w, strings.Join(columns, "\t"))
 
-	// Write separator
+	// Write separator with dynamic widths
 	separators := make([]string, len(columns))
-	for i := range separators {
-		separators[i] = strings.Repeat("-", 10)
+	for i, width := range colWidths {
+		separators[i] = strings.Repeat("-", width)
 	}
 	fmt.Fprintln(w, strings.Join(separators, "\t"))
 

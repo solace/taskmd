@@ -259,3 +259,75 @@ func TestListCommand_ParentColumn(t *testing.T) {
 		t.Error("Expected parent value '001' in output")
 	}
 }
+
+func TestListCommand_SeparatorAlignment(t *testing.T) {
+	resetListFlags()
+
+	tasks := []*model.Task{
+		{ID: "001", Title: "A very long task title here", Status: model.StatusInProgress, Priority: model.PriorityHigh, FilePath: "tasks/cli/001.md"},
+		{ID: "002", Title: "Short", Status: model.StatusPending, Priority: model.PriorityCritical, FilePath: "tasks/002.md"},
+	}
+
+	output := captureListTableOutput(t, tasks, "id,title,status,priority,file")
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+
+	if len(lines) < 3 {
+		t.Fatalf("Expected at least 3 lines (header, separator, data), got %d", len(lines))
+	}
+
+	// The separator is the second line. With tabwriter, columns are tab-aligned,
+	// so we check that each separator segment (dashes) is at least as wide as
+	// its corresponding header.
+	headerLine := lines[0]
+	separatorLine := lines[1]
+
+	// tabwriter replaces tabs with spaces, so split on 2+ spaces
+	headerCols := splitTableColumns(headerLine)
+	sepCols := splitTableColumns(separatorLine)
+
+	if len(headerCols) != len(sepCols) {
+		t.Fatalf("Header has %d columns, separator has %d columns", len(headerCols), len(sepCols))
+	}
+
+	for i, header := range headerCols {
+		sep := sepCols[i]
+		if len(sep) < len(header) {
+			t.Errorf("Separator column %d (%q, len=%d) is shorter than header (%q, len=%d)",
+				i, sep, len(sep), header, len(header))
+		}
+		// Separator should be all dashes
+		if strings.Trim(sep, "-") != "" {
+			t.Errorf("Separator column %d should be all dashes, got %q", i, sep)
+		}
+	}
+
+	// Also verify that "title" separator matches the longest title, not just the header
+	titleIdx := -1
+	for i, h := range headerCols {
+		if h == "title" {
+			titleIdx = i
+			break
+		}
+	}
+	if titleIdx >= 0 {
+		titleSep := sepCols[titleIdx]
+		longestTitle := "A very long task title here"
+		if len(titleSep) < len(longestTitle) {
+			t.Errorf("Title separator (%d dashes) should be at least as wide as longest title (%d chars)",
+				len(titleSep), len(longestTitle))
+		}
+	}
+}
+
+// splitTableColumns splits a tabwriter-formatted line into columns.
+// tabwriter uses 2+ spaces as column gaps.
+func splitTableColumns(line string) []string {
+	// Split on runs of 2+ spaces (tabwriter padding)
+	parts := strings.Fields(line)
+	// Fields splits on any whitespace, but multi-word values get split too.
+	// For separator lines (all dashes), Fields works fine.
+	// For headers (single words), Fields also works.
+	// We need a smarter approach for data rows with spaces, but for
+	// headers and separators this is sufficient.
+	return parts
+}
