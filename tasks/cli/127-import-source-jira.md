@@ -1,7 +1,7 @@
 ---
 id: "127"
 title: "Import source: Jira"
-status: in-progress
+status: completed
 priority: medium
 effort: small
 dependencies: ["125"]
