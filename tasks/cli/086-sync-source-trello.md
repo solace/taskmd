@@ -4,8 +4,7 @@ title: "Sync source: Trello"
 status: pending
 priority: low
 effort: small
-dependencies:
-  - "082"
+dependencies: []
 tags:
   - cli
   - go

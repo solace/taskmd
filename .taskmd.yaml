@@ -24,9 +24,21 @@ scopes:
     paths:
       - "apps/cli/internal/validate/"
       - "apps/cli/internal/cli/validate.go"
+  cli/commands:
+    paths:
+      - "apps/cli/internal/cli/"
   cli/config:
     paths:
       - "apps/cli/"
+  cli/import:
+    paths:
+      - "apps/cli/internal/cli/import.go"
+  cli/next:
+    paths:
+      - "apps/cli/internal/cli/next.go"
+  cli/scanner:
+    paths:
+      - "apps/cli/internal/scanner/"
   sync/core:
     paths:
       - "apps/cli/internal/sync/source.go"
