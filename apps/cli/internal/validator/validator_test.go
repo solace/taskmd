@@ -638,6 +638,87 @@ func TestValidate_ExternalID(t *testing.T) {
 	}
 }
 
+// --- External IDs (archived task) tests ---
+
+func TestValidate_ExternalIDs_DependencyResolved(t *testing.T) {
+	tasks := []*model.Task{
+		{
+			ID:           "001",
+			Title:        "Task depending on archived task",
+			Dependencies: []string{"082"},
+		},
+	}
+
+	v := NewValidator(false)
+	v.SetExternalIDs(map[string]bool{"082": true})
+	result := v.Validate(tasks)
+
+	if result.Errors != 0 {
+		t.Errorf("Expected 0 errors when dependency is an external ID, got %d", result.Errors)
+		for _, issue := range result.Issues {
+			t.Logf("  Issue: [%s] %s: %s", issue.Level, issue.TaskID, issue.Message)
+		}
+	}
+}
+
+func TestValidate_ExternalIDs_TrulyMissingStillErrors(t *testing.T) {
+	tasks := []*model.Task{
+		{
+			ID:           "001",
+			Title:        "Task depending on non-existent task",
+			Dependencies: []string{"999"},
+		},
+	}
+
+	v := NewValidator(false)
+	v.SetExternalIDs(map[string]bool{"082": true})
+	result := v.Validate(tasks)
+
+	if result.Errors != 1 {
+		t.Errorf("Expected 1 error for truly missing dependency, got %d", result.Errors)
+	}
+}
+
+func TestValidate_ExternalIDs_ParentResolved(t *testing.T) {
+	tasks := []*model.Task{
+		{
+			ID:     "001",
+			Title:  "Child of archived parent",
+			Parent: "082",
+		},
+	}
+
+	v := NewValidator(false)
+	v.SetExternalIDs(map[string]bool{"082": true})
+	result := v.Validate(tasks)
+
+	if result.Errors != 0 {
+		t.Errorf("Expected 0 errors when parent is an external ID, got %d", result.Errors)
+		for _, issue := range result.Issues {
+			t.Logf("  Issue: [%s] %s: %s", issue.Level, issue.TaskID, issue.Message)
+		}
+	}
+}
+
+func TestValidate_ExternalIDs_NilDoesNotPanic(t *testing.T) {
+	tasks := []*model.Task{
+		{
+			ID:           "001",
+			Title:        "Task with missing dep",
+			Dependencies: []string{"999"},
+			Parent:       "888",
+		},
+	}
+
+	v := NewValidator(false)
+	// Do NOT call SetExternalIDs — externalIDs stays nil
+	result := v.Validate(tasks)
+
+	if result.Errors != 2 {
+		t.Errorf("Expected 2 errors (missing dep + missing parent), got %d", result.Errors)
+	}
+}
+
 // --- Config validation tests ---
 
 func TestValidateConfig_ValidScopes(t *testing.T) {

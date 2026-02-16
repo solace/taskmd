@@ -1,7 +1,7 @@
 ---
 id: "133"
 title: "Validate command should scan archived tasks for dependency resolution"
-status: pending
+status: completed
 priority: medium
 effort: small
 tags:

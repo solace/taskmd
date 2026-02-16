@@ -73,12 +73,19 @@ type ScopeConfig struct {
 
 // Validator validates task collections
 type Validator struct {
-	strict bool
+	strict      bool
+	externalIDs map[string]bool // IDs known to exist but not subject to validation (e.g. archived tasks)
 }
 
 // NewValidator creates a new validator
 func NewValidator(strict bool) *Validator {
 	return &Validator{strict: strict}
+}
+
+// SetExternalIDs sets task IDs that are known to exist externally (e.g. in archive).
+// These IDs satisfy dependency and parent checks but are not validated themselves.
+func (v *Validator) SetExternalIDs(ids map[string]bool) {
+	v.externalIDs = ids
 }
 
 // Validate performs all validation checks on a set of tasks
@@ -192,6 +199,9 @@ func (v *Validator) checkMissingDependencies(tasks []*model.Task, taskMap map[st
 	for _, task := range tasks {
 		for _, depID := range task.Dependencies {
 			if _, exists := taskMap[depID]; !exists {
+				if v.externalIDs[depID] {
+					continue
+				}
 				result.AddIssue(LevelError, task.ID, task.FilePath,
 					fmt.Sprintf("dependency references non-existent task: '%s'", depID))
 			}
@@ -270,6 +280,9 @@ func (v *Validator) checkMissingParent(tasks []*model.Task, taskMap map[string]*
 			continue
 		}
 		if _, exists := taskMap[task.Parent]; !exists {
+			if v.externalIDs[task.Parent] {
+				continue
+			}
 			result.AddIssue(LevelError, task.ID, task.FilePath,
 				fmt.Sprintf("parent references non-existent task: '%s'", task.Parent))
 		}

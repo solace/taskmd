@@ -2,14 +2,18 @@ package cli
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
+	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/driangle/taskmd/apps/cli/internal/model"
+	"github.com/driangle/taskmd/apps/cli/internal/parser"
 	"github.com/driangle/taskmd/apps/cli/internal/scanner"
 	"github.com/driangle/taskmd/apps/cli/internal/validator"
 )
@@ -88,8 +92,13 @@ func runValidate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Run validation
+	// Scan archive directory for task IDs to avoid false-positive dependency errors
 	v := validator.NewValidator(validateStrict)
+	if externalIDs := collectArchiveIDs(scanDir); len(externalIDs) > 0 {
+		v.SetExternalIDs(externalIDs)
+	}
+
+	// Run validation
 	validationResult := v.Validate(tasks)
 	validateConfig(v, validationResult, tasks)
 
@@ -282,4 +291,34 @@ func mergeValidationResults(target, source *validator.ValidationResult) {
 	target.Issues = append(target.Issues, source.Issues...)
 	target.Errors += source.Errors
 	target.Warnings += source.Warnings
+}
+
+// collectArchiveIDs walks the archive subdirectory and returns task IDs found there.
+// These IDs are used to suppress false-positive dependency errors for archived tasks.
+func collectArchiveIDs(scanDir string) map[string]bool {
+	archiveDir := filepath.Join(scanDir, "archive")
+	info, err := os.Stat(archiveDir)
+	if err != nil || !info.IsDir() {
+		return nil
+	}
+
+	ids := make(map[string]bool)
+	_ = filepath.WalkDir(archiveDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		if !strings.HasSuffix(strings.ToLower(d.Name()), ".md") {
+			return nil
+		}
+		task, parseErr := parser.ParseTaskFile(path)
+		if parseErr != nil {
+			return nil
+		}
+		if task.ID != "" {
+			ids[task.ID] = true
+		}
+		return nil
+	})
+
+	return ids
 }
