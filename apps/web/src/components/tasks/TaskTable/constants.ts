@@ -13,8 +13,8 @@ export const STATUS_COLORS: Record<string, string> = {
 export const PRIORITY_COLORS: Record<string, string> = {
   critical: "bg-red-100 text-red-600 font-medium ring-1 ring-red-300 dark:bg-red-900/30 dark:text-red-400 dark:ring-red-700",
   high: "bg-orange-100 text-orange-600 font-medium ring-1 ring-orange-300 dark:bg-orange-900/30 dark:text-orange-400 dark:ring-orange-700",
-  medium: "bg-gray-100 text-gray-600 font-medium ring-1 ring-gray-300 dark:bg-gray-700/50 dark:text-gray-400 dark:ring-gray-600",
-  low: "bg-gray-50 text-gray-400 font-medium ring-1 ring-gray-200 dark:bg-gray-800/50 dark:text-gray-500 dark:ring-gray-700",
+  medium: "bg-indigo-100 text-indigo-600 font-medium ring-1 ring-indigo-300 dark:bg-indigo-900/30 dark:text-indigo-400 dark:ring-indigo-700",
+  low: "bg-sky-50 text-sky-500 font-medium ring-1 ring-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:ring-sky-700",
 };
 
 export const EFFORT_COLORS: Record<string, string> = {

@@ -1,7 +1,7 @@
 ---
 id: "124"
 title: "Improve contrast of medium and low priority pills"
-status: pending
+status: in-progress
 priority: medium
 effort: small
 tags:
@@ -30,11 +30,11 @@ These need distinct, non-gray colors so users can immediately see which priority
 
 ## Tasks
 
-- [ ] Choose new color palettes for medium and low priorities that are visually distinct from gray disabled state (e.g., blue/indigo for medium, slate/zinc-blue for low)
-- [ ] Update `PRIORITY_COLORS.medium` in `apps/web/src/components/tasks/TaskTable/constants.ts`
-- [ ] Update `PRIORITY_COLORS.low` in `apps/web/src/components/tasks/TaskTable/constants.ts`
-- [ ] Verify contrast in both light and dark modes
-- [ ] Verify the updated pills look distinct across all usages: TaskTable badges, FilterBar pills, BoardFilterBar, TrackCard, and RecommendationCard
+- [x] Choose new color palettes for medium and low priorities that are visually distinct from gray disabled state (e.g., blue/indigo for medium, slate/zinc-blue for low)
+- [x] Update `PRIORITY_COLORS.medium` in `apps/web/src/components/tasks/TaskTable/constants.ts`
+- [x] Update `PRIORITY_COLORS.low` in `apps/web/src/components/tasks/TaskTable/constants.ts`
+- [x] Verify contrast in both light and dark modes
+- [x] Verify the updated pills look distinct across all usages: TaskTable badges, FilterBar pills, BoardFilterBar, TrackCard, and RecommendationCard
 
 ## Acceptance Criteria
 
