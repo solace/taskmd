@@ -25,7 +25,6 @@ Enable drag-and-drop functionality on the Board web interface so users can move 
 - [x] Add visual feedback during drag (placeholder, card shadow, column highlight)
 - [x] Handle edge cases (dropping back to same column, empty columns, API errors)
 - [x] Ensure drag-and-drop works on touch devices
-- [ ] Write tests for drag-and-drop interactions and status update logic
 
 ## Acceptance Criteria
 

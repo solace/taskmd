@@ -21,14 +21,14 @@ Add color and styling to the `graph` command ASCII output, consistent with the c
 
 ## Tasks
 
-- [ ] Color graph nodes by task status (green=completed, yellow=in-progress, gray=pending, red=blocked/cancelled)
-- [ ] Bold task titles in graph node labels
-- [ ] Style task IDs with the standard ID color
-- [ ] Dim completed nodes to reduce visual noise
-- [ ] Style edges/arrows between nodes
-- [ ] Ensure `--no-color` flag and `NO_COLOR` env var disable all colors
-- [ ] Verify colors render correctly in both light and dark terminal themes
-- [ ] Add tests for colored vs no-color output
+- [X] Color graph nodes by task status (green=completed, yellow=in-progress, gray=pending, red=blocked/cancelled)
+- [X] Bold task titles in graph node labels
+- [X] Style task IDs with the standard ID color
+- [X] Dim completed nodes to reduce visual noise
+- [X] Style edges/arrows between nodes
+- [X] Ensure `--no-color` flag and `NO_COLOR` env var disable all colors
+- [X] Verify colors render correctly in both light and dark terminal themes
+- [X] Add tests for colored vs no-color output
 
 ## Acceptance Criteria
 

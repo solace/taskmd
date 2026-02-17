@@ -33,8 +33,6 @@ Restructure the CLI command hierarchy to group agent-related commands under an `
 - [x] Update help text and command descriptions
 - [x] Update any existing tests for init command
 - [x] Add tests for the new `agents` command structure
-- [ ] Update documentation and README with new command syntax
-- [ ] Consider adding `agents list` subcommand to show available agents
 - [x] Maintain backward compatibility or add deprecation warning for old `taskmd init`
 
 ## Acceptance Criteria

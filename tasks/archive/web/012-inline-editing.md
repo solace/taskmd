@@ -21,19 +21,19 @@ Allow users to change a task's status and priority directly from the table witho
 
 ## Tasks
 
-- [ ] Make status badges clickable in the table
+- [X] Make status badges clickable in the table
   - Click opens a dropdown with all status options
   - Selecting a new status triggers an optimistic update
   - Calls `PATCH /api/tasks/[id]` with `{ status: newStatus }`
   - On error, reverts the optimistic update and shows a toast
-- [ ] Make priority badges clickable in the table
+- [X] Make priority badges clickable in the table
   - Same pattern as status: click → dropdown → optimistic update → API call
   - Calls `PATCH /api/tasks/[id]` with `{ priority: newPriority }`
-- [ ] Implement optimistic updates in `use-tasks.ts`
+- [X] Implement optimistic updates in `use-tasks.ts`
   - Update the local SWR cache immediately
   - Revalidate from the server after the mutation completes
   - Rollback on error
-- [ ] Add visual feedback:
+- [X] Add visual feedback:
   - Brief highlight/flash on the row when a change is saved
   - Loading spinner or subtle indicator while the API call is in flight
   - Toast notification on error

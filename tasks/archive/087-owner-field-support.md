@@ -17,18 +17,18 @@ Add an `owner` field to the taskmd specification and implement support for it ac
 
 ## Tasks
 
-- [ ] Add `owner` field definition to `docs/taskmd_specification.md`
-- [ ] Add `owner` field to the Go task model (`internal/model`)
-- [ ] Update the markdown parser to read/write the `owner` field
-- [ ] Update CLI `list` command to display owner in table output
-- [ ] Update CLI `set` command to support `--owner` flag
-- [ ] Add owner filtering to CLI `list` and `next` commands
-- [ ] Add `owner` field to TypeScript types in the web app
-- [ ] Display owner in the web task table and detail views
-- [ ] Support editing owner in the web inline editing and task edit interface
-- [ ] Add owner filter to the web filtering UI
-- [ ] Write tests for owner field across CLI commands
-- [ ] Write tests for owner field in web components
+- [X] Add `owner` field definition to `docs/taskmd_specification.md`
+- [X] Add `owner` field to the Go task model (`internal/model`)
+- [X] Update the markdown parser to read/write the `owner` field
+- [X] Update CLI `list` command to display owner in table output
+- [X] Update CLI `set` command to support `--owner` flag
+- [X] Add owner filtering to CLI `list` and `next` commands
+- [X] Add `owner` field to TypeScript types in the web app
+- [X] Display owner in the web task table and detail views
+- [X] Support editing owner in the web inline editing and task edit interface
+- [X] Add owner filter to the web filtering UI
+- [X] Write tests for owner field across CLI commands
+- [X] Write tests for owner field in web components
 
 ## Acceptance Criteria
 

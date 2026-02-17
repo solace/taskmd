@@ -37,21 +37,21 @@ The list view already supports tag filtering via `selectedTags` state in `TaskTa
 
 ### URL-based tag filter state
 
-- [ ] Update `TasksPage.tsx` to read `tag` search param from the URL on mount
-- [ ] Pass the initial tag value down to `TaskTable.tsx` to seed `selectedTags` state
-- [ ] When `selectedTags` changes, sync back to URL search params (replace, not push)
-- [ ] Support both single and multiple tags via repeated params (e.g. `?tag=cli&tag=web`)
+- [X] Update `TasksPage.tsx` to read `tag` search param from the URL on mount
+- [X] Pass the initial tag value down to `TaskTable.tsx` to seed `selectedTags` state
+- [X] When `selectedTags` changes, sync back to URL search params (replace, not push)
+- [X] Support both single and multiple tags via repeated params (e.g. `?tag=cli&tag=web`)
 
 ### Task detail page — clickable tags
 
-- [ ] In `TaskDetailPage.tsx`, replace tag `<span>` elements with `<Link>` (or `<button>` + `useNavigate`)
-- [ ] Each tag navigates to `/tasks?tag=<tagValue>`
-- [ ] Style tags with the same interactive look as the list view (hover state, pointer cursor)
+- [X] In `TaskDetailPage.tsx`, replace tag `<span>` elements with `<Link>` (or `<button>` + `useNavigate`)
+- [X] Each tag navigates to `/tasks?tag=<tagValue>`
+- [X] Style tags with the same interactive look as the list view (hover state, pointer cursor)
 
 ### Task list table — sync tag clicks with URL
 
-- [ ] When a tag is toggled in the table via click, update the URL search params to reflect the current tag filter
-- [ ] On page load, initialize `selectedTags` from URL params if present
+- [X] When a tag is toggled in the table via click, update the URL search params to reflect the current tag filter
+- [X] On page load, initialize `selectedTags` from URL params if present
 
 ## Acceptance Criteria
 

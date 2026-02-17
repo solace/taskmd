@@ -17,16 +17,16 @@ Add a "Tracks" page to the web UI that visualizes parallel work tracks, mirrorin
 
 ## Tasks
 
-- [ ] Add `/api/tracks` endpoint that returns track assignment data (reuse CLI tracks algorithm via Go backend)
-- [ ] Create `TracksPage` component with route at `/tracks`
-- [ ] Render track lanes as vertical columns or horizontal swim lanes, each labeled with its scopes
-- [ ] Show tasks within each lane ordered by score (priority, critical path, downstream impact)
-- [ ] Display a "Flexible" section for tasks with no `touches` field
-- [ ] Add task cards showing ID, title, priority, effort, and touched scopes
-- [ ] Support filtering (by tag, group, priority) consistent with other pages
-- [ ] Add navigation link to Tracks page in the sidebar/header
-- [ ] Ensure responsive layout for varying numbers of tracks
-- [ ] Add empty state when no actionable tasks exist
+- [X] Add `/api/tracks` endpoint that returns track assignment data (reuse CLI tracks algorithm via Go backend)
+- [X] Create `TracksPage` component with route at `/tracks`
+- [X] Render track lanes as vertical columns or horizontal swim lanes, each labeled with its scopes
+- [X] Show tasks within each lane ordered by score (priority, critical path, downstream impact)
+- [X] Display a "Flexible" section for tasks with no `touches` field
+- [X] Add task cards showing ID, title, priority, effort, and touched scopes
+- [X] Support filtering (by tag, group, priority) consistent with other pages
+- [X] Add navigation link to Tracks page in the sidebar/header
+- [X] Ensure responsive layout for varying numbers of tracks
+- [X] Add empty state when no actionable tasks exist
 
 ## Acceptance Criteria
 

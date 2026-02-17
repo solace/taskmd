@@ -79,25 +79,25 @@ Tasks without a `touches` field are assumed to have no overlaps and can be place
 
 ## Tasks
 
-- [ ] Add `touches` field support to the task model (`internal/model/task.go`)
-- [ ] Update the task parser to read `touches` from frontmatter
-- [ ] Add `scopes` config support to `.taskmd.yaml` loading
-- [ ] Implement the parallel tracks algorithm (`internal/tracks/`)
-  - [ ] Overlap detection: given two tasks, check if `touches` arrays intersect
-  - [ ] Track assignment: greedy allocation of tasks to non-overlapping tracks
-  - [ ] Track ordering: sort tasks within each track by dependency + score
-- [ ] Implement the `tracks` CLI command (`internal/cli/tracks.go`)
-  - [ ] ASCII output: show tracks side by side or as labeled lists
-  - [ ] JSON output: structured tracks data
-  - [ ] Support `--filter` flag for scoping (e.g., `group=cli`)
-  - [ ] Support `--limit` flag to cap number of tracks shown
-- [ ] Add `touches` field to the taskmd specification (`docs/taskmd_specification.md`)
-- [ ] Add `scopes` config to the configuration documentation
-- [ ] Add comprehensive tests
-  - [ ] Track algorithm with various overlap scenarios
-  - [ ] Tasks with no `touches` (flexible placement)
-  - [ ] Tasks with identical `touches` (forced sequential)
-  - [ ] Integration test with real task files
+- [X] Add `touches` field support to the task model (`internal/model/task.go`)
+- [X] Update the task parser to read `touches` from frontmatter
+- [X] Add `scopes` config support to `.taskmd.yaml` loading
+- [X] Implement the parallel tracks algorithm (`internal/tracks/`)
+  - [X] Overlap detection: given two tasks, check if `touches` arrays intersect
+  - [X] Track assignment: greedy allocation of tasks to non-overlapping tracks
+  - [X] Track ordering: sort tasks within each track by dependency + score
+- [X] Implement the `tracks` CLI command (`internal/cli/tracks.go`)
+  - [X] ASCII output: show tracks side by side or as labeled lists
+  - [X] JSON output: structured tracks data
+  - [X] Support `--filter` flag for scoping (e.g., `group=cli`)
+  - [X] Support `--limit` flag to cap number of tracks shown
+- [X] Add `touches` field to the taskmd specification (`docs/taskmd_specification.md`)
+- [X] Add `scopes` config to the configuration documentation
+- [X] Add comprehensive tests
+  - [X] Track algorithm with various overlap scenarios
+  - [X] Tasks with no `touches` (flexible placement)
+  - [X] Tasks with identical `touches` (forced sequential)
+  - [X] Integration test with real task files
 
 ## Example Output
 

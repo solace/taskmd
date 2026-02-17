@@ -22,21 +22,21 @@ Ensure that every time a task appears in the UI (task list, board, graph), its n
 
 ### Tasks Table (`TaskTable.tsx`)
 
-- [ ] Make the task title column a `<Link to={/tasks/${task.id}}>` instead of plain text
-- [ ] Style as a subtle link (underline on hover, or blue text)
+- [X] Make the task title column a `<Link to={/tasks/${task.id}}>` instead of plain text
+- [X] Style as a subtle link (underline on hover, or blue text)
 
 ### Board View (`BoardView.tsx`)
 
-- [ ] Make the task title in each card a `<Link to={/tasks/${task.id}}>`
-- [ ] Ensure the card itself remains non-clickable (only the title links)
+- [X] Make the task title in each card a `<Link to={/tasks/${task.id}}>`
+- [X] Ensure the card itself remains non-clickable (only the title links)
 
 ### Graph View (`GraphView.tsx`)
 
-- [ ] Add click handlers to Mermaid graph nodes that navigate to `/tasks/:id`
+- [X] Add click handlers to Mermaid graph nodes that navigate to `/tasks/:id`
   - Mermaid's `securityLevel: "loose"` is already set, which allows click callbacks
   - Use Mermaid's `click` directive in the graph syntax to bind node clicks
   - Or: add post-render event listeners on SVG nodes
-- [ ] Ensure the cursor changes to pointer on hoverable nodes
+- [X] Ensure the cursor changes to pointer on hoverable nodes
 
 ## Acceptance Criteria
 

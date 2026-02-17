@@ -18,12 +18,12 @@ Add a "Tags" section nested under the existing Stats view in the web interface. 
 
 ## Tasks
 
-- [ ] Add a tags aggregation endpoint or include tag data in the existing stats API response
-- [ ] Create a Tags section component that displays tag names and counts
-- [ ] Sort tags by count descending, with alphabetical tie-breaking
-- [ ] Integrate the Tags section into the existing Stats view
-- [ ] Style consistently with the rest of the Stats view
-- [ ] Add tests for the tags aggregation logic and component rendering
+- [X] Add a tags aggregation endpoint or include tag data in the existing stats API response
+- [X] Create a Tags section component that displays tag names and counts
+- [X] Sort tags by count descending, with alphabetical tie-breaking
+- [X] Integrate the Tags section into the existing Stats view
+- [X] Style consistently with the rest of the Stats view
+- [X] Add tests for the tags aggregation logic and component rendering
 
 ## Acceptance Criteria
 

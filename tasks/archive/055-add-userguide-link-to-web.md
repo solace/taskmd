@@ -44,7 +44,6 @@ Users working in the web interface may need help understanding features, task fo
   - Verify URL is correct
   - Verify new tab behavior
   - Test on mobile responsive view
-- [ ] Update web UI if user guide location changes
 
 ## Acceptance Criteria
 

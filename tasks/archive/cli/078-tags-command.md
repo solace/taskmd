@@ -19,17 +19,17 @@ Implement a `tags` CLI command that outputs all tags used across task files alon
 
 ## Tasks
 
-- [ ] Create `internal/cli/tags.go` for the tags command
-- [ ] Scan all task files and collect tags from frontmatter
-- [ ] Aggregate tag counts across all matching tasks
-- [ ] Sort output by count descending (most used first)
-- [ ] Support standard filtering flags (`--status`, `--priority`, `--tag`, `--dir`)
-- [ ] Support output formats: `table` (default), `json`
-- [ ] Create `internal/cli/tags_test.go` with comprehensive tests
-  - [ ] Happy path tests
-  - [ ] Format tests (table, json)
-  - [ ] Flag/filter tests
-  - [ ] Edge cases (no tags, single tag, ties in count)
+- [X] Create `internal/cli/tags.go` for the tags command
+- [X] Scan all task files and collect tags from frontmatter
+- [X] Aggregate tag counts across all matching tasks
+- [X] Sort output by count descending (most used first)
+- [X] Support standard filtering flags (`--status`, `--priority`, `--tag`, `--dir`)
+- [X] Support output formats: `table` (default), `json`
+- [X] Create `internal/cli/tags_test.go` with comprehensive tests
+  - [X] Happy path tests
+  - [X] Format tests (table, json)
+  - [X] Flag/filter tests
+  - [X] Edge cases (no tags, single tag, ties in count)
 
 ## Acceptance Criteria
 

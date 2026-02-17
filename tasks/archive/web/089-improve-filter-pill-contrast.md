@@ -17,12 +17,12 @@ The gray pill-style filters used across the web UI (task list, board, etc.) have
 
 ## Tasks
 
-- [ ] Audit all filter pill components across web pages to identify shared styles
-- [ ] Update active/selected pill styling with higher contrast (e.g., stronger background color, bolder text, or distinct border)
-- [ ] Ensure inactive/unselected pills remain visually subdued but still readable
-- [ ] Verify contrast meets WCAG AA accessibility guidelines
-- [ ] Test across both light and dark modes
-- [ ] Confirm consistent styling on all pages that use filter pills
+- [X] Audit all filter pill components across web pages to identify shared styles
+- [X] Update active/selected pill styling with higher contrast (e.g., stronger background color, bolder text, or distinct border)
+- [X] Ensure inactive/unselected pills remain visually subdued but still readable
+- [X] Verify contrast meets WCAG AA accessibility guidelines
+- [X] Test across both light and dark modes
+- [X] Confirm consistent styling on all pages that use filter pills
 
 ## Acceptance Criteria
 

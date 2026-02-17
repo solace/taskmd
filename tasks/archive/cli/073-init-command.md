@@ -35,19 +35,19 @@ A single `taskmd init` command should run both steps, creating the agent configu
 
 ## Tasks
 
-- [ ] Create `internal/cli/project_init.go` with a `taskmd init` cobra command
-- [ ] By default, run both agent config generation (Claude) and spec generation
-- [ ] Support all existing agent flags (`--claude`, `--gemini`, `--codex`)
-- [ ] Add `--no-spec` flag to skip writing `TASKMD_SPEC.md`
-- [ ] Add `--no-agent` flag to skip writing agent configuration files
-- [ ] Support `--force` flag to overwrite existing files
-- [ ] Support `--stdout` flag to print all output to stdout instead of writing files
-- [ ] Support `--dir` flag for target directory
-- [ ] Print a summary of what was created (list of files written)
-- [ ] If a file already exists and `--force` is not set, skip it with a warning (don't fail the whole command)
-- [ ] Handle the existing `agents init` deprecation alias — `taskmd init` now refers to this new command, not the old agents init alias
-- [ ] Create `internal/cli/project_init_test.go` with comprehensive tests
-- [ ] Run `make lint` and `make test` to verify
+- [X] Create `internal/cli/project_init.go` with a `taskmd init` cobra command
+- [X] By default, run both agent config generation (Claude) and spec generation
+- [X] Support all existing agent flags (`--claude`, `--gemini`, `--codex`)
+- [X] Add `--no-spec` flag to skip writing `TASKMD_SPEC.md`
+- [X] Add `--no-agent` flag to skip writing agent configuration files
+- [X] Support `--force` flag to overwrite existing files
+- [X] Support `--stdout` flag to print all output to stdout instead of writing files
+- [X] Support `--dir` flag for target directory
+- [X] Print a summary of what was created (list of files written)
+- [X] If a file already exists and `--force` is not set, skip it with a warning (don't fail the whole command)
+- [X] Handle the existing `agents init` deprecation alias — `taskmd init` now refers to this new command, not the old agents init alias
+- [X] Create `internal/cli/project_init_test.go` with comprehensive tests
+- [X] Run `make lint` and `make test` to verify
 
 ## Acceptance Criteria
 

@@ -21,15 +21,15 @@ Set up the core `taskmd sync` command with a pluggable source architecture. This
 
 ## Tasks
 
-- [ ] Design a `Source` interface in `internal/sync/` (e.g. `FetchTasks()`, `Name()`, `ValidateConfig()`)
-- [ ] Implement a provider registry that discovers and registers available sources
-- [ ] Define the sync config format (`.taskmd-sync.yaml`) for specifying sources, credentials, project/board IDs, and field mappings
-- [ ] Implement the `taskmd sync` CLI command that reads config, fetches from the configured source, and writes/updates markdown files
-- [ ] Handle conflict resolution: detect when a local file was modified and the remote changed too
-- [ ] Map external fields (status, priority, assignee, labels) to taskmd frontmatter fields via configurable field mappings
-- [ ] Support `--dry-run` flag to preview what would be created/updated/deleted
-- [ ] Support `--source` flag to sync a specific source when multiple are configured
-- [ ] Write tests for the core sync engine and the source interface contract
+- [X] Design a `Source` interface in `internal/sync/` (e.g. `FetchTasks()`, `Name()`, `ValidateConfig()`)
+- [X] Implement a provider registry that discovers and registers available sources
+- [X] Define the sync config format (`.taskmd-sync.yaml`) for specifying sources, credentials, project/board IDs, and field mappings
+- [X] Implement the `taskmd sync` CLI command that reads config, fetches from the configured source, and writes/updates markdown files
+- [X] Handle conflict resolution: detect when a local file was modified and the remote changed too
+- [X] Map external fields (status, priority, assignee, labels) to taskmd frontmatter fields via configurable field mappings
+- [X] Support `--dry-run` flag to preview what would be created/updated/deleted
+- [X] Support `--source` flag to sync a specific source when multiple are configured
+- [X] Write tests for the core sync engine and the source interface contract
 
 ## Provider Interface (rough sketch)
 

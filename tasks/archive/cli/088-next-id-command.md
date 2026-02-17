@@ -17,14 +17,14 @@ Add a `next-id` CLI command that outputs the next available task ID. This simpli
 
 ## Tasks
 
-- [ ] Create `internal/cli/nextid.go` with the `next-id` command
-- [ ] Scan all task files in the target directory to find the highest numeric ID
-- [ ] Handle zero-padded numeric IDs (e.g., `001`, `042`, `087`)
-- [ ] Handle IDs with a static prefix pattern (e.g., `WEB-001`, `CLI-042`)
-- [ ] Output the next sequential ID in the same format
-- [ ] Support `--dir` flag for specifying the tasks directory
-- [ ] Support `--format` flag for output (plain text, json)
-- [ ] Write tests in `internal/cli/nextid_test.go`
+- [X] Create `internal/cli/nextid.go` with the `next-id` command
+- [X] Scan all task files in the target directory to find the highest numeric ID
+- [X] Handle zero-padded numeric IDs (e.g., `001`, `042`, `087`)
+- [X] Handle IDs with a static prefix pattern (e.g., `WEB-001`, `CLI-042`)
+- [X] Output the next sequential ID in the same format
+- [X] Support `--dir` flag for specifying the tasks directory
+- [X] Support `--format` flag for output (plain text, json)
+- [X] Write tests in `internal/cli/nextid_test.go`
 
 ## Acceptance Criteria
 

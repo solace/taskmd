@@ -33,7 +33,6 @@ The project was originally named `md-task-tracker` but the CLI tool and branding
 - [x] Update `go install` commands in docs
 - [x] Run `go mod tidy` and verify build
 - [x] Run full test suite
-- [ ] Tag a new release after rename (requires user action)
 
 ## Acceptance Criteria
 

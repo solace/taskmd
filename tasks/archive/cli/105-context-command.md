@@ -39,41 +39,41 @@ The command merges files from both sources (automatic scope resolution + explici
 ## Tasks
 
 ### Specification & Model
-- [ ] Add `context` field to `docs/taskmd_specification.md` as an optional array of relative file path strings
-- [ ] Add `Context []string` to the Task struct in `internal/model/task.go` with `yaml:"context" json:"context,omitempty"`
+- [X] Add `context` field to `docs/taskmd_specification.md` as an optional array of relative file path strings
+- [X] Add `Context []string` to the Task struct in `internal/model/task.go` with `yaml:"context" json:"context,omitempty"`
 
 ### Context Resolution Package
-- [ ] Create `internal/context/resolve.go`:
+- [X] Create `internal/context/resolve.go`:
   - Accept a task + scope config, return a unified file list
   - Resolve `touches` → scope paths, merge with explicit `context` entries
   - Deduplicate by path, check file/directory existence
   - Support directory expansion (glob files within directory paths)
   - Support content inlining (read file contents into output)
-- [ ] Add tests in `internal/context/resolve_test.go`
+- [X] Add tests in `internal/context/resolve_test.go`
 
 ### CLI Command
-- [ ] Create `internal/cli/context.go` with the `context` command
-- [ ] Flags:
+- [X] Create `internal/cli/context.go` with the `context` command
+- [X] Flags:
   - `--task-id` (required) — task to build context for
   - `--format` — `text` (default), `json`, `yaml`
   - `--resolve` — expand directory paths to individual files
   - `--include-content` — inline file contents into output
   - `--include-deps` — also include files from dependency tasks
   - `--max-files` — cap number of files returned (default: no limit)
-- [ ] Text output: grouped by source (scope files, explicit files, dependencies)
-- [ ] JSON output: flat `files` array with `path`, `source`, `exists`, and optional `content`/`lines` fields
-- [ ] Register command with `rootCmd`
-- [ ] Add tests in `internal/cli/context_test.go`
+- [X] Text output: grouped by source (scope files, explicit files, dependencies)
+- [X] JSON output: flat `files` array with `path`, `source`, `exists`, and optional `content`/`lines` fields
+- [X] Register command with `rootCmd`
+- [X] Add tests in `internal/cli/context_test.go`
 
 ### Integration with `get`
-- [ ] Add `--context` flag to `taskmd get` that appends the context file list to normal output
-- [ ] In JSON/YAML mode, include as a `context_files` field
+- [X] Add `--context` flag to `taskmd get` that appends the context file list to normal output
+- [X] In JSON/YAML mode, include as a `context_files` field
 
 ### Validation
-- [ ] Warn (not error) when `context` references a non-existent file — the task may create it
+- [X] Warn (not error) when `context` references a non-existent file — the task may create it
 
 ### Skill Update
-- [ ] Update `claude-code-plugin/skills/do-task/SKILL.md` to use `taskmd context` before starting work
+- [X] Update `claude-code-plugin/skills/do-task/SKILL.md` to use `taskmd context` before starting work
 
 ## Example Output
 

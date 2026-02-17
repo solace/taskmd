@@ -59,11 +59,11 @@ allowed-tools: Read, Glob, Write
 
 ## Tasks
 
-- [ ] Create `.claude/skills/next-task/SKILL.md` with instructions for running `taskmd next`
-- [ ] Create `.claude/skills/add-task/SKILL.md` with instructions for creating task files per the spec
-- [ ] Verify both skills appear in Claude Code's `/` menu
-- [ ] Test `/next-task` returns a task
-- [ ] Test `/add-task` creates a valid task file
+- [X] Create `.claude/skills/next-task/SKILL.md` with instructions for running `taskmd next`
+- [X] Create `.claude/skills/add-task/SKILL.md` with instructions for creating task files per the spec
+- [X] Verify both skills appear in Claude Code's `/` menu
+- [X] Test `/next-task` returns a task
+- [X] Test `/add-task` creates a valid task file
 
 ## Acceptance Criteria
 

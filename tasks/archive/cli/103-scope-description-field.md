@@ -30,11 +30,11 @@ scopes:
 
 ## Tasks
 
-- [ ] Update the config struct to include an optional `Description` field on scope entries
-- [ ] Update the config parser to read and preserve the `description` field
-- [ ] Include the description in `taskmd validate` output when warning about unknown `touches` values
-- [ ] Update the specification (`docs/taskmd_specification.md`) to document the `description` field
-- [ ] Add tests for parsing scopes with and without descriptions
+- [x] Update the config struct to include an optional `Description` field on scope entries
+- [x] Update the config parser to read and preserve the `description` field
+- [x] Include the description in `taskmd validate` output when warning about unknown `touches` values
+- [x] Update the specification (`docs/taskmd_specification.md`) to document the `description` field
+- [x] Add tests for parsing scopes with and without descriptions
 
 ## Acceptance Criteria
 

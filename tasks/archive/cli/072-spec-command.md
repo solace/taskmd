@@ -29,16 +29,16 @@ Task 061 (simplify specification) should be completed first so we embed the fina
 
 ## Tasks
 
-- [ ] Embed `docs/taskmd_specification.md` into the binary using `//go:embed`
-- [ ] Create `internal/cli/spec.go` with a `spec` cobra command
-- [ ] Write the spec to `TASKMD_SPEC.md` in the target directory by default
-- [ ] Add `--dir` flag to specify output directory
-- [ ] Add `--force` flag to overwrite an existing file
-- [ ] Add `--stdout` flag to print to stdout instead of writing a file
-- [ ] Refuse to overwrite without `--force` and print a clear message
-- [ ] Print success message with the output file path
-- [ ] Create `internal/cli/spec_test.go` with comprehensive tests
-- [ ] Run `make lint` and `make test` to verify
+- [X] Embed `docs/taskmd_specification.md` into the binary using `//go:embed`
+- [X] Create `internal/cli/spec.go` with a `spec` cobra command
+- [X] Write the spec to `TASKMD_SPEC.md` in the target directory by default
+- [X] Add `--dir` flag to specify output directory
+- [X] Add `--force` flag to overwrite an existing file
+- [X] Add `--stdout` flag to print to stdout instead of writing a file
+- [X] Refuse to overwrite without `--force` and print a clear message
+- [X] Print success message with the output file path
+- [X] Create `internal/cli/spec_test.go` with comprehensive tests
+- [X] Run `make lint` and `make test` to verify
 
 ## Acceptance Criteria
 
