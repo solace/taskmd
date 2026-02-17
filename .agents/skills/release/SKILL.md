@@ -40,15 +40,15 @@ The user's input is in `$ARGUMENTS` (a semver version like `1.2.3` or `v1.2.3`, 
 
 7. **If `--no-push`**, run the script without pushing:
     ```bash
-    scripts/release.sh --no-push --notes-file /tmp/taskmd-release-notes-X.Y.Z.md X.Y.Z
+    echo "y" | scripts/release.sh --no-push --notes-file /tmp/taskmd-release-notes-X.Y.Z.md X.Y.Z
     ```
     Report what was created locally and stop.
 
 8. **Run the release script** to handle the full release lifecycle:
     ```bash
-    scripts/release.sh --notes-file /tmp/taskmd-release-notes-X.Y.Z.md X.Y.Z
+    echo "y" | scripts/release.sh --notes-file /tmp/taskmd-release-notes-X.Y.Z.md X.Y.Z
     ```
-    The script handles everything: version bumps, commit, tag, push, CI workflow monitoring, and applying release notes after CI creates the release.
+    The script has an interactive confirmation prompt — piping `echo "y"` auto-confirms it. The user already approved the release when they confirmed the release notes, so no second confirmation is needed. The script handles everything: version bumps, commit, tag, push, CI workflow monitoring, and applying release notes after CI creates the release.
 
 9. **Report success** with the release tag and a link to the GitHub releases page.
 
