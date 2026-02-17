@@ -1,7 +1,7 @@
 ---
 id: "142"
 title: "Detect new pending task files in commit-msg and adjust message"
-status: pending
+status: completed
 priority: medium
 effort: small
 tags: [cli, git, dx]
@@ -18,13 +18,13 @@ Currently the command only looks for tasks changing to `completed`. When a user 
 
 ## Tasks
 
-- [ ] Add a `parseNewPendingFilesFromDiff` function (or extend existing diff parsing) to detect newly added files where the diff contains `+status: pending`
-- [ ] Extract task IDs from the matched file paths or parsed frontmatter
-- [ ] When no completed tasks are found but new pending tasks are detected, generate a message like `chore: added task <ID>` (single) or `chore: added tasks <ID1>, <ID2>` (multiple)
-- [ ] Respect existing `--type` flag override for the commit prefix
-- [ ] Ensure completed tasks still take priority (if both completed and new pending are staged, use the existing completed-task message)
-- [ ] Add tests for the new pending-task detection path
-- [ ] Add tests for mixed scenarios (completed + new pending in same commit)
+- [x] Add a `parseNewPendingFilesFromDiff` function (or extend existing diff parsing) to detect newly added files where the diff contains `+status: pending`
+- [x] Extract task IDs from the matched file paths or parsed frontmatter
+- [x] When no completed tasks are found but new pending tasks are detected, generate a message like `chore: added task <ID>` (single) or `chore: added tasks <ID1>, <ID2>` (multiple)
+- [x] Respect existing `--type` flag override for the commit prefix
+- [x] Ensure completed tasks still take priority (if both completed and new pending are staged, use the existing completed-task message)
+- [x] Add tests for the new pending-task detection path
+- [x] Add tests for mixed scenarios (completed + new pending in same commit)
 
 ## Acceptance Criteria
 

@@ -79,6 +79,7 @@ func runCommitMsg(_ *cobra.Command, _ []string) error {
 	tasks := result.Tasks
 
 	var matched []*model.Task
+	var isNewPending bool
 	if commitMsgTaskID != "" {
 		task := findExactMatch(commitMsgTaskID, tasks)
 		if task == nil {
@@ -91,11 +92,23 @@ func runCommitMsg(_ *cobra.Command, _ []string) error {
 			return err
 		}
 		if len(matched) == 0 {
-			return fmt.Errorf("no completed tasks found in staged changes")
+			matched, err = findNewPendingTasksFromDiff(tasks, scanDir)
+			if err != nil {
+				return err
+			}
+			if len(matched) == 0 {
+				return fmt.Errorf("no completed tasks found in staged changes")
+			}
+			isNewPending = true
 		}
 	}
 
-	msg := buildCommitMessage(matched, commitMsgType, commitMsgBody, commitMsgShort)
+	var msg string
+	if isNewPending {
+		msg = buildAddedTaskMessage(matched, commitMsgType)
+	} else {
+		msg = buildCommitMessage(matched, commitMsgType, commitMsgBody, commitMsgShort)
+	}
 	fmt.Print(msg)
 	return nil
 }
@@ -266,6 +279,79 @@ func parseCompletedFilesFromDiff(diff string) []string {
 		} else if strings.HasPrefix(line, "+status: completed") && currentFile != "" {
 			files = append(files, currentFile)
 			currentFile = "" // avoid duplicates from same file
+		}
+	}
+	return files
+}
+
+// buildAddedTaskMessage generates a commit message for newly added pending tasks.
+func buildAddedTaskMessage(tasks []*model.Task, commitType string) string {
+	ids := make([]string, len(tasks))
+	for i, t := range tasks {
+		ids[i] = t.ID
+	}
+
+	var subject string
+	if len(tasks) == 1 {
+		subject = fmt.Sprintf("%s: added task %s", commitType, ids[0])
+	} else {
+		subject = fmt.Sprintf("%s: added tasks %s", commitType, strings.Join(ids, ", "))
+	}
+	return subject + "\n"
+}
+
+// findNewPendingTasksFromDiff runs git diff --cached, parses for newly added files
+// with +status: pending, and matches them against scanned tasks.
+func findNewPendingTasksFromDiff(tasks []*model.Task, scanDir string) ([]*model.Task, error) {
+	diffOutput, err := gitDiffFunc(scanDir)
+	if err != nil {
+		return nil, fmt.Errorf("git diff failed: %w", err)
+	}
+
+	pendingFiles := parseNewPendingFilesFromDiff(diffOutput)
+	if len(pendingFiles) == 0 {
+		return nil, nil
+	}
+
+	gitRoot, err := resolveGitRoot(scanDir)
+	if err != nil {
+		return nil, err
+	}
+
+	absPendingFiles := make(map[string]bool)
+	for _, f := range pendingFiles {
+		abs := filepath.Join(gitRoot, f)
+		absPendingFiles[filepath.Clean(abs)] = true
+	}
+
+	var matched []*model.Task
+	for _, t := range tasks {
+		cleaned := filepath.Clean(t.FilePath)
+		if absPendingFiles[cleaned] {
+			matched = append(matched, t)
+		}
+	}
+	return matched, nil
+}
+
+// parseNewPendingFilesFromDiff parses unified diff output and returns file paths
+// for newly added files that have a line matching "+status: pending".
+// A file is considered "new" if the diff shows it was added (--- /dev/null).
+func parseNewPendingFilesFromDiff(diff string) []string {
+	var files []string
+	var currentFile string
+	var isNewFile bool
+
+	s := bufio.NewScanner(strings.NewReader(diff))
+	for s.Scan() {
+		line := s.Text()
+		if strings.HasPrefix(line, "--- ") {
+			isNewFile = line == "--- /dev/null"
+		} else if strings.HasPrefix(line, "+++ b/") {
+			currentFile = strings.TrimPrefix(line, "+++ b/")
+		} else if isNewFile && strings.HasPrefix(line, "+status: pending") && currentFile != "" {
+			files = append(files, currentFile)
+			currentFile = ""
 		}
 	}
 	return files

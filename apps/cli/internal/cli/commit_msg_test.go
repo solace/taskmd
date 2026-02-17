@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/driangle/taskmd/apps/cli/internal/model"
 )
 
 func createCommitMsgTestFiles(t *testing.T) string {
@@ -65,6 +67,32 @@ created: 2026-02-16
 
 - [x] Add installation instructions
 - [x] Add usage examples
+`,
+		"cli/045-new-pending.md": `---
+id: "045"
+title: "Add search feature"
+status: pending
+priority: medium
+effort: medium
+tags: [cli]
+group: cli
+created: 2026-02-17
+---
+
+# Add search feature
+`,
+		"cli/046-new-pending.md": `---
+id: "046"
+title: "Add filter feature"
+status: pending
+priority: medium
+effort: small
+tags: [cli]
+group: cli
+created: 2026-02-17
+---
+
+# Add filter feature
 `,
 	}
 
@@ -610,5 +638,243 @@ func TestCommitMsg_MessageFormat(t *testing.T) {
 	body := parts[1]
 	if !strings.Contains(body, "- Create command scaffolding") {
 		t.Errorf("unexpected body: %s", body)
+	}
+}
+
+// Tests for new pending task detection
+
+func TestCommitMsg_SingleNewPendingTask(t *testing.T) {
+	tmpDir := createCommitMsgTestFiles(t)
+	resetCommitMsgFlags()
+	taskDir = tmpDir
+
+	mockGitDiffAndRoot(t,
+		"diff --git a/cli/045-new-pending.md b/cli/045-new-pending.md\n"+
+			"new file mode 100644\n"+
+			"--- /dev/null\n"+
+			"+++ b/cli/045-new-pending.md\n"+
+			"@@ -0,0 +1,10 @@\n"+
+			"+---\n"+
+			"+id: \"045\"\n"+
+			"+title: \"Add search feature\"\n"+
+			"+status: pending\n"+
+			"+---\n",
+		tmpDir)
+
+	output, err := captureCommitMsgOutput(t)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := "chore: added task 045\n"
+	if output != expected {
+		t.Errorf("expected %q, got %q", expected, output)
+	}
+}
+
+func TestCommitMsg_MultipleNewPendingTasks(t *testing.T) {
+	tmpDir := createCommitMsgTestFiles(t)
+	resetCommitMsgFlags()
+	taskDir = tmpDir
+
+	mockGitDiffAndRoot(t,
+		"diff --git a/cli/045-new-pending.md b/cli/045-new-pending.md\n"+
+			"new file mode 100644\n"+
+			"--- /dev/null\n"+
+			"+++ b/cli/045-new-pending.md\n"+
+			"@@ -0,0 +1,10 @@\n"+
+			"+status: pending\n"+
+			"diff --git a/cli/046-new-pending.md b/cli/046-new-pending.md\n"+
+			"new file mode 100644\n"+
+			"--- /dev/null\n"+
+			"+++ b/cli/046-new-pending.md\n"+
+			"@@ -0,0 +1,10 @@\n"+
+			"+status: pending\n",
+		tmpDir)
+
+	output, err := captureCommitMsgOutput(t)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := "chore: added tasks 045, 046\n"
+	if output != expected {
+		t.Errorf("expected %q, got %q", expected, output)
+	}
+}
+
+func TestCommitMsg_NewPendingWithTypeFlag(t *testing.T) {
+	tmpDir := createCommitMsgTestFiles(t)
+	resetCommitMsgFlags()
+	taskDir = tmpDir
+	commitMsgType = "feat"
+
+	mockGitDiffAndRoot(t,
+		"diff --git a/cli/045-new-pending.md b/cli/045-new-pending.md\n"+
+			"new file mode 100644\n"+
+			"--- /dev/null\n"+
+			"+++ b/cli/045-new-pending.md\n"+
+			"+status: pending\n",
+		tmpDir)
+
+	output, err := captureCommitMsgOutput(t)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	expected := "feat: added task 045\n"
+	if output != expected {
+		t.Errorf("expected %q, got %q", expected, output)
+	}
+}
+
+func TestCommitMsg_CompletedTakesPriorityOverNewPending(t *testing.T) {
+	tmpDir := createCommitMsgTestFiles(t)
+	resetCommitMsgFlags()
+	taskDir = tmpDir
+
+	// Diff contains both a completed task and a new pending task
+	mockGitDiffAndRoot(t,
+		"diff --git a/cli/042-feature.md b/cli/042-feature.md\n"+
+			"--- a/cli/042-feature.md\n"+
+			"+++ b/cli/042-feature.md\n"+
+			"@@ -4 +4 @@\n"+
+			"-status: pending\n"+
+			"+status: completed\n"+
+			"diff --git a/cli/045-new-pending.md b/cli/045-new-pending.md\n"+
+			"new file mode 100644\n"+
+			"--- /dev/null\n"+
+			"+++ b/cli/045-new-pending.md\n"+
+			"+status: pending\n",
+		tmpDir)
+
+	output, err := captureCommitMsgOutput(t)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Should use completed-task message, not "added task" message
+	if !strings.Contains(output, "chore(cli): add commit-msg command (task 042)") {
+		t.Errorf("expected completed task message to take priority, got:\n%s", output)
+	}
+	if strings.Contains(output, "added task") {
+		t.Errorf("should not contain 'added task' when completed tasks exist, got:\n%s", output)
+	}
+}
+
+func TestCommitMsg_ModifiedPendingNotDetected(t *testing.T) {
+	tmpDir := createCommitMsgTestFiles(t)
+	resetCommitMsgFlags()
+	taskDir = tmpDir
+
+	// File was modified (not new) with status: pending — should NOT be detected
+	mockGitDiffAndRoot(t,
+		"diff --git a/cli/045-new-pending.md b/cli/045-new-pending.md\n"+
+			"--- a/cli/045-new-pending.md\n"+
+			"+++ b/cli/045-new-pending.md\n"+
+			"@@ -4 +4 @@\n"+
+			"+status: pending\n",
+		tmpDir)
+
+	_, err := captureCommitMsgOutput(t)
+	if err == nil {
+		t.Fatal("expected error when only modified (not new) pending file staged")
+	}
+	if !strings.Contains(err.Error(), "no completed tasks found") {
+		t.Errorf("expected 'no completed tasks found' error, got: %v", err)
+	}
+}
+
+func TestParseNewPendingFilesFromDiff(t *testing.T) {
+	tests := []struct {
+		name string
+		diff string
+		want []string
+	}{
+		{
+			name: "single new pending file",
+			diff: "--- /dev/null\n+++ b/tasks/cli/045.md\n+status: pending\n",
+			want: []string{"tasks/cli/045.md"},
+		},
+		{
+			name: "multiple new pending files",
+			diff: "--- /dev/null\n+++ b/a.md\n+status: pending\n--- /dev/null\n+++ b/b.md\n+status: pending\n",
+			want: []string{"a.md", "b.md"},
+		},
+		{
+			name: "modified file with pending status ignored",
+			diff: "--- a/tasks/cli/045.md\n+++ b/tasks/cli/045.md\n+status: pending\n",
+			want: nil,
+		},
+		{
+			name: "new file with non-pending status ignored",
+			diff: "--- /dev/null\n+++ b/a.md\n+status: completed\n",
+			want: nil,
+		},
+		{
+			name: "empty diff",
+			diff: "",
+			want: nil,
+		},
+		{
+			name: "mixed new and modified files",
+			diff: "--- /dev/null\n+++ b/new.md\n+status: pending\n--- a/old.md\n+++ b/old.md\n+status: pending\n",
+			want: []string{"new.md"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := parseNewPendingFilesFromDiff(tt.diff)
+			if len(got) != len(tt.want) {
+				t.Fatalf("parseNewPendingFilesFromDiff() = %v, want %v", got, tt.want)
+			}
+			for i := range got {
+				if got[i] != tt.want[i] {
+					t.Errorf("parseNewPendingFilesFromDiff()[%d] = %q, want %q", i, got[i], tt.want[i])
+				}
+			}
+		})
+	}
+}
+
+func TestBuildAddedTaskMessage(t *testing.T) {
+	tests := []struct {
+		name       string
+		taskIDs    []string
+		commitType string
+		want       string
+	}{
+		{
+			name:       "single task",
+			taskIDs:    []string{"045"},
+			commitType: "chore",
+			want:       "chore: added task 045\n",
+		},
+		{
+			name:       "multiple tasks",
+			taskIDs:    []string{"045", "046"},
+			commitType: "chore",
+			want:       "chore: added tasks 045, 046\n",
+		},
+		{
+			name:       "custom type",
+			taskIDs:    []string{"045"},
+			commitType: "feat",
+			want:       "feat: added task 045\n",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var tasks []*model.Task
+			for _, id := range tt.taskIDs {
+				tasks = append(tasks, &model.Task{ID: id})
+			}
+			got := buildAddedTaskMessage(tasks, tt.commitType)
+			if got != tt.want {
+				t.Errorf("buildAddedTaskMessage() = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
