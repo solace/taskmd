@@ -97,6 +97,10 @@ jobs:
           echo "Building for windows/amd64..."
           GOOS=windows GOARCH=amd64 go build -tags embed_web -ldflags="$LDFLAGS" -o ../../dist/taskmd-windows-amd64.exe ./cmd/taskmd
 
+          # Build for Windows ARM64
+          echo "Building for windows/arm64..."
+          GOOS=windows GOARCH=arm64 go build -tags embed_web -ldflags="$LDFLAGS" -o ../../dist/taskmd-windows-arm64.exe ./cmd/taskmd
+
       - name: Compress binaries
         working-directory: dist
         run: |
@@ -115,6 +119,9 @@ jobs:
           # Compress Windows AMD64
           zip taskmd-${{ steps.version.outputs.tag }}-windows-amd64.zip taskmd-windows-amd64.exe
 
+          # Compress Windows ARM64
+          zip taskmd-${{ steps.version.outputs.tag }}-windows-arm64.zip taskmd-windows-arm64.exe
+
       - name: Generate checksums
         working-directory: dist
         run: |
@@ -130,6 +137,7 @@ jobs:
             dist/taskmd-${{ steps.version.outputs.tag }}-darwin-amd64.tar.gz
             dist/taskmd-${{ steps.version.outputs.tag }}-darwin-arm64.tar.gz
             dist/taskmd-${{ steps.version.outputs.tag }}-windows-amd64.zip
+            dist/taskmd-${{ steps.version.outputs.tag }}-windows-arm64.zip
             dist/checksums.txt
           draft: false
           prerelease: false

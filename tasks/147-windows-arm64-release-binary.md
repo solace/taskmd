@@ -1,7 +1,7 @@
 ---
 id: "147"
 title: "Add Windows ARM64 binary to release workflow"
-status: pending
+status: completed
 priority: medium
 effort: small
 tags: [distribution, windows, ci]
@@ -16,10 +16,10 @@ The release workflow already builds a Windows AMD64 binary. Add a Windows ARM64 
 
 ## Tasks
 
-- [ ] Add `GOOS=windows GOARCH=arm64` build step in `.github/workflows/release.yml`
-- [ ] Compress the ARM64 binary as `.zip` and include it in release artifacts
-- [ ] Include the ARM64 zip in SHA256 checksum generation
-- [ ] Update `build-all` target in `apps/cli/Makefile` to include `windows-arm64`
+- [x] Add `GOOS=windows GOARCH=arm64` build step in `.github/workflows/release.yml`
+- [x] Compress the ARM64 binary as `.zip` and include it in release artifacts
+- [x] Include the ARM64 zip in SHA256 checksum generation
+- [x] Update `build-all` target in `apps/cli/Makefile` to include `windows-arm64`
 
 ## Acceptance Criteria
 

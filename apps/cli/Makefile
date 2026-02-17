@@ -94,3 +94,4 @@ build-all:
 	GOOS=darwin GOARCH=arm64 go build -o taskmd-darwin-arm64 ./cmd/taskmd
 	GOOS=linux GOARCH=amd64 go build -o taskmd-linux-amd64 ./cmd/taskmd
 	GOOS=windows GOARCH=amd64 go build -o taskmd-windows-amd64.exe ./cmd/taskmd
+	GOOS=windows GOARCH=arm64 go build -o taskmd-windows-arm64.exe ./cmd/taskmd
