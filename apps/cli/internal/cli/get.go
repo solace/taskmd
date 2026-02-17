@@ -419,6 +419,7 @@ func outputGetText(task *model.Task, deps dependencyInfo, ctxFiles []taskcontext
 	fmt.Fprintf(w, "%s %s\n", formatLabel("Status:", r), formatStatus(string(task.Status), r))
 	printOptionalField(w, "Priority", string(task.Priority), r)
 	printOptionalField(w, "Effort", string(task.Effort), r)
+	printOptionalField(w, "Type", string(task.Type), r)
 	printTags(w, task.Tags, r)
 	if deps.Parent != nil {
 		fmt.Fprintf(w, "%s %s\n", formatLabel("Parent:", r), formatDepEntry(*deps.Parent, r))
@@ -524,6 +525,7 @@ type getOutput struct {
 	Status       string                  `json:"status" yaml:"status"`
 	Priority     string                  `json:"priority,omitempty" yaml:"priority,omitempty"`
 	Effort       string                  `json:"effort,omitempty" yaml:"effort,omitempty"`
+	Type         string                  `json:"type,omitempty" yaml:"type,omitempty"`
 	Tags         []string                `json:"tags" yaml:"tags"`
 	Parent       *depEntry               `json:"parent,omitempty" yaml:"parent,omitempty"`
 	Created      string                  `json:"created,omitempty" yaml:"created,omitempty"`
@@ -551,6 +553,7 @@ func buildGetOutput(task *model.Task, deps dependencyInfo, ctxFiles []taskcontex
 		Status:   string(task.Status),
 		Priority: string(task.Priority),
 		Effort:   string(task.Effort),
+		Type:     string(task.Type),
 		Tags:     task.Tags,
 		Parent:   deps.Parent,
 		Created:  created,

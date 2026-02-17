@@ -297,6 +297,25 @@ func TestValidateUpdateRequest_InvalidEffort(t *testing.T) {
 	}
 }
 
+func TestValidateUpdateRequest_InvalidType(t *testing.T) {
+	errs := ValidateUpdateRequest(UpdateRequest{Type: strPtr("task")})
+	if len(errs) != 1 {
+		t.Fatalf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+	if !strings.Contains(errs[0], "invalid type") {
+		t.Errorf("expected 'invalid type' error, got: %s", errs[0])
+	}
+}
+
+func TestValidateUpdateRequest_ValidType(t *testing.T) {
+	for _, typ := range []string{"feature", "bug", "improvement", "chore", "docs"} {
+		errs := ValidateUpdateRequest(UpdateRequest{Type: strPtr(typ)})
+		if len(errs) != 0 {
+			t.Errorf("expected no errors for type %q, got: %v", typ, errs)
+		}
+	}
+}
+
 func TestValidateUpdateRequest_MultipleErrors(t *testing.T) {
 	errs := ValidateUpdateRequest(UpdateRequest{
 		Status: strPtr("bad"),

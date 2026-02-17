@@ -157,6 +157,15 @@ func (v *Validator) checkInvalidFieldValues(tasks []*model.Task, result *Validat
 		"":                 true, // Empty is allowed (will default)
 	}
 
+	validTypes := map[model.TaskType]bool{
+		model.TypeFeature:     true,
+		model.TypeBug:         true,
+		model.TypeImprovement: true,
+		model.TypeChore:       true,
+		model.TypeDocs:        true,
+		"":                    true, // Empty is allowed (optional field)
+	}
+
 	for _, task := range tasks {
 		if !validStatuses[task.Status] {
 			result.AddIssue(LevelError, task.ID, task.FilePath,
@@ -171,6 +180,11 @@ func (v *Validator) checkInvalidFieldValues(tasks []*model.Task, result *Validat
 		if !validEfforts[task.Effort] {
 			result.AddIssue(LevelError, task.ID, task.FilePath,
 				fmt.Sprintf("invalid effort: '%s' (valid values: small, medium, large)", task.Effort))
+		}
+
+		if !validTypes[task.Type] {
+			result.AddIssue(LevelWarning, task.ID, task.FilePath,
+				fmt.Sprintf("invalid type: '%s' (valid values: feature, bug, improvement, chore, docs)", task.Type))
 		}
 	}
 }

@@ -55,6 +55,27 @@ func TestApply_InvalidFilterFormat(t *testing.T) {
 	}
 }
 
+func TestApply_TypeFilter(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Feature A", Type: model.TypeFeature},
+		{ID: "002", Title: "Bug fix B", Type: model.TypeBug},
+		{ID: "003", Title: "Chore C", Type: model.TypeChore},
+		{ID: "004", Title: "No type"},
+	}
+
+	filtered, err := Apply(tasks, []string{"type=bug"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(filtered) != 1 {
+		t.Fatalf("expected 1 task, got %d", len(filtered))
+	}
+	if filtered[0].ID != "002" {
+		t.Errorf("expected task 002, got %s", filtered[0].ID)
+	}
+}
+
 func TestApply_ParentFilter(t *testing.T) {
 	tasks := []*model.Task{
 		{ID: "001", Title: "Parent"},

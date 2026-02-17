@@ -16,6 +16,9 @@ var validPriorityValues = []string{"low", "medium", "high", "critical"}
 // validEffortValues lists all valid effort values.
 var validEffortValues = []string{"small", "medium", "large"}
 
+// validTypeValues lists all valid task type values.
+var validTypeValues = []string{"feature", "bug", "improvement", "chore", "docs"}
+
 // validSortFields lists all valid sort field values for the list command.
 var validSortFields = []string{"id", "title", "status", "priority", "effort", "created"}
 
@@ -55,6 +58,9 @@ func validateSetEnums(req taskfile.UpdateRequest) error {
 	}
 	if req.Effort != nil && !contains(validEffortValues, *req.Effort) {
 		return invalidValueError("effort", *req.Effort, validEffortValues)
+	}
+	if req.Type != nil && !contains(validTypeValues, *req.Type) {
+		return invalidValueError("type", *req.Type, validTypeValues)
 	}
 	return nil
 }

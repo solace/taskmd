@@ -1,7 +1,7 @@
 ---
 id: "149"
 title: "Add type field to taskmd specification"
-status: pending
+status: completed
 priority: medium
 effort: medium
 tags:
@@ -9,6 +9,7 @@ tags:
   - core
   - cli
 created: 2026-02-17
+type: chore
 ---
 
 # Add Type Field to taskmd Specification

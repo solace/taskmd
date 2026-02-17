@@ -648,6 +648,51 @@ func TestBoardCommand_HeadingColoredByPriority(t *testing.T) {
 	}
 }
 
+func TestBoardCommand_GroupByType(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	tasks := map[string]string{
+		"001-feat.md": `---
+id: "001"
+title: "New feature"
+status: pending
+type: feature
+---
+`,
+		"002-bug.md": `---
+id: "002"
+title: "Fix crash"
+status: pending
+type: bug
+---
+`,
+		"003-notype.md": `---
+id: "003"
+title: "No type task"
+status: pending
+---
+`,
+	}
+	for name, content := range tasks {
+		os.WriteFile(filepath.Join(tmpDir, name), []byte(content), 0644)
+	}
+
+	resetBoardFlags()
+	boardGroupBy = "type"
+
+	output := captureBoardOutput(t, tmpDir)
+
+	if !strings.Contains(output, "## feature") {
+		t.Error("Expected output to contain '## feature' header")
+	}
+	if !strings.Contains(output, "## bug") {
+		t.Error("Expected output to contain '## bug' header")
+	}
+	if !strings.Contains(output, "(none)") {
+		t.Error("Expected output to contain '(none)' for tasks without type")
+	}
+}
+
 func TestBoardCommand_HeadingNoColorFlag(t *testing.T) {
 	tmpDir := createBoardTestFiles(t)
 	resetBoardFlags()

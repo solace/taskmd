@@ -41,6 +41,17 @@ const (
 	EffortLarge  Effort = "large"
 )
 
+// TaskType represents the classification of a work item
+type TaskType string
+
+const (
+	TypeFeature     TaskType = "feature"
+	TypeBug         TaskType = "bug"
+	TypeImprovement TaskType = "improvement"
+	TypeChore       TaskType = "chore"
+	TypeDocs        TaskType = "docs"
+)
+
 // VerifyStep represents a single verification check defined in task frontmatter.
 type VerifyStep struct {
 	Type  string `yaml:"type" json:"type"`
@@ -80,6 +91,7 @@ type Task struct {
 	Status       Status       `yaml:"status" json:"status"`
 	Priority     Priority     `yaml:"priority" json:"priority,omitempty"`
 	Effort       Effort       `yaml:"effort" json:"effort,omitempty"`
+	Type         TaskType     `yaml:"type" json:"type,omitempty"`
 	Dependencies []string     `yaml:"dependencies" json:"dependencies"`
 	Tags         []string     `yaml:"tags" json:"tags"`
 	Touches      []string     `yaml:"touches" json:"touches,omitempty"`

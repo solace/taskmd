@@ -143,6 +143,57 @@ func TestValidate_InvalidFieldValues(t *testing.T) {
 	}
 }
 
+func TestValidate_InvalidType(t *testing.T) {
+	tests := []struct {
+		name         string
+		tasks        []*model.Task
+		wantWarnings int
+		wantErrs     int
+	}{
+		{
+			name: "valid type",
+			tasks: []*model.Task{
+				{ID: "001", Title: "Test", Type: model.TypeBug},
+			},
+			wantWarnings: 0,
+			wantErrs:     0,
+		},
+		{
+			name: "empty type is allowed",
+			tasks: []*model.Task{
+				{ID: "001", Title: "Test"},
+			},
+			wantWarnings: 0,
+			wantErrs:     0,
+		},
+		{
+			name: "invalid type produces warning",
+			tasks: []*model.Task{
+				{ID: "001", Title: "Test", Type: "unknown"},
+			},
+			wantWarnings: 1,
+			wantErrs:     0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v := NewValidator(false)
+			result := v.Validate(tt.tasks)
+
+			if result.Errors != tt.wantErrs {
+				t.Errorf("Validate() errors = %d, want %d", result.Errors, tt.wantErrs)
+			}
+			if result.Warnings != tt.wantWarnings {
+				t.Errorf("Validate() warnings = %d, want %d", result.Warnings, tt.wantWarnings)
+				for _, issue := range result.Issues {
+					t.Logf("  Issue: %s (level: %s)", issue.Message, issue.Level)
+				}
+			}
+		})
+	}
+}
+
 func TestValidate_CancelledStatus(t *testing.T) {
 	tests := []struct {
 		name     string

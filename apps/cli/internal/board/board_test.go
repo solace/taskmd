@@ -71,6 +71,41 @@ func TestToJSON_OmitsEmptyTags(t *testing.T) {
 	}
 }
 
+func TestGroupTasks_Type(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Feature", Type: model.TypeFeature},
+		{ID: "002", Title: "Bug", Type: model.TypeBug},
+		{ID: "003", Title: "No type"},
+	}
+
+	result, err := GroupTasks(tasks, "type")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Groups) != 3 {
+		t.Fatalf("expected 3 groups, got %d", len(result.Groups))
+	}
+
+	if len(result.Groups["feature"]) != 1 {
+		t.Errorf("expected 1 feature task, got %d", len(result.Groups["feature"]))
+	}
+	if len(result.Groups["bug"]) != 1 {
+		t.Errorf("expected 1 bug task, got %d", len(result.Groups["bug"]))
+	}
+	if len(result.Groups[defaultGroupKey]) != 1 {
+		t.Errorf("expected 1 task with no type, got %d", len(result.Groups[defaultGroupKey]))
+	}
+
+	// Verify ordering: feature, bug, then (none)
+	if result.Keys[0] != "feature" {
+		t.Errorf("expected first key to be 'feature', got %q", result.Keys[0])
+	}
+	if result.Keys[1] != "bug" {
+		t.Errorf("expected second key to be 'bug', got %q", result.Keys[1])
+	}
+}
+
 func TestToJSON_OmitsEmptySliceTags(t *testing.T) {
 	tasks := []*model.Task{
 		{

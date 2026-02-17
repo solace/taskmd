@@ -61,6 +61,19 @@ func GroupTasks(tasks []*model.Task, field string) (*GroupResult, error) {
 			Groups: groups,
 		}, nil
 
+	case "type":
+		for _, t := range tasks {
+			key := string(t.Type)
+			if key == "" {
+				key = defaultGroupKey
+			}
+			groups[key] = append(groups[key], t)
+		}
+		return &GroupResult{
+			Keys:   orderedKeys(groups, typeOrder()),
+			Groups: groups,
+		}, nil
+
 	case "group":
 		for _, t := range tasks {
 			key := t.GetGroup()
@@ -90,7 +103,7 @@ func GroupTasks(tasks []*model.Task, field string) (*GroupResult, error) {
 		}, nil
 
 	default:
-		return nil, fmt.Errorf("unsupported group-by field: %s (supported: status, priority, effort, group, tag)", field)
+		return nil, fmt.Errorf("unsupported group-by field: %s (supported: status, priority, effort, type, group, tag)", field)
 	}
 }
 
@@ -160,6 +173,16 @@ func effortOrder() []string {
 		string(model.EffortSmall),
 		string(model.EffortMedium),
 		string(model.EffortLarge),
+	}
+}
+
+func typeOrder() []string {
+	return []string{
+		string(model.TypeFeature),
+		string(model.TypeBug),
+		string(model.TypeImprovement),
+		string(model.TypeChore),
+		string(model.TypeDocs),
 	}
 }
 

@@ -28,6 +28,7 @@ Description and subtasks go here.
 | `status` | enum | Recommended | `pending`, `in-progress`, `completed`, `blocked`, `cancelled` |
 | `priority` | enum | No | `low`, `medium`, `high`, `critical` |
 | `effort` | enum | No | `small`, `medium`, `large` |
+| `type` | enum | No | `feature`, `bug`, `improvement`, `chore`, `docs` |
 | `dependencies` | array | No | List of task ID strings (e.g., `["001", "015"]`) |
 | `tags` | array | No | Lowercase, hyphen-separated strings |
 | `group` | string | No | Logical grouping (derived from directory if omitted) |
@@ -85,6 +86,16 @@ pending → in-progress → completed
 | `small` | < 2 hours |
 | `medium` | 2–8 hours |
 | `large` | > 8 hours / multi-day |
+
+**`type`** — Classification of the work item:
+
+| Type | Meaning |
+|------|---------|
+| `feature` | New functionality |
+| `bug` | Defect fix |
+| `improvement` | Enhancement to existing functionality |
+| `chore` | Maintenance or housekeeping |
+| `docs` | Documentation-only change |
 
 **`dependencies`** — List of task IDs that must be completed before this task can start. Always reference by ID, always use array format:
 
@@ -227,7 +238,7 @@ A valid taskmd file **must**:
 
 1. Have YAML frontmatter enclosed in `---` delimiters
 2. Include required fields: `id`, `title`
-3. Use valid enum values for `status`, `priority`, `effort`
+3. Use valid enum values for `status`, `priority`, `effort`, `type`
 4. Have unique IDs across the project
 5. Reference only existing tasks in `dependencies`
 6. Have no circular dependency chains
@@ -264,6 +275,7 @@ title: "Implement user authentication"
 status: in-progress
 priority: high
 effort: large
+type: feature
 dependencies: ["012", "013"]
 parent: "012"
 tags:

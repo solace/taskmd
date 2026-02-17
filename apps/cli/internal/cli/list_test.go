@@ -260,6 +260,28 @@ func TestListCommand_ParentColumn(t *testing.T) {
 	}
 }
 
+func TestListCommand_TypeColumn(t *testing.T) {
+	resetListFlags()
+
+	tasks := []*model.Task{
+		{ID: "001", Title: "Feature", Status: model.StatusPending, Type: model.TypeFeature},
+		{ID: "002", Title: "Bug", Status: model.StatusPending, Type: model.TypeBug},
+		{ID: "003", Title: "No type", Status: model.StatusPending},
+	}
+
+	output := captureListTableOutput(t, tasks, "id,title,type")
+
+	if !strings.Contains(output, "type") {
+		t.Error("Expected 'type' column header in output")
+	}
+	if !strings.Contains(output, "feature") {
+		t.Error("Expected 'feature' in output")
+	}
+	if !strings.Contains(output, "bug") {
+		t.Error("Expected 'bug' in output")
+	}
+}
+
 func TestListCommand_SeparatorAlignment(t *testing.T) {
 	resetListFlags()
 

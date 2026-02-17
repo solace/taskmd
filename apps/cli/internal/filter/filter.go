@@ -77,6 +77,8 @@ func getFieldValue(task *model.Task, field string) (string, bool) {
 		return string(task.Priority), true
 	case "effort":
 		return string(task.Effort), true
+	case "type":
+		return string(task.Type), true
 	case "id":
 		return task.ID, true
 	case "group":

@@ -298,6 +298,8 @@ func getScalarColumnValue(task *model.Task, column string) string {
 		return string(task.Priority)
 	case "effort":
 		return string(task.Effort)
+	case "type":
+		return string(task.Type)
 	case "group":
 		return task.Group
 	case "owner":

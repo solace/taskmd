@@ -48,7 +48,7 @@ func init() {
 	snapshotCmd.Flags().StringVar(&snapshotFormat, "format", "json", "output format (json, yaml, md)")
 	snapshotCmd.Flags().BoolVar(&snapshotCore, "core", false, "output only core fields (id, title, dependencies)")
 	snapshotCmd.Flags().BoolVar(&snapshotDerived, "derived", false, "include computed/derived fields (blocked status, depth, topological order)")
-	snapshotCmd.Flags().StringVar(&snapshotGroupBy, "group-by", "", "group tasks by field (status, priority, effort, group)")
+	snapshotCmd.Flags().StringVar(&snapshotGroupBy, "group-by", "", "group tasks by field (status, priority, effort, type, group)")
 	snapshotCmd.Flags().StringVarP(&snapshotOut, "out", "o", "", "write output to file instead of stdout")
 }
 

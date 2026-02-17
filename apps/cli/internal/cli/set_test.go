@@ -109,6 +109,7 @@ func resetSetFlags() {
 	setStatus = ""
 	setPriority = ""
 	setEffort = ""
+	setType = ""
 	setOwner = ""
 	setParent = ""
 	setDone = false
@@ -460,6 +461,44 @@ func TestSet_InvalidEffort(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "invalid effort") {
 		t.Errorf("Expected 'invalid effort' error, got: %v", err)
+	}
+}
+
+func TestSet_Type(t *testing.T) {
+	tmpDir := createSetTestFiles(t)
+	resetSetFlags()
+	taskDir = tmpDir
+	setTaskID = "001"
+	setType = "bug"
+
+	output, err := captureSetOutput(t)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(output, "type: (unset) -> bug") {
+		t.Errorf("Expected type change in output, got: %s", output)
+	}
+
+	content, _ := os.ReadFile(filepath.Join(tmpDir, "001-setup.md"))
+	if !strings.Contains(string(content), "type: bug") {
+		t.Errorf("Expected file to contain type: bug, got:\n%s", string(content))
+	}
+}
+
+func TestSet_InvalidType(t *testing.T) {
+	tmpDir := createSetTestFiles(t)
+	resetSetFlags()
+	taskDir = tmpDir
+	setTaskID = "001"
+	setType = "task"
+
+	_, err := captureSetOutput(t)
+	if err == nil {
+		t.Fatal("Expected error for invalid type")
+	}
+	if !strings.Contains(err.Error(), "invalid type") {
+		t.Errorf("Expected 'invalid type' error, got: %v", err)
 	}
 }
 

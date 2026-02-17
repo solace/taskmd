@@ -14,6 +14,7 @@ type UpdateRequest struct {
 	Status   *string
 	Priority *string
 	Effort   *string
+	Type     *string
 	Owner    *string
 	Parent   *string
 	Tags     *[]string // replace tags entirely
@@ -43,6 +44,14 @@ var validEfforts = map[string]bool{
 	string(model.EffortLarge):  true,
 }
 
+var validTypes = map[string]bool{
+	string(model.TypeFeature):     true,
+	string(model.TypeBug):         true,
+	string(model.TypeImprovement): true,
+	string(model.TypeChore):       true,
+	string(model.TypeDocs):        true,
+}
+
 // ValidateUpdateRequest checks enum fields and returns a list of error strings.
 func ValidateUpdateRequest(req UpdateRequest) []string {
 	var errs []string
@@ -54,6 +63,9 @@ func ValidateUpdateRequest(req UpdateRequest) []string {
 	}
 	if req.Effort != nil && !validEfforts[*req.Effort] {
 		errs = append(errs, fmt.Sprintf("invalid effort: %q", *req.Effort))
+	}
+	if req.Type != nil && !validTypes[*req.Type] {
+		errs = append(errs, fmt.Sprintf("invalid type: %q", *req.Type))
 	}
 	return errs
 }
@@ -130,6 +142,9 @@ func buildScalarUpdates(req UpdateRequest) []scalarUpdate {
 	}
 	if req.Effort != nil {
 		updates = append(updates, scalarUpdate{key: "effort", value: *req.Effort})
+	}
+	if req.Type != nil {
+		updates = append(updates, scalarUpdate{key: "type", value: *req.Type})
 	}
 	if req.Owner != nil {
 		updates = append(updates, scalarUpdate{key: "owner", value: *req.Owner})

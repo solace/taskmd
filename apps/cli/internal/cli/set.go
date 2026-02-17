@@ -20,6 +20,7 @@ var (
 	setStatus     string
 	setPriority   string
 	setEffort     string
+	setType       string
 	setOwner      string
 	setParent     string
 	setDone       bool
@@ -66,6 +67,7 @@ func init() {
 		cmd.Flags().StringVar(&setStatus, "status", "", "new status (pending, in-progress, completed, blocked, cancelled)")
 		cmd.Flags().StringVar(&setPriority, "priority", "", "new priority (low, medium, high, critical)")
 		cmd.Flags().StringVar(&setEffort, "effort", "", "new effort (small, medium, large)")
+		cmd.Flags().StringVar(&setType, "type", "", "work type (feature, bug, improvement, chore, docs)")
 		cmd.Flags().StringVar(&setOwner, "owner", "", "owner/assignee of the task")
 		cmd.Flags().StringVar(&setParent, "parent", "", "parent task ID (use empty string to clear)")
 		cmd.Flags().BoolVar(&setDone, "done", false, "mark task as completed (alias for --status completed)")
@@ -143,6 +145,7 @@ func buildSetRequest(cmd *cobra.Command) (taskfile.UpdateRequest, error) {
 	setStringField(&req.Status, setStatus)
 	setStringField(&req.Priority, setPriority)
 	setStringField(&req.Effort, setEffort)
+	setStringField(&req.Type, setType)
 	setStringField(&req.Owner, setOwner)
 
 	if cmd.Flags().Changed("parent") {
@@ -160,13 +163,18 @@ func buildSetRequest(cmd *cobra.Command) (taskfile.UpdateRequest, error) {
 		return taskfile.UpdateRequest{}, err
 	}
 
-	hasScalar := req.Status != nil || req.Priority != nil || req.Effort != nil || req.Owner != nil || req.Parent != nil
-	hasTags := len(req.AddTags) > 0 || len(req.RemTags) > 0
-	if !hasScalar && !hasTags {
-		return taskfile.UpdateRequest{}, fmt.Errorf("nothing to update: provide --status, --priority, --effort, --owner, --parent, --done, --add-tag, or --remove-tag")
+	if !hasUpdates(req) {
+		return taskfile.UpdateRequest{}, fmt.Errorf("nothing to update: provide --status, --priority, --effort, --type, --owner, --parent, --done, --add-tag, or --remove-tag")
 	}
 
 	return req, nil
+}
+
+func hasUpdates(req taskfile.UpdateRequest) bool {
+	hasScalar := req.Status != nil || req.Priority != nil || req.Effort != nil ||
+		req.Type != nil || req.Owner != nil || req.Parent != nil
+	hasTags := len(req.AddTags) > 0 || len(req.RemTags) > 0
+	return hasScalar || hasTags
 }
 
 type changeEntry struct {
@@ -180,6 +188,7 @@ func buildChangeLog(task *model.Task, req taskfile.UpdateRequest) []changeEntry 
 		"status":   string(task.Status),
 		"priority": string(task.Priority),
 		"effort":   string(task.Effort),
+		"type":     string(task.Type),
 		"owner":    task.Owner,
 		"parent":   task.Parent,
 	}
@@ -194,6 +203,9 @@ func buildChangeLog(task *model.Task, req taskfile.UpdateRequest) []changeEntry 
 	}
 	if req.Effort != nil {
 		changes = append(changes, changeEntry{field: "effort", oldValue: oldValues["effort"], newValue: *req.Effort})
+	}
+	if req.Type != nil {
+		changes = append(changes, changeEntry{field: "type", oldValue: oldValues["type"], newValue: *req.Type})
 	}
 	if req.Owner != nil {
 		changes = append(changes, changeEntry{field: "owner", oldValue: oldValues["owner"], newValue: *req.Owner})
