@@ -203,6 +203,12 @@ func handleNext(dp *DataProvider) http.HandlerFunc {
 			return
 		}
 
+		archivedTasks, err := dp.GetArchivedTasks()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		limit := 5
 		if v := r.URL.Query().Get("limit"); v != "" {
 			if n, err := strconv.Atoi(v); err == nil && n > 0 {
@@ -213,8 +219,9 @@ func handleNext(dp *DataProvider) http.HandlerFunc {
 		filters := r.URL.Query()["filter"]
 
 		recs, err := next.Recommend(tasks, next.Options{
-			Limit:   limit,
-			Filters: filters,
+			Limit:         limit,
+			Filters:       filters,
+			ArchivedTasks: archivedTasks,
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -233,10 +240,17 @@ func handleTracks(dp *DataProvider) http.HandlerFunc {
 			return
 		}
 
+		archivedTasks, err := dp.GetArchivedTasks()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
 		filters := r.URL.Query()["filter"]
 
 		result, err := tracks.Assign(tasks, tracks.Options{
-			Filters: filters,
+			Filters:       filters,
+			ArchivedTasks: archivedTasks,
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

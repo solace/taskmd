@@ -342,6 +342,30 @@ func TestAssign_TransitiveOverlap(t *testing.T) {
 	}
 }
 
+func TestAssign_ArchivedCompletedDepSatisfied(t *testing.T) {
+	// Task 002 depends on 001, but 001 is archived+completed.
+	// 002 should be actionable and appear in results.
+	tasks := []*model.Task{
+		makeTask("002", model.StatusPending, model.PriorityHigh, []string{"001"}, []string{"scope-a"}),
+	}
+	archived := []*model.Task{
+		makeTask("001", model.StatusCompleted, model.PriorityHigh, nil, nil),
+	}
+
+	result, err := Assign(tasks, Options{ArchivedTasks: archived})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Task 002 is actionable with touches → should be in a track
+	if len(result.Tracks) != 1 {
+		t.Fatalf("expected 1 track, got %d", len(result.Tracks))
+	}
+	if result.Tracks[0].Tasks[0].ID != "002" {
+		t.Errorf("expected task 002, got %s", result.Tracks[0].Tasks[0].ID)
+	}
+}
+
 func TestAssign_IndependentGroups(t *testing.T) {
 	// Two disjoint clusters: {001, 002} share scope-a, {003, 004} share scope-b
 	tasks := []*model.Task{

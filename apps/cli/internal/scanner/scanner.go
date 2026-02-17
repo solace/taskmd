@@ -150,6 +150,82 @@ func (s *Scanner) shouldSkipDirectory(name string) bool {
 	return s.ignoreDirs[name]
 }
 
+// ScanArchive walks rootDir to find directories named "archive" and parses
+// task files within them. These tasks are returned for dependency resolution
+// but are not included in normal scan results.
+func (s *Scanner) ScanArchive() ([]*model.Task, error) {
+	absRoot, err := filepath.Abs(s.rootDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve path %s: %w", s.rootDir, err)
+	}
+
+	var archiveDirs []string
+	err = filepath.WalkDir(absRoot, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if !d.IsDir() {
+			return nil
+		}
+		name := d.Name()
+		if strings.HasPrefix(name, ".") {
+			return filepath.SkipDir
+		}
+		if name == "archive" {
+			archiveDirs = append(archiveDirs, path)
+			return filepath.SkipDir
+		}
+		// Skip other default skip dirs (except "archive" which we want to find)
+		if s.ignoreDirs[name] && name != "archive" {
+			return filepath.SkipDir
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("archive scan walk failed: %w", err)
+	}
+
+	var tasks []*model.Task
+	for _, archiveDir := range archiveDirs {
+		archiveTasks, err := s.scanDirectory(archiveDir)
+		if err != nil {
+			return nil, err
+		}
+		tasks = append(tasks, archiveTasks...)
+	}
+
+	return tasks, nil
+}
+
+// scanDirectory walks a single directory and parses all markdown task files in it.
+func (s *Scanner) scanDirectory(dir string) ([]*model.Task, error) {
+	var tasks []*model.Task
+	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if d.IsDir() {
+			if strings.HasPrefix(d.Name(), ".") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(strings.ToLower(d.Name()), ".md") {
+			return nil
+		}
+		task, parseErr := parser.ParseTaskFile(path)
+		if parseErr != nil {
+			return nil
+		}
+		tasks = append(tasks, task)
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("directory walk failed: %w", err)
+	}
+	return tasks, nil
+}
+
 // deriveGroupFromPath derives a group name from the file's directory path
 // relative to the root scan directory
 func deriveGroupFromPath(rootDir, filePath string) string {

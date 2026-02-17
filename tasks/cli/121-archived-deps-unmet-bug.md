@@ -1,7 +1,7 @@
 ---
 id: "121"
 title: "Fix archived dependencies treated as unmet"
-status: pending
+status: completed
 priority: medium
 effort: medium
 tags:

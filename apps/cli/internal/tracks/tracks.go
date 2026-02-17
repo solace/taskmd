@@ -39,8 +39,9 @@ type Result struct {
 
 // Options controls track assignment behaviour.
 type Options struct {
-	Filters     []string
-	KnownScopes map[string]bool
+	Filters       []string
+	KnownScopes   map[string]bool
+	ArchivedTasks []*model.Task
 }
 
 type scored struct {
@@ -50,7 +51,7 @@ type scored struct {
 
 // Assign groups actionable tasks into parallel tracks based on scope overlap.
 func Assign(tasks []*model.Task, opts Options) (*Result, error) {
-	items, err := scoreActionable(tasks, opts.Filters)
+	items, err := scoreActionable(tasks, opts.Filters, opts.ArchivedTasks)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +67,16 @@ func Assign(tasks []*model.Task, opts Options) (*Result, error) {
 	}, nil
 }
 
-func scoreActionable(tasks []*model.Task, filters []string) ([]scored, error) {
+func scoreActionable(tasks []*model.Task, filters []string, archivedTasks []*model.Task) ([]scored, error) {
 	taskMap := next.BuildTaskMap(tasks)
+
+	// Merge archived tasks for dependency resolution only.
+	for _, at := range archivedTasks {
+		if _, exists := taskMap[at.ID]; !exists {
+			taskMap[at.ID] = at
+		}
+	}
+
 	criticalPath := next.CalculateCriticalPathTasks(tasks, taskMap)
 	downstreamCounts := computeDownstreamCounts(tasks)
 

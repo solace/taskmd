@@ -54,6 +54,12 @@ func (dp *DataProvider) GetTasks() ([]*model.Task, error) {
 	return dp.tasks, nil
 }
 
+// GetArchivedTasks scans archive directories for tasks used in dependency resolution.
+func (dp *DataProvider) GetArchivedTasks() ([]*model.Task, error) {
+	s := scanner.NewScanner(dp.scanDir, dp.verbose, nil)
+	return s.ScanArchive()
+}
+
 // Invalidate marks cached data as stale.
 func (dp *DataProvider) Invalidate() {
 	dp.mu.Lock()

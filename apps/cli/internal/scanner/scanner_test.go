@@ -279,3 +279,98 @@ func TestDeriveGroupFromPath(t *testing.T) {
 		})
 	}
 }
+
+func createArchivedTaskFile(t *testing.T, dir, id, status string) {
+	t.Helper()
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		t.Fatalf("Failed to create directory %s: %v", dir, err)
+	}
+	content := "---\nid: \"" + id + "\"\ntitle: \"Task " + id + "\"\nstatus: " + status + "\n---\n# Task " + id
+	if err := os.WriteFile(filepath.Join(dir, id+".md"), []byte(content), 0644); err != nil {
+		t.Fatalf("Failed to write task file: %v", err)
+	}
+}
+
+func TestScanner_ScanArchive_FindsArchivedTasks(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Active task
+	createTaskFile(t, filepath.Join(tmpDir, "cli"), "001")
+	// Archived tasks
+	createArchivedTaskFile(t, filepath.Join(tmpDir, "archive"), "050", "completed")
+	createArchivedTaskFile(t, filepath.Join(tmpDir, "archive"), "051", "completed")
+
+	s := NewScanner(tmpDir, false, nil)
+	archived, err := s.ScanArchive()
+	if err != nil {
+		t.Fatalf("ScanArchive failed: %v", err)
+	}
+
+	if len(archived) != 2 {
+		t.Fatalf("Expected 2 archived tasks, got %d", len(archived))
+	}
+
+	ids := make(map[string]bool)
+	for _, task := range archived {
+		ids[task.ID] = true
+	}
+	if !ids["050"] || !ids["051"] {
+		t.Errorf("Expected archived tasks 050 and 051, got %v", ids)
+	}
+}
+
+func TestScanner_ScanArchive_NestedArchive(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Archive nested in a subdirectory
+	createArchivedTaskFile(t, filepath.Join(tmpDir, "cli", "archive"), "060", "completed")
+	createTaskFile(t, filepath.Join(tmpDir, "cli"), "001")
+
+	s := NewScanner(tmpDir, false, nil)
+	archived, err := s.ScanArchive()
+	if err != nil {
+		t.Fatalf("ScanArchive failed: %v", err)
+	}
+
+	if len(archived) != 1 {
+		t.Fatalf("Expected 1 archived task, got %d", len(archived))
+	}
+	if archived[0].ID != "060" {
+		t.Errorf("Expected task 060, got %s", archived[0].ID)
+	}
+}
+
+func TestScanner_ScanArchive_NoArchiveDir(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	createTaskFile(t, filepath.Join(tmpDir, "cli"), "001")
+
+	s := NewScanner(tmpDir, false, nil)
+	archived, err := s.ScanArchive()
+	if err != nil {
+		t.Fatalf("ScanArchive failed: %v", err)
+	}
+
+	if len(archived) != 0 {
+		t.Errorf("Expected 0 archived tasks, got %d", len(archived))
+	}
+}
+
+func TestScanner_ScanArchive_EmptyArchive(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create empty archive directory
+	if err := os.MkdirAll(filepath.Join(tmpDir, "archive"), 0755); err != nil {
+		t.Fatalf("Failed to create archive dir: %v", err)
+	}
+
+	s := NewScanner(tmpDir, false, nil)
+	archived, err := s.ScanArchive()
+	if err != nil {
+		t.Fatalf("ScanArchive failed: %v", err)
+	}
+
+	if len(archived) != 0 {
+		t.Errorf("Expected 0 archived tasks from empty archive, got %d", len(archived))
+	}
+}

@@ -1438,3 +1438,60 @@ func TestNext_QuickWins_Ranking(t *testing.T) {
 		}
 	}
 }
+
+func TestNext_ArchivedDependencySatisfied(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	// Create an active task that depends on an archived completed task
+	activeTask := `---
+id: "002"
+title: "Feature that depends on archived"
+status: pending
+priority: high
+effort: small
+dependencies: ["001"]
+created: 2026-02-01
+---`
+	if err := os.WriteFile(filepath.Join(tmpDir, "002.md"), []byte(activeTask), 0644); err != nil {
+		t.Fatalf("Failed to write active task: %v", err)
+	}
+
+	// Create archive directory with completed dependency
+	archiveDir := filepath.Join(tmpDir, "archive")
+	if err := os.MkdirAll(archiveDir, 0755); err != nil {
+		t.Fatalf("Failed to create archive dir: %v", err)
+	}
+	archivedTask := `---
+id: "001"
+title: "Completed archived task"
+status: completed
+priority: high
+effort: medium
+created: 2026-01-01
+---`
+	if err := os.WriteFile(filepath.Join(archiveDir, "001.md"), []byte(archivedTask), 0644); err != nil {
+		t.Fatalf("Failed to write archived task: %v", err)
+	}
+
+	resetNextFlags()
+	nextFormat = "json"
+	nextLimit = 10
+
+	output, err := captureNextOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runNext failed: %v", err)
+	}
+
+	var recs []Recommendation
+	if err := json.Unmarshal([]byte(output), &recs); err != nil {
+		t.Fatalf("Failed to parse JSON: %v\nOutput: %s", err, output)
+	}
+
+	// Task 002 should be actionable because its dependency (001) is archived and completed
+	if len(recs) != 1 {
+		t.Fatalf("Expected 1 recommendation (002 unblocked by archived dep), got %d", len(recs))
+	}
+	if recs[0].ID != "002" {
+		t.Errorf("Expected task 002, got %s", recs[0].ID)
+	}
+}

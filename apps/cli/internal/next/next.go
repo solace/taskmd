@@ -39,10 +39,11 @@ type Recommendation struct {
 
 // Options controls recommendation behaviour.
 type Options struct {
-	Limit     int
-	Filters   []string
-	QuickWins bool
-	Critical  bool
+	Limit         int
+	Filters       []string
+	QuickWins     bool
+	Critical      bool
+	ArchivedTasks []*model.Task
 }
 
 type scoredTask struct {
@@ -58,6 +59,15 @@ func Recommend(tasks []*model.Task, opts Options) ([]Recommendation, error) {
 	}
 
 	taskMap := BuildTaskMap(tasks)
+
+	// Merge archived tasks for dependency resolution only.
+	// Active tasks take precedence over archived duplicates.
+	for _, at := range opts.ArchivedTasks {
+		if _, exists := taskMap[at.ID]; !exists {
+			taskMap[at.ID] = at
+		}
+	}
+
 	criticalPath := CalculateCriticalPathTasks(tasks, taskMap)
 	downstreamCounts := computeDownstreamCounts(tasks)
 

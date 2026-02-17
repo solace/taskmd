@@ -65,11 +65,17 @@ func runTracks(cmd *cobra.Command, args []string) error {
 	allTasks := scanResult.Tasks
 	makeFilePathsRelative(allTasks, scanDir)
 
+	archivedTasks, err := taskScanner.ScanArchive()
+	if err != nil {
+		return fmt.Errorf("archive scan failed: %w", err)
+	}
+
 	knownScopes := loadScopesConfig()
 
 	result, err := tracks.Assign(allTasks, tracks.Options{
-		Filters:     tracksFilters,
-		KnownScopes: knownScopes,
+		Filters:       tracksFilters,
+		KnownScopes:   knownScopes,
+		ArchivedTasks: archivedTasks,
 	})
 	if err != nil {
 		return err

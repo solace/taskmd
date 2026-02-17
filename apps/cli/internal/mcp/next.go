@@ -39,11 +39,17 @@ func handleNext(_ context.Context, _ *gomcp.CallToolRequest, input NextInput) (*
 		return nil, nil, fmt.Errorf("scan failed: %w", err)
 	}
 
+	archivedTasks, err := taskScanner.ScanArchive()
+	if err != nil {
+		return nil, nil, fmt.Errorf("archive scan failed: %w", err)
+	}
+
 	opts := next.Options{
-		Limit:     input.Limit,
-		Filters:   input.Filters,
-		QuickWins: input.QuickWins,
-		Critical:  input.Critical,
+		Limit:         input.Limit,
+		Filters:       input.Filters,
+		QuickWins:     input.QuickWins,
+		Critical:      input.Critical,
+		ArchivedTasks: archivedTasks,
 	}
 
 	recs, err := next.Recommend(result.Tasks, opts)

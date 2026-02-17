@@ -70,11 +70,17 @@ func runNext(cmd *cobra.Command, args []string) error {
 	allTasks := result.Tasks
 	makeFilePathsRelative(allTasks, scanDir)
 
+	archivedTasks, err := taskScanner.ScanArchive()
+	if err != nil {
+		return fmt.Errorf("archive scan failed: %w", err)
+	}
+
 	recs, err := next.Recommend(allTasks, next.Options{
-		Limit:     nextLimit,
-		Filters:   nextFilters,
-		QuickWins: nextQuickWins,
-		Critical:  nextCritical,
+		Limit:         nextLimit,
+		Filters:       nextFilters,
+		QuickWins:     nextQuickWins,
+		Critical:      nextCritical,
+		ArchivedTasks: archivedTasks,
 	})
 	if err != nil {
 		return err
