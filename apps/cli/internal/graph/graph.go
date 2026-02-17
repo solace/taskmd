@@ -371,12 +371,12 @@ func (g *Graph) ToASCII(rootTaskID string, downstream bool, f *ASCIIFormatter) s
 		for i, childID := range children {
 			isLastChild := i == len(children)-1
 			childPrefix := prefix
-			if prefix != "" || len(children) > 1 || i > 0 {
-				if isLast {
-					childPrefix = prefix + "    "
-				} else {
-					childPrefix = prefix + f.applyConnector("│") + "   "
-				}
+			// Root nodes (prefix == "") don't have tree connectors between them,
+			// so always use blank indentation to avoid dangling │ lines.
+			if isLast || prefix == "" {
+				childPrefix = prefix + "    "
+			} else {
+				childPrefix = prefix + f.applyConnector("│") + "   "
 			}
 			printTree(childID, childPrefix, isLastChild)
 		}

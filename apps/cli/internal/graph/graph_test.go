@@ -423,7 +423,6 @@ func TestToASCII_WithFormatter(t *testing.T) {
 	if !strings.Contains(output, "<S:⋯>") {
 		t.Errorf("Expected formatted status indicator for in-progress, got:\n%s", output)
 	}
-	// T2 is the only child of root T1 with empty prefix, so no connector is rendered.
 	// Test connector formatting with multiple children.
 	tasksMulti := []*model.Task{
 		{ID: "A", Title: "Root", Status: model.StatusPending, Dependencies: []string{}},
@@ -438,6 +437,42 @@ func TestToASCII_WithFormatter(t *testing.T) {
 	}
 	if !strings.Contains(outputMulti, "<C:└── >") {
 		t.Errorf("Expected formatted └── connector, got:\n%s", outputMulti)
+	}
+}
+
+func TestToASCII_SingleChildChain_ShowsIndentation(t *testing.T) {
+	// A linear chain A → B → C should render with tree connectors,
+	// not as flat root-level nodes.
+	tasks := []*model.Task{
+		{ID: "A", Title: "Root", Status: model.StatusPending, Dependencies: []string{}},
+		{ID: "B", Title: "Middle", Status: model.StatusPending, Dependencies: []string{"A"}},
+		{ID: "C", Title: "Leaf", Status: model.StatusPending, Dependencies: []string{"B"}},
+	}
+
+	g := NewGraph(tasks)
+
+	// Without a specified root — auto-detected roots
+	output := g.ToASCII("", true, nil)
+
+	// B should be indented under A with a tree connector
+	if !strings.Contains(output, "└── [B]") {
+		t.Errorf("Expected B to be indented under A with └── connector, got:\n%s", output)
+	}
+
+	// C should be indented under B with a tree connector
+	if !strings.Contains(output, "└── [C]") {
+		t.Errorf("Expected C to be indented under B with └── connector, got:\n%s", output)
+	}
+
+	// With a specified root
+	outputRooted := g.ToASCII("A", true, nil)
+
+	if !strings.Contains(outputRooted, "└── [B]") {
+		t.Errorf("Expected B to be indented under A with └── connector (rooted), got:\n%s", outputRooted)
+	}
+
+	if !strings.Contains(outputRooted, "└── [C]") {
+		t.Errorf("Expected C to be indented under B with └── connector (rooted), got:\n%s", outputRooted)
 	}
 }
 
