@@ -370,9 +370,9 @@ func (g *Graph) ToASCII(rootTaskID string, downstream bool, f *ASCIIFormatter) s
 		// Print children
 		for i, childID := range children {
 			isLastChild := i == len(children)-1
-			childPrefix := prefix
 			// Root nodes (prefix == "") don't have tree connectors between them,
 			// so always use blank indentation to avoid dangling │ lines.
+			var childPrefix string
 			if isLast || prefix == "" {
 				childPrefix = prefix + "    "
 			} else {

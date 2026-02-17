@@ -4,6 +4,7 @@ import {
   STATUSES,
   PRIORITIES,
   EFFORTS,
+  TYPES,
 } from "./TaskTable/constants.ts";
 
 interface TaskEditFormProps {
@@ -18,6 +19,7 @@ export function TaskEditForm({ task, onSave, onCancel, error }: TaskEditFormProp
   const [status, setStatus] = useState(task.status);
   const [priority, setPriority] = useState(task.priority);
   const [effort, setEffort] = useState(task.effort);
+  const [taskType, setTaskType] = useState(task.type ?? "");
   const [owner, setOwner] = useState(task.owner ?? "");
   const [parent, setParent] = useState(task.parent ?? "");
   const [tags, setTags] = useState((task.tags ?? []).join(", "));
@@ -34,6 +36,7 @@ export function TaskEditForm({ task, onSave, onCancel, error }: TaskEditFormProp
     if (status !== task.status) data.status = status;
     if (priority !== task.priority) data.priority = priority;
     if (effort !== task.effort) data.effort = effort;
+    if (taskType !== (task.type ?? "")) data.type = taskType || undefined;
     if (owner !== (task.owner ?? "")) data.owner = owner;
     if (parent !== (task.parent ?? "")) data.parent = parent;
 
@@ -83,7 +86,7 @@ export function TaskEditForm({ task, onSave, onCancel, error }: TaskEditFormProp
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Status
@@ -132,6 +135,24 @@ export function TaskEditForm({ task, onSave, onCancel, error }: TaskEditFormProp
             {EFFORTS.map((e) => (
               <option key={e} value={e}>
                 {e}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Type
+          </label>
+          <select
+            value={taskType}
+            onChange={(e) => setTaskType(e.target.value)}
+            className={inputClasses}
+          >
+            <option value="">-</option>
+            {TYPES.map((ty) => (
+              <option key={ty} value={ty}>
+                {ty}
               </option>
             ))}
           </select>

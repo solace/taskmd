@@ -1,7 +1,7 @@
 import type { BoardGroup } from "../../api/types.ts";
 import { BoardColumn } from "./BoardColumn.tsx";
 
-const draggableGroupByFields = ["status", "priority", "effort"];
+const draggableGroupByFields = ["status", "priority", "effort", "type"];
 
 interface BoardViewProps {
   groups: BoardGroup[];

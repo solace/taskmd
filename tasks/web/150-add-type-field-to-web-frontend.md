@@ -1,7 +1,7 @@
 ---
 id: "150"
 title: "Add type field support to web frontend"
-status: pending
+status: completed
 priority: medium
 effort: medium
 type: feature

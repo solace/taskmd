@@ -9,7 +9,7 @@ import {
 import { useState, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { Task } from "../../api/types.ts";
-import { STATUSES, PRIORITIES } from "./TaskTable/constants.ts";
+import { STATUSES, PRIORITIES, TYPES } from "./TaskTable/constants.ts";
 import { FilterBar } from "./TaskTable/FilterBar.tsx";
 import { createTaskColumns } from "./TaskTable/columns.tsx";
 import { toggleInSet } from "./TaskTable/utils.ts";
@@ -29,6 +29,9 @@ export function TaskTable({ tasks, initialTags }: TaskTableProps) {
   const [selectedPriorities, setSelectedPriorities] = useState<Set<string>>(
     new Set(PRIORITIES),
   );
+  const [selectedTypes, setSelectedTypes] = useState<Set<string>>(
+    new Set(TYPES),
+  );
   const [selectedTags, setSelectedTags] = useState<Set<string>>(
     () => new Set(initialTags),
   );
@@ -36,6 +39,7 @@ export function TaskTable({ tasks, initialTags }: TaskTableProps) {
   const hasActiveFilters =
     selectedStatuses.size !== STATUSES.length ||
     selectedPriorities.size !== PRIORITIES.length ||
+    selectedTypes.size !== TYPES.length ||
     selectedTags.size > 0 ||
     globalFilter !== "";
 
@@ -56,6 +60,7 @@ export function TaskTable({ tasks, initialTags }: TaskTableProps) {
   function clearFilters() {
     setSelectedStatuses(new Set(STATUSES));
     setSelectedPriorities(new Set(PRIORITIES));
+    setSelectedTypes(new Set(TYPES));
     setSelectedTags(new Set());
     syncTagsToUrl(new Set());
     setGlobalFilter("");
@@ -73,13 +78,14 @@ export function TaskTable({ tasks, initialTags }: TaskTableProps) {
     return tasks.filter((task) => {
       if (!selectedStatuses.has(task.status)) return false;
       if (task.priority && !selectedPriorities.has(task.priority)) return false;
+      if (task.type && !selectedTypes.has(task.type)) return false;
       if (selectedTags.size > 0) {
         if (!task.tags || !task.tags.some((t) => selectedTags.has(t)))
           return false;
       }
       return true;
     });
-  }, [tasks, selectedStatuses, selectedPriorities, selectedTags]);
+  }, [tasks, selectedStatuses, selectedPriorities, selectedTypes, selectedTags]);
 
   const columns = useMemo(
     () => createTaskColumns(selectedTags, toggleTag),
@@ -111,6 +117,10 @@ export function TaskTable({ tasks, initialTags }: TaskTableProps) {
         selectedPriorities={selectedPriorities}
         onTogglePriority={(p) =>
           setSelectedPriorities((prev) => toggleInSet(prev, p))
+        }
+        selectedTypes={selectedTypes}
+        onToggleType={(ty) =>
+          setSelectedTypes((prev) => toggleInSet(prev, ty))
         }
         selectedTags={selectedTags}
         onRemoveTag={toggleTag}

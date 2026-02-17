@@ -121,6 +121,7 @@ type JSONTask struct {
 	Status   string   `json:"status"`
 	Priority string   `json:"priority,omitempty"`
 	Effort   string   `json:"effort,omitempty"`
+	Type     string   `json:"type,omitempty"`
 	Tags     []string `json:"tags,omitempty"`
 }
 
@@ -137,6 +138,7 @@ func ToJSON(gr *GroupResult) []JSONGroup {
 				Status:   string(t.Status),
 				Priority: string(t.Priority),
 				Effort:   string(t.Effort),
+				Type:     string(t.Type),
 				Tags:     t.Tags,
 			}
 		}

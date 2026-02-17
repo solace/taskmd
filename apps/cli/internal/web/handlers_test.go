@@ -454,6 +454,51 @@ func TestHandleUpdateTask_Tags(t *testing.T) {
 	}
 }
 
+func TestHandleUpdateTask_Type(t *testing.T) {
+	dir := createTestTaskDir(t)
+	dp := NewDataProvider(dir, false)
+
+	body := strings.NewReader(`{"type":"feature"}`)
+	req := httptest.NewRequest(http.MethodPut, "/api/tasks/001", body)
+	req.SetPathValue("id", "001")
+	rec := httptest.NewRecorder()
+
+	handleUpdateTask(dp, false)(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	content, _ := os.ReadFile(filepath.Join(dir, "001-task-one.md"))
+	if !strings.Contains(string(content), "type: feature") {
+		t.Errorf("expected file to contain 'type: feature', got:\n%s", string(content))
+	}
+}
+
+func TestHandleUpdateTask_InvalidType(t *testing.T) {
+	dir := createTestTaskDir(t)
+	dp := NewDataProvider(dir, false)
+
+	body := strings.NewReader(`{"type":"invalid"}`)
+	req := httptest.NewRequest(http.MethodPut, "/api/tasks/001", body)
+	req.SetPathValue("id", "001")
+	rec := httptest.NewRecorder()
+
+	handleUpdateTask(dp, false)(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var errResp ErrorResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &errResp); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if errResp.Error != "validation failed" {
+		t.Errorf("expected 'validation failed', got %q", errResp.Error)
+	}
+}
+
 func TestHandleUpdateTask_PartialUpdate(t *testing.T) {
 	dir := createTestTaskDir(t)
 	dp := NewDataProvider(dir, false)

@@ -2,9 +2,11 @@ import {
   STATUSES,
   PRIORITIES,
   EFFORTS,
+  TYPES,
   STATUS_COLORS,
   PRIORITY_COLORS,
   EFFORT_COLORS,
+  TYPE_COLORS,
 } from "../tasks/TaskTable/constants.ts";
 import { toggleInSet } from "../tasks/TaskTable/utils.ts";
 import { TagAutocomplete } from "./TagAutocomplete.tsx";
@@ -53,6 +55,8 @@ export interface BoardFilterBarProps {
   onPrioritiesChange: (next: Set<string>) => void;
   selectedEfforts: Set<string>;
   onEffortsChange: (next: Set<string>) => void;
+  selectedTypes: Set<string>;
+  onTypesChange: (next: Set<string>) => void;
   selectedTags: Set<string>;
   onTagsChange: (next: Set<string>) => void;
   availableTags: string[];
@@ -66,6 +70,8 @@ export function BoardFilterBar({
   onPrioritiesChange,
   selectedEfforts,
   onEffortsChange,
+  selectedTypes,
+  onTypesChange,
   selectedTags,
   onTagsChange,
   availableTags,
@@ -97,6 +103,15 @@ export function BoardFilterBar({
           selected={selectedEfforts}
           colors={EFFORT_COLORS}
           onToggle={(e) => onEffortsChange(toggleInSet(selectedEfforts, e))}
+        />
+      )}
+      {groupBy !== "type" && (
+        <PillRow
+          label="Type"
+          items={TYPES}
+          selected={selectedTypes}
+          colors={TYPE_COLORS}
+          onToggle={(ty) => onTypesChange(toggleInSet(selectedTypes, ty))}
         />
       )}
       {groupBy !== "tag" && availableTags.length > 0 && (

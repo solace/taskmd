@@ -8,14 +8,15 @@ import { BoardFilterBar } from "../components/board/BoardFilterBar.tsx";
 import { LoadingState } from "../components/shared/LoadingState.tsx";
 import { ErrorState } from "../components/shared/ErrorState.tsx";
 import type { BoardGroup } from "../api/types.ts";
-import { STATUSES, PRIORITIES, EFFORTS } from "../components/tasks/TaskTable/constants.ts";
+import { STATUSES, PRIORITIES, EFFORTS, TYPES } from "../components/tasks/TaskTable/constants.ts";
 
-const groupByOptions = ["status", "priority", "effort", "group", "tag"];
+const groupByOptions = ["status", "priority", "effort", "type", "group", "tag"];
 
 const groupByToField: Record<string, string> = {
   status: "status",
   priority: "priority",
   effort: "effort",
+  type: "type",
 };
 
 export function BoardPage() {
@@ -29,6 +30,7 @@ export function BoardPage() {
   const [selectedStatuses, setSelectedStatuses] = useState(() => new Set(STATUSES));
   const [selectedPriorities, setSelectedPriorities] = useState(() => new Set(PRIORITIES));
   const [selectedEfforts, setSelectedEfforts] = useState(() => new Set(EFFORTS));
+  const [selectedTypes, setSelectedTypes] = useState(() => new Set(TYPES));
   const [selectedTags, setSelectedTags] = useState<Set<string>>(() => new Set());
 
   const availableTags = useMemo(() => {
@@ -51,6 +53,7 @@ export function BoardPage() {
         if (groupBy !== "status" && !selectedStatuses.has(task.status)) return false;
         if (groupBy !== "priority" && task.priority && !selectedPriorities.has(task.priority)) return false;
         if (groupBy !== "effort" && task.effort && !selectedEfforts.has(task.effort)) return false;
+        if (groupBy !== "type" && task.type && !selectedTypes.has(task.type)) return false;
         if (groupBy !== "tag" && selectedTags.size > 0) {
           const taskTags = task.tags ?? [];
           if (!taskTags.some((t) => selectedTags.has(t))) return false;
@@ -59,7 +62,7 @@ export function BoardPage() {
       });
       return { ...group, tasks: filtered, count: filtered.length };
     });
-  }, [data, groupBy, selectedStatuses, selectedPriorities, selectedEfforts, selectedTags]);
+  }, [data, groupBy, selectedStatuses, selectedPriorities, selectedEfforts, selectedTypes, selectedTags]);
 
   function handleGroupByChange(value: string) {
     setSearchParams(value === "status" ? {} : { groupBy: value }, {
@@ -118,6 +121,8 @@ export function BoardPage() {
           onPrioritiesChange={setSelectedPriorities}
           selectedEfforts={selectedEfforts}
           onEffortsChange={setSelectedEfforts}
+          selectedTypes={selectedTypes}
+          onTypesChange={setSelectedTypes}
           selectedTags={selectedTags}
           onTagsChange={setSelectedTags}
           availableTags={availableTags}

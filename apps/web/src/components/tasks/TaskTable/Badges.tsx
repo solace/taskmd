@@ -1,4 +1,4 @@
-import { STATUS_COLORS, PRIORITY_COLORS } from "./constants.ts";
+import { STATUS_COLORS, PRIORITY_COLORS, TYPE_COLORS } from "./constants.ts";
 
 export function StatusBadge({ status }: { status: string }) {
   return (
@@ -16,6 +16,16 @@ export function PriorityBadge({ priority }: { priority: string }) {
       className={`px-2 py-0.5 text-xs font-medium rounded-full ${PRIORITY_COLORS[priority] ?? "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"}`}
     >
       {priority}
+    </span>
+  );
+}
+
+export function TypeBadge({ type: taskType }: { type: string }) {
+  return (
+    <span
+      className={`px-2 py-0.5 text-xs font-medium rounded-full ${TYPE_COLORS[taskType] ?? "bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400"}`}
+    >
+      {taskType}
     </span>
   );
 }

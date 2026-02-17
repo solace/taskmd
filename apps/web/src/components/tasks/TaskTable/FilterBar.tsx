@@ -1,4 +1,4 @@
-import { STATUSES, PRIORITIES, STATUS_COLORS, PRIORITY_COLORS } from "./constants.ts";
+import { STATUSES, PRIORITIES, TYPES, STATUS_COLORS, PRIORITY_COLORS, TYPE_COLORS } from "./constants.ts";
 
 export interface FilterBarProps {
   globalFilter: string;
@@ -7,6 +7,8 @@ export interface FilterBarProps {
   onToggleStatus: (status: string) => void;
   selectedPriorities: Set<string>;
   onTogglePriority: (priority: string) => void;
+  selectedTypes: Set<string>;
+  onToggleType: (type: string) => void;
   selectedTags: Set<string>;
   onRemoveTag: (tag: string) => void;
   onClearFilters: () => void;
@@ -20,6 +22,8 @@ export function FilterBar({
   onToggleStatus,
   selectedPriorities,
   onTogglePriority,
+  selectedTypes,
+  onToggleType,
   selectedTags,
   onRemoveTag,
   onClearFilters,
@@ -80,6 +84,26 @@ export function FilterBar({
               }`}
             >
               {p}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Type:</span>
+        {TYPES.map((ty) => {
+          const active = selectedTypes.has(ty);
+          return (
+            <button
+              key={ty}
+              onClick={() => onToggleType(ty)}
+              className={`px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
+                active
+                  ? TYPE_COLORS[ty]
+                  : "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400"
+              }`}
+            >
+              {ty}
             </button>
           );
         })}

@@ -4,6 +4,7 @@ export interface Task {
   status: string;
   priority: string;
   effort: string;
+  type: string;
   dependencies: string[] | null;
   tags: string[] | null;
   group: string;
@@ -33,6 +34,7 @@ export interface BoardTask {
   status: string;
   priority?: string;
   effort?: string;
+  type?: string;
   tags?: string[];
 }
 
@@ -104,6 +106,7 @@ export interface TaskUpdateRequest {
   status?: string;
   priority?: string;
   effort?: string;
+  type?: string;
   owner?: string;
   parent?: string;
   tags?: string[];
