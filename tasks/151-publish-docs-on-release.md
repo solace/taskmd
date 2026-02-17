@@ -1,7 +1,7 @@
 ---
 id: "151"
 title: "Publish docs site on release version bump"
-status: pending
+status: completed
 priority: medium
 effort: medium
 type: chore
@@ -17,10 +17,10 @@ When a new version is released and the project version is bumped, the docs site 
 
 ## Tasks
 
-- [ ] Investigate how the docs site is currently deployed (hosting platform, build triggers)
-- [ ] Determine where version references appear in the docs site and how they are sourced
-- [ ] Add a CI step or workflow trigger that redeploys `apps/docs` when a new release tag is pushed
-- [ ] Ensure the docs build picks up the new version number automatically
+- [x] Investigate how the docs site is currently deployed (hosting platform, build triggers)
+- [x] Determine where version references appear in the docs site and how they are sourced
+- [x] Add a CI step or workflow trigger that redeploys `apps/docs` when a new release tag is pushed
+- [x] Ensure the docs build picks up the new version number automatically
 - [ ] Test the end-to-end flow: version bump -> release -> docs site reflects new version
 
 ## Acceptance Criteria

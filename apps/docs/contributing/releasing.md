@@ -84,6 +84,7 @@ Pre-release suffixes: `v1.0.0-alpha.1`, `v1.0.0-beta.1`, `v1.0.0-rc.1`
 - [ ] Version tag follows semantic versioning
 - [ ] Tag is pushed to GitHub
 - [ ] Release workflow completes successfully
+- [ ] Docs site redeploys automatically (triggered by `package.json` version bump on `main`)
 - [ ] All platform binaries are attached
 - [ ] Checksums file is included
 - [ ] Release notes are accurate
