@@ -1,7 +1,7 @@
 ---
 id: "149"
 title: "Add type field to taskmd specification"
-status: completed
+status: in-progress
 priority: medium
 effort: medium
 tags:

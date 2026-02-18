@@ -36,6 +36,10 @@ scopes:
   cli/next:
     paths:
       - "apps/cli/internal/cli/next.go"
+  cli/tracks:
+    paths:
+      - "apps/cli/internal/tracks/"
+      - "apps/cli/internal/cli/tracks.go"
   cli/scanner:
     paths:
       - "apps/cli/internal/scanner/"

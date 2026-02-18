@@ -1,7 +1,7 @@
 ---
-id: "149"
+id: "153"
 title: "Group tracks by dependency connectivity in addition to scopes"
-status: pending
+status: completed
 priority: high
 effort: medium
 tags: [cli, tracks, dependencies]
@@ -48,16 +48,16 @@ Remove the `splitByTouches` pre-filtering. Instead, after the combined union-fin
 
 ## Tasks
 
-- [ ] Add a `buildDependencyComponents` function that computes connected components from all tasks using dependency edges (undirected BFS/DFS)
-- [ ] Pass full task list (including non-actionable) into the grouping logic so dependency components can be computed
-- [ ] Modify `assignTracks` to accept all scored items (not just those with touches) and a component map
-- [ ] Add dependency-based union step after the scope-based union step
-- [ ] Replace `splitByTouches` with post-union-find flexible determination (singleton + no scopes = flexible)
-- [ ] Update existing tests to account for the new grouping behavior
-- [ ] Add test: two actionable tasks connected through a blocked intermediary are placed in the same track
-- [ ] Add test: tasks connected only by dependencies (no scopes) form a track, not flexible
-- [ ] Add test: singleton task with no scopes and no dependency connections remains flexible
-- [ ] Run `make check` (test + lint + vet) to verify
+- [x] Add a `buildDependencyComponents` function that computes connected components from all tasks using dependency edges (undirected BFS/DFS)
+- [x] Pass full task list (including non-actionable) into the grouping logic so dependency components can be computed
+- [x] Modify `assignTracks` to accept all scored items (not just those with touches) and a component map
+- [x] Add dependency-based union step after the scope-based union step
+- [x] Replace `splitByTouches` with post-union-find flexible determination (singleton + no scopes = flexible)
+- [x] Update existing tests to account for the new grouping behavior
+- [x] Add test: two actionable tasks connected through a blocked intermediary are placed in the same track
+- [x] Add test: tasks connected only by dependencies (no scopes) form a track, not flexible
+- [x] Add test: singleton task with no scopes and no dependency connections remains flexible
+- [x] Run `make check` (test + lint + vet) to verify
 
 ## Acceptance Criteria
 

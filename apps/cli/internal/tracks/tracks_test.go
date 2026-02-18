@@ -366,6 +366,88 @@ func TestAssign_ArchivedCompletedDepSatisfied(t *testing.T) {
 	}
 }
 
+func TestAssign_DepConnectedTasksFormTrack(t *testing.T) {
+	// Two actionable tasks with no scopes connected by a dependency → same track, not flexible.
+	tasks := []*model.Task{
+		makeTask("001", model.StatusCompleted, model.PriorityHigh, nil, nil),
+		makeTask("002", model.StatusPending, model.PriorityMedium, []string{"001"}, nil),
+		makeTask("003", model.StatusPending, model.PriorityLow, []string{"001"}, nil),
+	}
+
+	result, err := Assign(tasks, Options{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// 001 completed → excluded. 002 and 003 are actionable, share dep component via 001.
+	if len(result.Tracks) != 1 {
+		t.Fatalf("expected 1 track (dep-connected), got %d", len(result.Tracks))
+	}
+	if len(result.Tracks[0].Tasks) != 2 {
+		t.Errorf("expected 2 tasks in track, got %d", len(result.Tracks[0].Tasks))
+	}
+	if len(result.Flexible) != 0 {
+		t.Errorf("expected 0 flexible tasks, got %d", len(result.Flexible))
+	}
+}
+
+func TestAssign_DepConnectedThroughBlockedIntermediary(t *testing.T) {
+	// A and C are actionable (no scopes). B is blocked (depends on C).
+	// A depends on nothing but shares a dep component with B and C.
+	// A → depends on 001 (completed), B → depends on C and 001, C → depends on 001.
+	// All three (A, B, C) are in same component. A and C are actionable → same track.
+	tasks := []*model.Task{
+		makeTask("001", model.StatusCompleted, model.PriorityHigh, nil, nil),
+		makeTask("A", model.StatusPending, model.PriorityMedium, []string{"001"}, nil),
+		makeTask("B", model.StatusPending, model.PriorityLow, []string{"C", "001"}, nil),
+		makeTask("C", model.StatusPending, model.PriorityLow, []string{"001"}, nil),
+	}
+
+	result, err := Assign(tasks, Options{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// B is blocked (dep C is pending). A and C are actionable.
+	// All share dep component via 001 → A and C in same track.
+	if len(result.Tracks) != 1 {
+		t.Fatalf("expected 1 track, got %d", len(result.Tracks))
+	}
+	if len(result.Tracks[0].Tasks) != 2 {
+		t.Errorf("expected 2 tasks in track, got %d", len(result.Tracks[0].Tasks))
+	}
+	ids := map[string]bool{}
+	for _, tt := range result.Tracks[0].Tasks {
+		ids[tt.ID] = true
+	}
+	if !ids["A"] || !ids["C"] {
+		t.Errorf("expected tasks A and C in track, got %v", result.Tracks[0].Tasks)
+	}
+	if len(result.Flexible) != 0 {
+		t.Errorf("expected 0 flexible, got %d", len(result.Flexible))
+	}
+}
+
+func TestAssign_SingletonNoScopesNoDepsRemainsFlexible(t *testing.T) {
+	// An isolated task with no scopes and no dependency connections → flexible.
+	tasks := []*model.Task{
+		makeTask("001", model.StatusPending, model.PriorityHigh, nil, []string{"scope-a"}),
+		makeTask("002", model.StatusPending, model.PriorityMedium, nil, nil),
+	}
+
+	result, err := Assign(tasks, Options{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Tracks) != 1 {
+		t.Errorf("expected 1 track, got %d", len(result.Tracks))
+	}
+	if len(result.Flexible) != 1 || result.Flexible[0].ID != "002" {
+		t.Errorf("expected task 002 as flexible, got %v", result.Flexible)
+	}
+}
+
 func TestAssign_IndependentGroups(t *testing.T) {
 	// Two disjoint clusters: {001, 002} share scope-a, {003, 004} share scope-b
 	tasks := []*model.Task{

@@ -57,8 +57,8 @@ func Assign(tasks []*model.Task, opts Options) (*Result, error) {
 	}
 
 	warnings := validateScopes(items, opts.KnownScopes)
-	withTouches, flexible := splitByTouches(items)
-	assignedTracks := assignTracks(withTouches)
+	depComponents := buildDependencyComponents(tasks)
+	assignedTracks, flexible := assignTracks(items, depComponents)
 
 	return &Result{
 		Tracks:   assignedTracks,
@@ -124,70 +124,183 @@ func validateScopes(items []scored, knownScopes map[string]bool) []string {
 	return warnings
 }
 
-func splitByTouches(items []scored) (withTouches, flexible []scored) {
-	for _, it := range items {
-		if len(it.task.Touches) > 0 {
-			withTouches = append(withTouches, it)
-		} else {
-			flexible = append(flexible, it)
-		}
-	}
-	return
+// unionFind provides path-compressed union-find over integer indices.
+type unionFind struct {
+	parent []int
 }
 
-func assignTracks(items []scored) []Track {
+func newUnionFind(n int) *unionFind {
+	p := make([]int, n)
+	for i := range p {
+		p[i] = i
+	}
+	return &unionFind{parent: p}
+}
+
+func (uf *unionFind) find(x int) int {
+	if uf.parent[x] != x {
+		uf.parent[x] = uf.find(uf.parent[x])
+	}
+	return uf.parent[x]
+}
+
+func (uf *unionFind) union(a, b int) {
+	ra, rb := uf.find(a), uf.find(b)
+	if ra != rb {
+		uf.parent[ra] = rb
+	}
+}
+
+func assignTracks(items []scored, depComponents map[string]string) ([]Track, []scored) {
 	n := len(items)
 	if n == 0 {
-		return nil
+		return nil, nil
 	}
 
-	// Union-Find with path compression
-	parent := make([]int, n)
-	for i := range parent {
-		parent[i] = i
-	}
-	var find func(int) int
-	find = func(x int) int {
-		if parent[x] != x {
-			parent[x] = find(parent[x])
-		}
-		return parent[x]
-	}
-	union := func(a, b int) {
-		ra, rb := find(a), find(b)
-		if ra != rb {
-			parent[ra] = rb
-		}
-	}
+	uf := newUnionFind(n)
+	unionByScopes(uf, items)
+	unionByDeps(uf, items, depComponents)
+	return splitGroups(uf, items)
+}
 
-	// Union tasks that share any scope
+func unionByScopes(uf *unionFind, items []scored) {
 	scopeFirst := make(map[string]int)
 	for i, it := range items {
 		for _, scope := range it.task.Touches {
 			if first, exists := scopeFirst[scope]; exists {
-				union(first, i)
+				uf.union(first, i)
 			} else {
 				scopeFirst[scope] = i
 			}
 		}
 	}
+}
 
-	// Group items by component, preserving sorted order
-	seen := make(map[int]int) // root -> track index
-	var tracks []Track
-	for i := range items {
-		root := find(i)
-		if ti, exists := seen[root]; exists {
-			addToTrack(&tracks[ti], items[i])
+func unionByDeps(uf *unionFind, items []scored, depComponents map[string]string) {
+	compFirst := make(map[string]int)
+	for i, it := range items {
+		rep, ok := depComponents[it.task.ID]
+		if !ok {
+			continue
+		}
+		if first, exists := compFirst[rep]; exists {
+			uf.union(first, i)
 		} else {
-			seen[root] = len(tracks)
-			track := newTrack(len(tracks) + 1)
-			addToTrack(&track, items[i])
-			tracks = append(tracks, track)
+			compFirst[rep] = i
 		}
 	}
+}
 
-	return tracks
+type itemGroup struct {
+	indices   []int
+	hasScopes bool
+}
+
+func splitGroups(uf *unionFind, items []scored) ([]Track, []scored) {
+	groups, order := collectGroups(uf, items)
+
+	var tracks []Track
+	var flexible []scored
+	for _, root := range order {
+		g := groups[root]
+		if len(g.indices) > 1 || g.hasScopes {
+			track := newTrack(len(tracks) + 1)
+			for _, idx := range g.indices {
+				addToTrack(&track, items[idx])
+			}
+			tracks = append(tracks, track)
+		} else {
+			flexible = append(flexible, items[g.indices[0]])
+		}
+	}
+	return tracks, flexible
+}
+
+func collectGroups(uf *unionFind, items []scored) (map[int]*itemGroup, []int) {
+	seen := make(map[int]*itemGroup)
+	var order []int
+	for i := range items {
+		root := uf.find(i)
+		if g, exists := seen[root]; exists {
+			g.indices = append(g.indices, i)
+			if len(items[i].task.Touches) > 0 {
+				g.hasScopes = true
+			}
+		} else {
+			seen[root] = &itemGroup{
+				indices:   []int{i},
+				hasScopes: len(items[i].task.Touches) > 0,
+			}
+			order = append(order, root)
+		}
+	}
+	return seen, order
+}
+
+// buildDependencyComponents computes connected components from dependency
+// edges treated as undirected. Returns a map from task ID to a representative
+// component ID (the lexicographically smallest ID in the component).
+func buildDependencyComponents(tasks []*model.Task) map[string]string {
+	adj, ids := buildDepAdjacency(tasks)
+	return bfsComponents(adj, ids)
+}
+
+func buildDepAdjacency(tasks []*model.Task) (map[string][]string, map[string]bool) {
+	adj := make(map[string][]string)
+	ids := make(map[string]bool)
+	for _, t := range tasks {
+		ids[t.ID] = true
+		for _, dep := range t.Dependencies {
+			adj[t.ID] = append(adj[t.ID], dep)
+			adj[dep] = append(adj[dep], t.ID)
+		}
+	}
+	return adj, ids
+}
+
+func bfsComponents(adj map[string][]string, ids map[string]bool) map[string]string {
+	visited := make(map[string]bool)
+	components := make(map[string]string)
+
+	for id := range ids {
+		if visited[id] {
+			continue
+		}
+		members := bfsFrom(id, adj, visited)
+		rep := minString(members)
+		for _, m := range members {
+			components[m] = rep
+		}
+	}
+	return components
+}
+
+func bfsFrom(start string, adj map[string][]string, visited map[string]bool) []string {
+	queue := []string{start}
+	visited[start] = true
+	var members []string
+	for len(queue) > 0 {
+		cur := queue[0]
+		queue = queue[1:]
+		members = append(members, cur)
+		for _, neighbor := range adj[cur] {
+			if !visited[neighbor] {
+				visited[neighbor] = true
+				queue = append(queue, neighbor)
+			}
+		}
+	}
+	return members
+}
+
+func minString(ss []string) string {
+	m := ss[0]
+	for _, s := range ss[1:] {
+		if s < m {
+			m = s
+		}
+	}
+	return m
 }
 
 func computeDownstreamCounts(tasks []*model.Task) map[string]int {
