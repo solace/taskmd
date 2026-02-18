@@ -9,13 +9,19 @@ import (
 )
 
 type htmlReportData struct {
-	Metrics      *metrics.Metrics
-	Groups       []htmlGroupData
-	GroupByLabel string
-	CriticalPath []htmlTaskData
-	BlockedTasks []htmlBlockedTaskData
-	IncludeGraph bool
-	MermaidSrc   string
+	Metrics       *metrics.Metrics
+	Groups        []htmlGroupData
+	GroupByLabel  string
+	CriticalPath  []htmlTaskData
+	BlockedTasks  []htmlBlockedTaskData
+	TypeBreakdown []htmlBreakdownItem
+	IncludeGraph  bool
+	MermaidSrc    string
+}
+
+type htmlBreakdownItem struct {
+	Label string
+	Count int
 }
 
 type htmlGroupData struct {
@@ -79,14 +85,29 @@ func toHTMLData(data *reportData) htmlReportData {
 	}
 
 	return htmlReportData{
-		Metrics:      data.Metrics,
-		Groups:       groups,
-		GroupByLabel: capitalizeFirst(data.GroupBy),
-		CriticalPath: cpTasks,
-		BlockedTasks: blocked,
-		IncludeGraph: data.IncludeGraph,
-		MermaidSrc:   data.GraphMermaid,
+		Metrics:       data.Metrics,
+		Groups:        groups,
+		GroupByLabel:  capitalizeFirst(data.GroupBy),
+		CriticalPath:  cpTasks,
+		BlockedTasks:  blocked,
+		TypeBreakdown: buildTypeBreakdown(data.Metrics),
+		IncludeGraph:  data.IncludeGraph,
+		MermaidSrc:    data.GraphMermaid,
 	}
+}
+
+func buildTypeBreakdown(m *metrics.Metrics) []htmlBreakdownItem {
+	typeOrder := []model.TaskType{
+		model.TypeFeature, model.TypeBug, model.TypeImprovement,
+		model.TypeChore, model.TypeDocs,
+	}
+	var items []htmlBreakdownItem
+	for _, tt := range typeOrder {
+		if count, ok := m.TasksByType[tt]; ok && count > 0 {
+			items = append(items, htmlBreakdownItem{Label: string(tt), Count: count})
+		}
+	}
+	return items
 }
 
 func outputReportHTML(data *reportData, w io.Writer) error {
@@ -154,6 +175,11 @@ const reportHTMLTemplate = `<!DOCTYPE html>
   <tr><td>Avg Dependencies</td><td>{{printf "%.1f" .Metrics.AvgDependenciesPerTask}}</td></tr>
 </table>
 
+{{if .TypeBreakdown}}<h3>By Type</h3>
+<ul>
+{{range .TypeBreakdown}}  <li>{{.Label}}: {{.Count}}</li>
+{{end}}</ul>
+{{end}}
 <h2>Tasks by {{.GroupByLabel}}</h2>
 {{range .Groups}}
 <h3>{{.Name}} ({{.Count}})</h3>

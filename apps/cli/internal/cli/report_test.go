@@ -23,6 +23,7 @@ title: "Setup project"
 status: completed
 priority: high
 effort: small
+type: chore
 dependencies: []
 tags: ["infra"]
 created: 2026-02-08
@@ -36,6 +37,7 @@ title: "Implement authentication"
 status: in-progress
 priority: critical
 effort: large
+type: feature
 dependencies: ["001"]
 tags: ["backend", "security"]
 created: 2026-02-08
@@ -49,6 +51,7 @@ title: "Build UI components"
 status: pending
 priority: medium
 effort: medium
+type: feature
 dependencies: []
 tags: ["frontend"]
 created: 2026-02-08
@@ -62,6 +65,7 @@ title: "Design API endpoints"
 status: pending
 priority: high
 effort: medium
+type: feature
 dependencies: ["002"]
 tags: ["backend"]
 created: 2026-02-08
@@ -75,6 +79,7 @@ title: "Setup deployment"
 status: pending
 priority: low
 effort: large
+type: chore
 dependencies: ["004"]
 tags: ["infra"]
 created: 2026-02-08
@@ -88,6 +93,7 @@ title: "Write documentation"
 status: pending
 priority: low
 effort: small
+type: docs
 dependencies: []
 tags: ["docs"]
 created: 2026-02-08
@@ -196,6 +202,52 @@ func TestReportCommand_MarkdownStatusBreakdown(t *testing.T) {
 	}
 	if !strings.Contains(output, "in-progress: 1") {
 		t.Error("Expected 1 in-progress task in breakdown")
+	}
+}
+
+func TestReportCommand_MarkdownTypeBreakdown(t *testing.T) {
+	tmpDir := createReportTestFiles(t)
+	resetReportFlags()
+
+	output := captureReportOutput(t, tmpDir)
+
+	if !strings.Contains(output, "### By Type") {
+		t.Error("Expected '### By Type' breakdown")
+	}
+	if !strings.Contains(output, "feature: 3") {
+		t.Error("Expected 3 feature tasks in type breakdown")
+	}
+	if !strings.Contains(output, "chore: 2") {
+		t.Error("Expected 2 chore tasks in type breakdown")
+	}
+	if !strings.Contains(output, "docs: 1") {
+		t.Error("Expected 1 docs task in type breakdown")
+	}
+}
+
+func TestReportCommand_MarkdownTypeBreakdownHiddenWhenEmpty(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetReportFlags()
+
+	// Create a task without a type field
+	content := `---
+id: "001"
+title: "Untyped task"
+status: pending
+dependencies: []
+created: 2026-02-08
+---
+# Untyped task
+`
+	path := filepath.Join(tmpDir, "001.md")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatalf("Failed to create file: %v", err)
+	}
+
+	output := captureReportOutput(t, tmpDir)
+
+	if strings.Contains(output, "### By Type") {
+		t.Error("Expected no '### By Type' section when no tasks have a type set")
 	}
 }
 
@@ -308,6 +360,24 @@ func TestReportCommand_GroupByEffort(t *testing.T) {
 	}
 	if !strings.Contains(output, "### large") {
 		t.Error("Expected '### large' group header")
+	}
+}
+
+func TestReportCommand_GroupByType(t *testing.T) {
+	tmpDir := createReportTestFiles(t)
+	resetReportFlags()
+	reportGroupBy = "type"
+
+	output := captureReportOutput(t, tmpDir)
+
+	if !strings.Contains(output, "## Tasks by Type") {
+		t.Error("Expected '## Tasks by Type' section")
+	}
+	if !strings.Contains(output, "### feature") {
+		t.Error("Expected '### feature' group header")
+	}
+	if !strings.Contains(output, "### chore") {
+		t.Error("Expected '### chore' group header")
 	}
 }
 
@@ -470,6 +540,21 @@ func TestReportCommand_HTMLSections(t *testing.T) {
 		if !strings.Contains(output, s) {
 			t.Errorf("Expected HTML to contain %q", s)
 		}
+	}
+}
+
+func TestReportCommand_HTMLTypeBreakdown(t *testing.T) {
+	tmpDir := createReportTestFiles(t)
+	resetReportFlags()
+	reportFormat = "html"
+
+	output := captureReportOutput(t, tmpDir)
+
+	if !strings.Contains(output, "<h3>By Type</h3>") {
+		t.Error("Expected '<h3>By Type</h3>' in HTML output")
+	}
+	if !strings.Contains(output, "feature: 3") {
+		t.Error("Expected 'feature: 3' in HTML type breakdown")
 	}
 }
 

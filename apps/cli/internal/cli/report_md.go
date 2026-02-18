@@ -50,6 +50,7 @@ func writeMarkdownSummary(m *metrics.Metrics, w io.Writer, r *lipgloss.Renderer)
 
 	writeMarkdownStatusBreakdown(m, w, r)
 	writeMarkdownPriorityBreakdown(m, w, r)
+	writeMarkdownTypeBreakdown(m, w, r)
 }
 
 func writeMarkdownStatusBreakdown(m *metrics.Metrics, w io.Writer, r *lipgloss.Renderer) {
@@ -90,6 +91,33 @@ func writeMarkdownPriorityBreakdown(m *metrics.Metrics, w io.Writer, r *lipgloss
 	for _, p := range priorityOrder {
 		if count, ok := m.TasksByPriority[p]; ok && count > 0 {
 			fmt.Fprintf(w, "- %s: %d\n", formatPriority(string(p), r), count)
+		}
+	}
+	fmt.Fprintln(w)
+}
+
+func writeMarkdownTypeBreakdown(m *metrics.Metrics, w io.Writer, r *lipgloss.Renderer) {
+	typeOrder := []model.TaskType{
+		model.TypeFeature, model.TypeBug, model.TypeImprovement,
+		model.TypeChore, model.TypeDocs,
+	}
+
+	hasAny := false
+	for _, tt := range typeOrder {
+		if count, ok := m.TasksByType[tt]; ok && count > 0 {
+			hasAny = true
+			break
+		}
+	}
+	if !hasAny {
+		return
+	}
+
+	fmt.Fprintln(w, formatLabel("### By Type", r))
+	fmt.Fprintln(w)
+	for _, tt := range typeOrder {
+		if count, ok := m.TasksByType[tt]; ok && count > 0 {
+			fmt.Fprintf(w, "- %s: %d\n", formatType(string(tt), r), count)
 		}
 	}
 	fmt.Fprintln(w)

@@ -1,7 +1,7 @@
 ---
 id: "149"
 title: "Add type field to taskmd specification"
-status: in-progress
+status: completed
 priority: medium
 effort: medium
 tags:
@@ -30,17 +30,17 @@ Add an optional `type` enum field to the frontmatter schema to separate work-typ
 
 ## Tasks
 
-- [ ] Add `type` field definition to `docs/taskmd_specification.md`
-- [ ] Run `make sync-spec` to propagate spec to embedded CLI template and docs site
-- [ ] Add `Type` field to the Go task model struct
-- [ ] Update the parser to read `type` from frontmatter
-- [ ] Add enum validation for `type` (warn on unknown values)
-- [ ] Update `list` command to support `--type` filter flag
-- [ ] Update `set` command to support setting `type`
-- [ ] Update `report` command to include type breakdown
-- [ ] Display `type` in `get` command output
-- [ ] Add tests for parsing, validation, and CLI filtering
-- [ ] Update docs site frontmatter reference page
+- [x]Add `type` field definition to `docs/taskmd_specification.md`
+- [x]Run `make sync-spec` to propagate spec to embedded CLI template and docs site
+- [x]Add `Type` field to the Go task model struct
+- [x]Update the parser to read `type` from frontmatter
+- [x]Add enum validation for `type` (warn on unknown values)
+- [x]Update `list` command to support `--type` filter flag
+- [x]Update `set` command to support setting `type`
+- [x] Update `report` command to include type breakdown
+- [x]Display `type` in `get` command output
+- [x]Add tests for parsing, validation, and CLI filtering
+- [x]Update docs site frontmatter reference page
 
 ## Acceptance Criteria
 

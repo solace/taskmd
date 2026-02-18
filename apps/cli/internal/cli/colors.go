@@ -86,6 +86,24 @@ func getEffortColor(effort string, r *lipgloss.Renderer) lipgloss.Style {
 	}
 }
 
+// getTypeColor returns the appropriate color style for a task type.
+func getTypeColor(taskType string, r *lipgloss.Renderer) lipgloss.Style {
+	switch strings.ToLower(taskType) {
+	case "bug":
+		return r.NewStyle().Foreground(lipgloss.Color("1")) // Red
+	case "feature":
+		return r.NewStyle().Foreground(lipgloss.Color("2")) // Green
+	case "improvement":
+		return r.NewStyle().Foreground(lipgloss.Color("4")) // Blue
+	case "chore":
+		return r.NewStyle().Foreground(lipgloss.Color("3")) // Yellow
+	case "docs":
+		return r.NewStyle().Foreground(lipgloss.Color("6")) // Cyan
+	default:
+		return r.NewStyle().Foreground(lipgloss.Color("8")) // Gray
+	}
+}
+
 // formatTaskID formats task IDs with a distinct color.
 func formatTaskID(id string, r *lipgloss.Renderer) string {
 	style := r.NewStyle().Foreground(lipgloss.Color("6")).Bold(true) // Cyan, bold
@@ -108,6 +126,8 @@ func formatHeading(key, groupBy string, r *lipgloss.Renderer) string {
 		style = getPriorityColor(key, r)
 	case "effort":
 		style = getEffortColor(key, r)
+	case "type":
+		style = getTypeColor(key, r)
 	default:
 		style = r.NewStyle().Bold(true)
 	}
@@ -130,6 +150,12 @@ func formatPriority(priority string, r *lipgloss.Renderer) string {
 func formatEffort(effort string, r *lipgloss.Renderer) string {
 	style := getEffortColor(effort, r)
 	return style.Render(effort)
+}
+
+// formatType formats type text with type-based color.
+func formatType(taskType string, r *lipgloss.Renderer) string {
+	style := getTypeColor(taskType, r)
+	return style.Render(taskType)
 }
 
 // formatSuccess formats a success message in green.
