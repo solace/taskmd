@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# Run taskmd validate before committing
+if command -v taskmd >/dev/null 2>&1; then
+    taskmd validate
+    if [ $? -ne 0 ]; then
+        echo "taskmd validate failed. Fix the issues above before committing."
+        exit 1
+    fi
+else
+    echo "Warning: taskmd not found, skipping validation"
+fi

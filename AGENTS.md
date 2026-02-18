@@ -12,6 +12,7 @@ Before developing, ensure you have the following tools installed:
   - macOS: `brew install golangci-lint`
   - go install: `go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest`
   - Other: See [golangci-lint install docs](https://golangci-lint.run/welcome/install/)
+- **Git hooks**: Run `git config core.hooksPath .githooks` to enable project git hooks (see [Git Hooks Setup](#git-hooks-setup))
 
 ## Testing Requirements
 
@@ -397,6 +398,17 @@ if outputPath != "" {
 ```
 
 ## Git Workflow
+
+### Git Hooks Setup
+
+This project uses a `.githooks/` directory for version-controlled git hooks. After cloning, configure Git to use them:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+**Active hooks:**
+- **pre-commit**: Runs `taskmd validate` to check task files before each commit. The commit is blocked if validation fails.
 
 ### Commit Messages
 
