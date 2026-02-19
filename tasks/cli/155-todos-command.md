@@ -1,7 +1,7 @@
 ---
 id: "155"
 title: "Add todos command for finding TODO/FIXME comments in codebase"
-status: pending
+status: completed
 priority: medium
 effort: large
 type: feature
@@ -19,26 +19,26 @@ Implement a new `todos` command with subcommands for discovering and displaying 
 
 ## Tasks
 
-- [ ] Define the `todos` root command with subcommand structure
-- [ ] Implement `todos list` subcommand
-  - [ ] Scan files recursively, respecting `.gitignore` and configurable ignore patterns
-  - [ ] Detect common markers: `TODO`, `FIXME`, `HACK`, `XXX`, `NOTE`, `BUG`, `OPTIMIZE`
-  - [ ] Support language-specific comment syntax (single-line and multiline block comments)
-    - [ ] Go (`//`, `/* */`)
-    - [ ] JavaScript/TypeScript (`//`, `/* */`)
-    - [ ] Python (`#`, `"""` / `'''` docstrings)
-    - [ ] Ruby (`#`, `=begin`/`=end`)
-    - [ ] Shell/Bash (`#`)
-    - [ ] CSS (`/* */`)
-    - [ ] HTML (`<!-- -->`)
-    - [ ] Rust (`//`, `/* */`)
-    - [ ] YAML/TOML (`#`)
-  - [ ] Handle multiline comment blocks (extract full TODO text spanning multiple lines)
-  - [ ] Output each match with file path, line number, marker type, and comment text
-- [ ] Support output formats: `table` (default), `json`, `yaml`
-- [ ] Add flags: `--marker` (filter by marker type), `--dir` (scan directory), `--include` (glob filter), `--exclude` (glob filter)
-- [ ] Write comprehensive tests for the command
-- [ ] Write tests for the comment parser across all supported languages
+- [x] Define the `todos` root command with subcommand structure
+- [x] Implement `todos list` subcommand
+  - [x] Scan files recursively, respecting `.gitignore` and configurable ignore patterns
+  - [x] Detect common markers: `TODO`, `FIXME`, `HACK`, `XXX`, `NOTE`, `BUG`, `OPTIMIZE`
+  - [x] Support language-specific comment syntax (single-line and multiline block comments)
+    - [x] Go (`//`, `/* */`)
+    - [x] JavaScript/TypeScript (`//`, `/* */`)
+    - [x] Python (`#`, `"""` / `'''` docstrings)
+    - [x] Ruby (`#`, `=begin`/`=end`)
+    - [x] Shell/Bash (`#`)
+    - [x] CSS (`/* */`)
+    - [x] HTML (`<!-- -->`)
+    - [x] Rust (`//`, `/* */`)
+    - [x] YAML/TOML (`#`)
+  - [x] Handle multiline comment blocks (extract full TODO text spanning multiple lines)
+  - [x] Output each match with file path, line number, marker type, and comment text
+- [x] Support output formats: `table` (default), `json`, `yaml`
+- [x] Add flags: `--marker` (filter by marker type), `--dir` (scan directory), `--include` (glob filter), `--exclude` (glob filter)
+- [x] Write comprehensive tests for the command
+- [x] Write tests for the comment parser across all supported languages
 
 ## Acceptance Criteria
 
