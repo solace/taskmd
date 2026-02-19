@@ -912,10 +912,11 @@ func TestIsActionable(t *testing.T) {
 
 func TestScoreTask(t *testing.T) {
 	criticalPath := map[string]bool{"cp1": true}
-	downstreamCounts := map[string]int{
-		"cp1": 3,
-		"ds1": 1,
-		"ds6": 6,
+	// Use high-priority downstream so bonuses are at full weight (multiplier = 1.0)
+	downstreamInfo := map[string]next.DownstreamInfo{
+		"cp1": {Count: 3, MaxPriority: model.PriorityHigh},
+		"ds1": {Count: 1, MaxPriority: model.PriorityHigh},
+		"ds6": {Count: 6, MaxPriority: model.PriorityHigh},
 	}
 
 	tests := []struct {
@@ -974,7 +975,7 @@ func TestScoreTask(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			score, reasons := next.ScoreTask(tt.task, criticalPath, downstreamCounts)
+			score, reasons := next.ScoreTask(tt.task, criticalPath, downstreamInfo)
 			if score != tt.expectedScore {
 				t.Errorf("scoreTask() score = %d, want %d", score, tt.expectedScore)
 			}

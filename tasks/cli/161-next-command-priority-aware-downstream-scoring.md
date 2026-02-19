@@ -1,7 +1,7 @@
 ---
 id: "161"
 title: "Next command: priority-aware downstream scoring"
-status: pending
+status: completed
 priority: medium
 effort: small
 tags: [cli, next, scoring]
@@ -18,9 +18,9 @@ For example, a low-priority task (base 10) with 5 low-priority downstream tasks 
 
 ## Tasks
 
-- [ ] In `ScoreTask()` (`apps/cli/internal/next/next.go`), scale the downstream bonus by the max priority in the downstream chain (e.g., full bonus if downstream contains high/critical tasks, reduced bonus if all downstream are low)
-- [ ] Similarly scale the critical-path bonus — if the critical path consists entirely of low-priority tasks, reduce its weight relative to higher-priority standalone tasks
-- [ ] Update or add tests in `apps/cli/internal/next/next_test.go` covering:
+- [x] In `ScoreTask()` (`apps/cli/internal/next/next.go`), scale the downstream bonus by the max priority in the downstream chain (e.g., full bonus if downstream contains high/critical tasks, reduced bonus if all downstream are low)
+- [x] Similarly scale the critical-path bonus — if the critical path consists entirely of low-priority tasks, reduce its weight relative to higher-priority standalone tasks
+- [x] Update or add tests in `apps/cli/internal/next/next_test.go` covering:
   - Low chain (all low-priority deps) does not outscore unblocked medium task
   - Mixed chain (low task unblocking high task) still gets full downstream bonus
   - Existing scoring behavior for high/critical priority chains is preserved

@@ -122,6 +122,104 @@ func TestRecommend_ActiveTaskPrecedenceOverArchived(t *testing.T) {
 	}
 }
 
+func TestScoreTask_LowChainDoesNotOutscoreMediumTask(t *testing.T) {
+	// A low-priority task unblocking 5 low-priority tasks should NOT outscore
+	// a standalone medium-priority task.
+	criticalPath := map[string]bool{"low1": true}
+	downstreamInfo := map[string]DownstreamInfo{
+		"low1": {Count: 5, MaxPriority: model.PriorityLow},
+		"med1": {Count: 0},
+	}
+
+	lowTask := &model.Task{ID: "low1", Priority: model.PriorityLow}
+	medTask := &model.Task{ID: "med1", Priority: model.PriorityMedium}
+
+	lowScore, _ := ScoreTask(lowTask, criticalPath, downstreamInfo)
+	medScore, _ := ScoreTask(medTask, map[string]bool{}, downstreamInfo)
+
+	if lowScore >= medScore {
+		t.Errorf("Low-priority task with all-low downstream chain (score=%d) should not outscore standalone medium task (score=%d)",
+			lowScore, medScore)
+	}
+}
+
+func TestScoreTask_MixedChainGetsFullDownstreamBonus(t *testing.T) {
+	// A low-priority task that unblocks a high-priority task should still get
+	// a full downstream bonus (multiplier = 1.0).
+	downstreamInfo := map[string]DownstreamInfo{
+		"low1": {Count: 1, MaxPriority: model.PriorityHigh},
+	}
+
+	task := &model.Task{ID: "low1", Priority: model.PriorityLow}
+	score, _ := ScoreTask(task, map[string]bool{}, downstreamInfo)
+
+	// Expected: base low (10) + full downstream bonus (1 * 3 * 1.0 = 3) = 13
+	expectedScore := ScorePriorityLow + 1*ScorePerDownstream
+	if score != expectedScore {
+		t.Errorf("Mixed chain score = %d, want %d (full downstream bonus for high-priority downstream)", score, expectedScore)
+	}
+}
+
+func TestScoreTask_HighChainPreservesExistingBehavior(t *testing.T) {
+	// A task on the critical path with high-priority downstream tasks should
+	// get full bonuses (same as before the priority-aware change).
+	criticalPath := map[string]bool{"t1": true}
+	downstreamInfo := map[string]DownstreamInfo{
+		"t1": {Count: 3, MaxPriority: model.PriorityCritical},
+	}
+
+	task := &model.Task{ID: "t1", Priority: model.PriorityHigh}
+	score, _ := ScoreTask(task, criticalPath, downstreamInfo)
+
+	// Expected: high (30) + critical path (15 * 1.0) + downstream (min(9,15) * 1.0 = 9) = 54
+	expectedScore := ScorePriorityHigh + ScoreCriticalPath + min(3*ScorePerDownstream, ScoreDownstreamMax)
+	if score != expectedScore {
+		t.Errorf("High/critical chain score = %d, want %d", score, expectedScore)
+	}
+}
+
+func TestRecommend_MediumTaskRanksAboveLowChain(t *testing.T) {
+	// Integration test: an unblocked medium-priority task should rank higher than
+	// a low-priority task whose entire downstream chain is low priority.
+	//
+	// low1 (low, no deps) -> low2 (low, depends on low1) -> low3 -> low4 -> low5
+	// med1 (medium, no deps, standalone)
+	tasks := []*model.Task{
+		makeTask("low1", model.StatusPending, model.PriorityLow, nil),
+		makeTask("low2", model.StatusPending, model.PriorityLow, []string{"low1"}),
+		makeTask("low3", model.StatusPending, model.PriorityLow, []string{"low2"}),
+		makeTask("low4", model.StatusPending, model.PriorityLow, []string{"low3"}),
+		makeTask("low5", model.StatusPending, model.PriorityLow, []string{"low4"}),
+		makeTask("med1", model.StatusPending, model.PriorityMedium, nil),
+	}
+
+	recs, err := Recommend(tasks, Options{Limit: 10})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Find positions
+	var medRank, lowRank int
+	for _, rec := range recs {
+		if rec.ID == "med1" {
+			medRank = rec.Rank
+		}
+		if rec.ID == "low1" {
+			lowRank = rec.Rank
+		}
+	}
+
+	if medRank == 0 {
+		t.Fatal("med1 not found in recommendations")
+	}
+	if lowRank == 0 {
+		t.Fatal("low1 not found in recommendations")
+	}
+	if medRank >= lowRank {
+		t.Errorf("Medium task (rank %d) should rank above low task with all-low downstream chain (rank %d)", medRank, lowRank)
+	}
+}
+
 func TestCalculateCriticalPathTasks_IgnoresCompletedDependencies(t *testing.T) {
 	// Scenario: tasks with completed dependencies should not have inflated depth.
 	//

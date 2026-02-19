@@ -69,26 +69,74 @@ func Recommend(tasks []*model.Task, opts Options) ([]Recommendation, error) {
 	}
 
 	criticalPath := CalculateCriticalPathTasks(tasks, taskMap)
-	downstreamCounts := computeDownstreamCounts(tasks)
+	downstreamInfo := ComputeDownstreamInfo(tasks)
 
 	actionable, err := filterActionable(tasks, opts, taskMap, criticalPath)
 	if err != nil {
 		return nil, err
 	}
 
-	scored := scoreAndSort(actionable, criticalPath, downstreamCounts)
+	scored := scoreAndSort(actionable, criticalPath, downstreamInfo)
 
 	limit := min(opts.Limit, len(scored))
-	return buildRecommendations(scored[:limit], criticalPath, downstreamCounts), nil
+	return buildRecommendations(scored[:limit], criticalPath, downstreamInfo), nil
 }
 
-func computeDownstreamCounts(tasks []*model.Task) map[string]int {
+// DownstreamInfo holds both the count and max priority of downstream tasks.
+type DownstreamInfo struct {
+	Count       int
+	MaxPriority model.Priority
+}
+
+// ComputeDownstreamInfo computes downstream counts and max priority for each task.
+func ComputeDownstreamInfo(tasks []*model.Task) map[string]DownstreamInfo {
 	g := graph.NewGraph(tasks)
-	counts := make(map[string]int, len(tasks))
+	info := make(map[string]DownstreamInfo, len(tasks))
 	for _, task := range tasks {
-		counts[task.ID] = len(g.GetDownstream(task.ID))
+		downstream := g.GetDownstream(task.ID)
+		maxPri := model.Priority("")
+		for id := range downstream {
+			if t, ok := g.TaskMap[id]; ok {
+				if priorityWeight(t.Priority) > priorityWeight(maxPri) {
+					maxPri = t.Priority
+				}
+			}
+		}
+		info[task.ID] = DownstreamInfo{
+			Count:       len(downstream),
+			MaxPriority: maxPri,
+		}
 	}
-	return counts
+	return info
+}
+
+// priorityWeight returns a numeric weight for a priority level.
+func priorityWeight(p model.Priority) int {
+	switch p {
+	case model.PriorityCritical:
+		return 4
+	case model.PriorityHigh:
+		return 3
+	case model.PriorityMedium:
+		return 2
+	case model.PriorityLow:
+		return 1
+	default:
+		return 1
+	}
+}
+
+// downstreamPriorityMultiplier returns a scaling factor for downstream/critical-path
+// bonuses based on the max priority found in the downstream chain.
+func downstreamPriorityMultiplier(maxPri model.Priority) float64 {
+	switch maxPri {
+	case model.PriorityCritical, model.PriorityHigh:
+		return 1.0
+	case model.PriorityMedium:
+		return 0.5
+	default:
+		return 0.25
+	}
 }
 
 func filterActionable(
@@ -119,11 +167,11 @@ func filterActionable(
 func scoreAndSort(
 	tasks []*model.Task,
 	criticalPath map[string]bool,
-	downstreamCounts map[string]int,
+	downstreamInfo map[string]DownstreamInfo,
 ) []scoredTask {
 	scored := make([]scoredTask, len(tasks))
 	for i, task := range tasks {
-		s, r := ScoreTask(task, criticalPath, downstreamCounts)
+		s, r := ScoreTask(task, criticalPath, downstreamInfo)
 		scored[i] = scoredTask{task: task, score: s, reasons: r}
 	}
 
@@ -140,7 +188,7 @@ func scoreAndSort(
 func buildRecommendations(
 	scored []scoredTask,
 	criticalPath map[string]bool,
-	downstreamCounts map[string]int,
+	downstreamInfo map[string]DownstreamInfo,
 ) []Recommendation {
 	recs := make([]Recommendation, len(scored))
 	for i, st := range scored {
@@ -154,7 +202,7 @@ func buildRecommendations(
 			Effort:          string(st.task.Effort),
 			Score:           st.score,
 			Reasons:         st.reasons,
-			DownstreamCount: downstreamCounts[st.task.ID],
+			DownstreamCount: downstreamInfo[st.task.ID].Count,
 			OnCriticalPath:  criticalPath[st.task.ID],
 		}
 	}
@@ -193,7 +241,7 @@ func IsActionable(task *model.Task, taskMap map[string]*model.Task) bool {
 func ScoreTask(
 	task *model.Task,
 	criticalPath map[string]bool,
-	downstreamCounts map[string]int,
+	downstreamInfo map[string]DownstreamInfo,
 ) (int, []string) {
 	score := 0
 	reasons := make([]string, 0)
@@ -211,13 +259,17 @@ func ScoreTask(
 		score += ScorePriorityLow
 	}
 
+	info := downstreamInfo[task.ID]
+	mult := downstreamPriorityMultiplier(info.MaxPriority)
+
 	if criticalPath[task.ID] {
-		score += ScoreCriticalPath
+		scaled := int(float64(ScoreCriticalPath) * mult)
+		score += scaled
 		reasons = append(reasons, "on critical path")
 	}
 
-	dc := downstreamCounts[task.ID]
-	bonus := min(dc*ScorePerDownstream, ScoreDownstreamMax)
+	dc := info.Count
+	bonus := int(float64(min(dc*ScorePerDownstream, ScoreDownstreamMax)) * mult)
 	score += bonus
 	if dc > 0 {
 		noun := "tasks"

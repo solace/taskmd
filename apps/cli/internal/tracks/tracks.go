@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	"github.com/driangle/taskmd/apps/cli/internal/filter"
-	"github.com/driangle/taskmd/apps/cli/internal/graph"
 	"github.com/driangle/taskmd/apps/cli/internal/model"
 	"github.com/driangle/taskmd/apps/cli/internal/next"
 )
@@ -78,7 +77,7 @@ func scoreActionable(tasks []*model.Task, filters []string, archivedTasks []*mod
 	}
 
 	criticalPath := next.CalculateCriticalPathTasks(tasks, taskMap)
-	downstreamCounts := computeDownstreamCounts(tasks)
+	downstreamInfo := next.ComputeDownstreamInfo(tasks)
 
 	candidates := tasks
 	if len(filters) > 0 {
@@ -92,7 +91,7 @@ func scoreActionable(tasks []*model.Task, filters []string, archivedTasks []*mod
 	var items []scored
 	for _, t := range candidates {
 		if next.IsActionable(t, taskMap) {
-			s, _ := next.ScoreTask(t, criticalPath, downstreamCounts)
+			s, _ := next.ScoreTask(t, criticalPath, downstreamInfo)
 			items = append(items, scored{task: t, score: s})
 		}
 	}
@@ -301,15 +300,6 @@ func minString(ss []string) string {
 		}
 	}
 	return m
-}
-
-func computeDownstreamCounts(tasks []*model.Task) map[string]int {
-	g := graph.NewGraph(tasks)
-	counts := make(map[string]int, len(tasks))
-	for _, t := range tasks {
-		counts[t.ID] = len(g.GetDownstream(t.ID))
-	}
-	return counts
 }
 
 func newTrack(id int) Track {
