@@ -122,12 +122,17 @@ func resetSetFlags() {
 
 func captureSetOutput(t *testing.T) (string, error) {
 	t.Helper()
+	return captureSetOutputWithArgs(t, nil)
+}
+
+func captureSetOutputWithArgs(t *testing.T, args []string) (string, error) {
+	t.Helper()
 
 	oldStdout := os.Stdout
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	err := runSet(setCmd, nil)
+	err := runSet(setCmd, args)
 
 	w.Close()
 	os.Stdout = oldStdout
@@ -1128,6 +1133,78 @@ func TestSet_VerifyNonCompletedSkips(t *testing.T) {
 	// Should succeed because --verify only gates completion
 	if !strings.Contains(output, "status: pending -> in-progress") {
 		t.Errorf("expected status change, got: %s", output)
+	}
+}
+
+func TestSet_PositionalArg(t *testing.T) {
+	tmpDir := createSetTestFiles(t)
+	resetSetFlags()
+	taskDir = tmpDir
+	setStatus = "completed"
+
+	output, err := captureSetOutputWithArgs(t, []string{"001"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(output, "Updated task 001") {
+		t.Error("Expected confirmation message")
+	}
+	if !strings.Contains(output, "status: pending -> completed") {
+		t.Errorf("Expected status change in output, got: %s", output)
+	}
+
+	content, _ := os.ReadFile(filepath.Join(tmpDir, "001-setup.md"))
+	if !strings.Contains(string(content), "status: completed") {
+		t.Error("Expected file to contain updated status")
+	}
+}
+
+func TestSet_PositionalArgAndFlagSameValue(t *testing.T) {
+	tmpDir := createSetTestFiles(t)
+	resetSetFlags()
+	taskDir = tmpDir
+	setTaskID = "001"
+	setStatus = "completed"
+
+	output, err := captureSetOutputWithArgs(t, []string{"001"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(output, "Updated task 001") {
+		t.Error("Expected confirmation message")
+	}
+}
+
+func TestSet_PositionalArgAndFlagConflict(t *testing.T) {
+	tmpDir := createSetTestFiles(t)
+	resetSetFlags()
+	taskDir = tmpDir
+	setTaskID = "002"
+	setStatus = "completed"
+
+	_, err := captureSetOutputWithArgs(t, []string{"001"})
+	if err == nil {
+		t.Fatal("Expected error when positional arg and --task-id conflict")
+	}
+	if !strings.Contains(err.Error(), "conflicting task ID") {
+		t.Errorf("Expected 'conflicting task ID' error, got: %v", err)
+	}
+}
+
+func TestSet_NeitherPositionalNorFlag(t *testing.T) {
+	tmpDir := createSetTestFiles(t)
+	resetSetFlags()
+	taskDir = tmpDir
+	setStatus = "completed"
+
+	_, err := captureSetOutput(t)
+	if err == nil {
+		t.Fatal("Expected error when neither positional arg nor --task-id provided")
+	}
+	if !strings.Contains(err.Error(), "task ID required") {
+		t.Errorf("Expected 'task ID required' error, got: %v", err)
 	}
 }
 

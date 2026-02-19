@@ -15,7 +15,7 @@ The user's query is in `$ARGUMENTS` (a task ID like `077` or a task name/keyword
 1. **Look up the task**: Run `taskmd get $ARGUMENTS` to find the task
    - If not found, run `taskmd list` to show available tasks and ask the user which one they meant
 2. **Read the task file** with the `Read` tool to get the full description, subtasks, and acceptance criteria
-3. **Mark the task as in-progress**: Run `taskmd set --task-id <ID> --status in-progress`
+3. **Mark the task as in-progress**: Run `taskmd set <ID> --status in-progress`
 4. **Start a worklog entry** (if worklogs are enabled):
    - Check `.taskmd.yaml` for `worklogs: false` -- if set, skip worklog steps
    - Otherwise, find or create the worklog file at `tasks/<group>/.worklogs/<ID>.md` (or `tasks/.worklogs/<ID>.md` for root tasks)
@@ -25,7 +25,7 @@ The user's query is in `$ARGUMENTS` (a task ID like `077` or a task name/keyword
    - Check off subtasks (`- [x]`) in the task file as you complete them
    - Append worklog entries when you make key decisions, hit blockers, or complete significant subtasks
 6. **Write a final worklog entry** summarizing what was done, decisions made, and any open items
-7. **Mark the task as completed** when done: Run `taskmd set --task-id <ID> --status completed --verify`
+7. **Mark the task as completed** when done: Run `taskmd set <ID> --status completed --verify`
    - The `--verify` flag will run any verification checks defined in the task before applying the status change
    - If verification fails, fix the issues and try again
 

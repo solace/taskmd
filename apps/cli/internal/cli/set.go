@@ -31,28 +31,29 @@ var (
 )
 
 var setCmd = &cobra.Command{
-	Use:        "set",
+	Use:        "set [task-id]",
 	SuggestFor: []string{"edit", "modify", "change"},
 	Short:      "Set a task's frontmatter fields",
 	Long: `Set modifies frontmatter fields (status, priority, effort, tags) of a task file.
 
-The task is identified by --task-id (exact match only).
+The task is identified by a positional argument or --task-id (exact match only).
 
 Examples:
-  taskmd set --task-id cli-049 --status completed
-  taskmd set --task-id cli-049 --priority high --effort large
-  taskmd set --task-id cli-049 --done
-  taskmd set --task-id cli-049 --add-tag backend --add-tag api
-  taskmd set --task-id cli-049 --remove-tag deprecated`,
-	Args: cobra.NoArgs,
+  taskmd set cli-049 --status completed
+  taskmd set cli-049 --priority high --effort large
+  taskmd set cli-049 --done
+  taskmd set cli-049 --add-tag backend --add-tag api
+  taskmd set cli-049 --remove-tag deprecated
+  taskmd set --task-id cli-049 --status completed   # --task-id also works`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: runSet,
 }
 
 // Deprecated: use "set" instead.
 var updateCmd = &cobra.Command{
-	Use:        "update",
+	Use:        "update [task-id]",
 	Short:      "Update a task's frontmatter fields (deprecated: use 'set')",
-	Args:       cobra.NoArgs,
+	Args:       cobra.MaximumNArgs(1),
 	RunE:       runSet,
 	Hidden:     true,
 	Deprecated: "use 'set' instead",
@@ -75,12 +76,35 @@ func init() {
 		cmd.Flags().BoolVar(&setVerify, "verify", false, "run verification checks before completing a task")
 		cmd.Flags().StringArrayVar(&setAddTags, "add-tag", nil, "add a tag (repeatable)")
 		cmd.Flags().StringArrayVar(&setRemoveTags, "remove-tag", nil, "remove a tag (repeatable)")
-
-		_ = cmd.MarkFlagRequired("task-id")
 	}
 }
 
-func runSet(cmd *cobra.Command, _ []string) error {
+func resolveSetTaskID(cmd *cobra.Command, args []string) (string, error) {
+	positional := ""
+	if len(args) > 0 {
+		positional = args[0]
+	}
+	flagVal := setTaskID
+
+	if positional != "" && flagVal != "" && positional != flagVal {
+		return "", fmt.Errorf("conflicting task ID: positional argument %q and --task-id %q differ", positional, flagVal)
+	}
+
+	if positional != "" {
+		return positional, nil
+	}
+	if flagVal != "" {
+		return flagVal, nil
+	}
+	return "", fmt.Errorf("task ID required: provide as positional argument or --task-id flag")
+}
+
+func runSet(cmd *cobra.Command, args []string) error {
+	taskID, err := resolveSetTaskID(cmd, args)
+	if err != nil {
+		return err
+	}
+
 	req, err := buildSetRequest(cmd)
 	if err != nil {
 		return err
@@ -98,9 +122,9 @@ func runSet(cmd *cobra.Command, _ []string) error {
 	debugLog("scan directory: %s", scanDir)
 	debugLog("found %d task(s)", len(result.Tasks))
 
-	task := findExactMatch(setTaskID, result.Tasks)
+	task := findExactMatch(taskID, result.Tasks)
 	if task == nil {
-		return fmt.Errorf("task not found: %s", setTaskID)
+		return fmt.Errorf("task not found: %s", taskID)
 	}
 
 	if err := runSetVerification(task, req); err != nil {

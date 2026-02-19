@@ -1,7 +1,7 @@
 ---
 id: "154"
 title: "Support positional task ID argument in set command"
-status: pending
+status: completed
 priority: medium
 effort: small
 type: improvement
@@ -21,11 +21,11 @@ Allow `taskmd set 148 --priority low` as a shorthand for `taskmd set --task-id 1
 
 ## Tasks
 
-- [ ] Change `Args` from `cobra.NoArgs` to `cobra.MaximumNArgs(1)`
-- [ ] In `runSet`, resolve task ID from positional arg (first) or `--task-id` flag (fallback)
-- [ ] Error if both positional arg and `--task-id` are provided with different values
-- [ ] Update `Use` field to `set [task-id]` and help text / examples
-- [ ] Add tests for positional arg, flag-only, both-provided, and neither-provided cases
+- [x] Change `Args` from `cobra.NoArgs` to `cobra.MaximumNArgs(1)`
+- [x] In `runSet`, resolve task ID from positional arg (first) or `--task-id` flag (fallback)
+- [x] Error if both positional arg and `--task-id` are provided with different values
+- [x] Update `Use` field to `set [task-id]` and help text / examples
+- [x] Add tests for positional arg, flag-only, both-provided, and neither-provided cases
 
 ## Acceptance Criteria
 

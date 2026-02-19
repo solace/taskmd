@@ -681,20 +681,21 @@ Modify a task's frontmatter fields (status, priority, effort, tags, owner, paren
 **Basic usage:**
 ```bash
 # Change status
-taskmd set --task-id 042 --status in-progress
+taskmd set 042 --status in-progress
 
 # Change priority and effort
-taskmd set --task-id 042 --priority high --effort large
+taskmd set 042 --priority high --effort large
 
 # Mark as completed (shortcut)
-taskmd set --task-id 042 --done
+taskmd set 042 --done
 ```
 
 **Flags:**
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--task-id string` | *(required)* | Task ID to update |
+| `[task-id]` | | Task ID as positional argument |
+| `--task-id string` | | Task ID to update (alternative to positional) |
 | `--status string` | | New status (`pending`, `in-progress`, `completed`, `blocked`, `cancelled`) |
 | `--priority string` | | New priority (`low`, `medium`, `high`, `critical`) |
 | `--effort string` | | New effort (`small`, `medium`, `large`) |
@@ -708,28 +709,28 @@ taskmd set --task-id 042 --done
 **Tag management:**
 ```bash
 # Add tags
-taskmd set --task-id 042 --add-tag backend --add-tag api
+taskmd set 042 --add-tag backend --add-tag api
 
 # Remove a tag
-taskmd set --task-id 042 --remove-tag deprecated
+taskmd set 042 --remove-tag deprecated
 
 # Add and remove in one command
-taskmd set --task-id 042 --add-tag v2 --remove-tag v1
+taskmd set 042 --add-tag v2 --remove-tag v1
 ```
 
 **Examples:**
 ```bash
 # Start working on a task
-taskmd set --task-id 042 --status in-progress
+taskmd set 042 --status in-progress
 
 # Preview changes before applying
-taskmd set --task-id 042 --priority critical --dry-run
+taskmd set 042 --priority critical --dry-run
 
 # Set owner and parent
-taskmd set --task-id 042 --owner alice --parent 040
+taskmd set 042 --owner alice --parent 040
 
 # Mark done
-taskmd set --task-id 042 --done
+taskmd set 042 --done
 ```
 
 ### tags - List Tags
@@ -1063,7 +1064,7 @@ taskmd list --filter priority=high --filter status=pending
 **During work: Track progress**
 ```bash
 # Update task status in your editor
-taskmd set --task-id 042 --status in-progress
+taskmd set 042 --status in-progress
 
 # Validate changes
 taskmd validate

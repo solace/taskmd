@@ -343,23 +343,24 @@ Modify a task's frontmatter fields by ID.
 
 ```bash
 # Change status
-taskmd set --task-id 042 --status in-progress
+taskmd set 042 --status in-progress
 
 # Change priority and effort
-taskmd set --task-id 042 --priority high --effort large
+taskmd set 042 --priority high --effort large
 
 # Mark as completed (shortcut)
-taskmd set --task-id 042 --done
+taskmd set 042 --done
 
 # Preview changes without writing
-taskmd set --task-id 042 --priority critical --dry-run
+taskmd set 042 --priority critical --dry-run
 ```
 
 **Flags:**
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--task-id` | *(required)* | Task ID to update |
+| `[task-id]` | | Task ID as positional argument |
+| `--task-id` | | Task ID to update (alternative to positional) |
 | `--status` | | New status (`pending`, `in-progress`, `completed`, `blocked`, `cancelled`) |
 | `--priority` | | New priority (`low`, `medium`, `high`, `critical`) |
 | `--effort` | | New effort (`small`, `medium`, `large`) |
@@ -373,13 +374,13 @@ taskmd set --task-id 042 --priority critical --dry-run
 **Tag management:**
 ```bash
 # Add tags
-taskmd set --task-id 042 --add-tag backend --add-tag api
+taskmd set 042 --add-tag backend --add-tag api
 
 # Remove a tag
-taskmd set --task-id 042 --remove-tag deprecated
+taskmd set 042 --remove-tag deprecated
 
 # Add and remove in one command
-taskmd set --task-id 042 --add-tag v2 --remove-tag v1
+taskmd set 042 --add-tag v2 --remove-tag v1
 ```
 
 ### tags - List Tags
