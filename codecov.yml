@@ -1,0 +1,25 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 2%
+    patch:
+      default:
+        target: 80%
+
+comment:
+  layout: "reach,diff,flags,files"
+  behavior: default
+
+flags:
+  cli:
+    paths:
+      - apps/cli/
+    carryforward: true
+
+ignore:
+  - "apps/web/"
+  - "apps/docs/"
+  - "**/*_test.go"
+  - "apps/cli/cmd/taskmd/main.go"

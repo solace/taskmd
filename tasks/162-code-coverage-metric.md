@@ -1,7 +1,7 @@
 ---
 id: "162"
 title: "Add code coverage metric to project dashboard/README on GitHub"
-status: pending
+status: completed
 priority: medium
 effort: medium
 type: improvement
@@ -17,11 +17,11 @@ Display a code coverage badge and/or metric in the project README on GitHub so t
 
 ## Tasks
 
-- [ ] Choose a code coverage service (e.g., Codecov, Coveralls, or GitHub Actions native)
-- [ ] Add a CI step to generate Go coverage reports (`go test -coverprofile=coverage.out ./...`)
-- [ ] Upload coverage data to the chosen service (or publish as a GitHub Actions artifact)
-- [ ] Generate a coverage badge and add it to the project README
-- [ ] Verify the badge renders correctly on GitHub and updates on new pushes
+- [x] Choose a code coverage service (e.g., Codecov, Coveralls, or GitHub Actions native)
+- [x] Add a CI step to generate Go coverage reports (`go test -coverprofile=coverage.out ./...`)
+- [x] Upload coverage data to the chosen service (or publish as a GitHub Actions artifact)
+- [x] Generate a coverage badge and add it to the project README
+- [x] Verify the badge renders correctly on GitHub and updates on new pushes
 
 ## Acceptance Criteria
 

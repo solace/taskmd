@@ -1,5 +1,8 @@
 # taskmd
 
+[![CI](https://github.com/driangle/taskmd/actions/workflows/ci.yml/badge.svg)](https://github.com/driangle/taskmd/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/driangle/taskmd/branch/main/graph/badge.svg)](https://codecov.io/gh/driangle/taskmd)
+
 > Markdown-based task management designed for both humans and AI coding assistants.
 
 Store your tasks as `.md` files with YAML frontmatter, and use the CLI or web interface to manage, visualize, and track your work.
@@ -243,6 +246,19 @@ go test ./...
 ```
 
 All new CLI features must include comprehensive tests. See [CLAUDE.md](CLAUDE.md) for testing requirements.
+
+### Code Coverage
+
+Code coverage is tracked automatically via [Codecov](https://codecov.io/gh/driangle/taskmd). On every push and pull request, the CI generates a Go coverage report and uploads it to Codecov. The coverage badge at the top of this README reflects the latest coverage on `main`.
+
+To generate a coverage report locally:
+
+```bash
+cd apps/cli
+go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out    # Open in browser
+go tool cover -func=coverage.out    # Print per-function coverage
+```
 
 ## License
 
