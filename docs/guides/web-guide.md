@@ -6,8 +6,10 @@ Complete guide to using the taskmd web interface.
 
 - Starting the web server
 - Navigating the interface
-- Using all views (Tasks, Board, Graph, Stats)
-- Filtering and searching
+- Using all views (Tasks, Board, Graph, Stats, Next, Tracks, Validate)
+- Task editing, filtering, and searching
+- Static site export and read-only mode
+- API endpoints
 - Keyboard shortcuts
 - Live reload functionality
 
@@ -73,6 +75,9 @@ The top navigation bar provides quick access to all views:
 - **Board** - Kanban board view
 - **Graph** - Dependency visualization
 - **Stats** - Project statistics
+- **Next** - Task recommendations
+- **Tracks** - Parallel work tracks
+- **Validate** - Task validation results
 
 ### Views
 
@@ -252,6 +257,154 @@ Project metrics and analytics.
 - Sprint retrospectives
 - Stakeholder reports
 - Capacity planning
+
+#### 5. Next View (Recommendations)
+
+**URL:** `http://localhost:8080/next`
+
+AI-powered task recommendations showing which tasks to work on next.
+
+**Features:**
+- Ranked task cards with priority scores
+- Explains why each task is recommended (unblocked dependencies, priority, effort)
+- Critical path indicators for tasks on the longest dependency chain
+- Downstream task count showing how many tasks each recommendation unblocks
+
+**Scoring factors:**
+- Priority level (critical > high > medium > low)
+- Critical path membership (+15 bonus)
+- Number of downstream tasks (+3 per task, max +15)
+- Effort (smaller tasks get a slight bonus)
+
+**Best for:**
+- Deciding what to work on next
+- Identifying high-impact tasks
+- Understanding task priority reasoning
+
+#### 6. Tracks View
+
+**URL:** `http://localhost:8080/tracks`
+
+Parallel work tracks showing tasks grouped by scope overlap.
+
+**Features:**
+- Tasks organized into independent work streams based on `touches` scopes
+- Tasks in the same track share scopes and should run sequentially
+- Tasks in different tracks can run in parallel
+- "Flexible" tasks (no scope constraints) listed separately
+- Warnings for unknown or misconfigured scopes
+
+**Best for:**
+- Planning parallel development work
+- Avoiding merge conflicts
+- Team task assignment
+- Identifying independent work streams
+
+#### 7. Validate View
+
+**URL:** `http://localhost:8080/validate`
+
+Validation results for task files, showing errors and warnings.
+
+**Features:**
+- Errors and warnings grouped by file
+- Checks for missing required fields, invalid enum values, broken dependencies, duplicate IDs, and circular dependencies
+- Error and warning counts displayed as summary
+
+**Best for:**
+- Catching formatting issues
+- Finding broken dependencies
+- Ensuring task file consistency
+
+#### 8. Task Detail View
+
+**URL:** `http://localhost:8080/tasks/{id}`
+
+Full detail page for a single task.
+
+**Features:**
+- Complete metadata panel (status, priority, effort, type, tags, owner, dependencies)
+- Rendered markdown body with full task description
+- Worklog timeline (if worklogs exist for the task)
+- Edit form for updating task fields directly in the browser
+- Edit button hidden in read-only mode
+
+**Best for:**
+- Reading full task descriptions
+- Updating task fields without leaving the browser
+- Reviewing worklog history
+
+## Web Features
+
+### Task Editing
+
+The web UI supports editing tasks directly from the browser.
+
+**Task Detail Edit Form:**
+- Click the **Edit** button on any task detail page
+- Editable fields: title, status, priority, effort, type, owner, parent, tags, and body (markdown)
+- Only changed fields are sent to the server
+- Validation errors from the server are displayed inline
+
+**Board Drag-and-Drop:**
+- Drag task cards between columns to update the grouping field
+- Supported when grouping by: status, priority, effort, or type
+- Drag-and-drop is disabled when grouping by group or tag
+- Visual feedback: columns highlight when dragging over
+
+Both editing features are disabled when the server runs in `--readonly` mode.
+
+### Static Site Export
+
+Generate a self-contained static site from your tasks:
+
+```bash
+# Export to default directory (./taskmd-export)
+taskmd web export
+
+# Custom output directory
+taskmd web export -o ./public
+
+# For subfolder deployment (e.g., GitHub Pages)
+taskmd web export --base-path /demo/
+```
+
+The exported site includes all views with pre-rendered data. No backend server required — deploy to GitHub Pages, Netlify, S3, or any static host.
+
+### Read-Only Mode
+
+Start the server in read-only mode to prevent any modifications:
+
+```bash
+taskmd web start --readonly
+```
+
+When enabled:
+- The task edit form is hidden
+- Board drag-and-drop is disabled
+- The `PUT /api/tasks/{id}` endpoint returns `403 Forbidden`
+- All read operations work normally
+
+### Board Filters
+
+The Board page includes interactive pill-based filters:
+
+- **Status** — pending, in-progress, completed, blocked, cancelled
+- **Priority** — critical, high, medium, low
+- **Effort** — XS, S, M, L, XL
+- **Type** — feature, bug, chore, docs, test
+- **Tags** — autocomplete dropdown with all available tags
+
+Multiple values can be selected per category. The filter row automatically hides the field being used for grouping.
+
+### Graph Search and Highlighting
+
+The Graph page includes a search box for finding tasks in the dependency graph:
+
+- Searches task IDs and titles (case-insensitive, instant results)
+- Matched nodes are highlighted with a blue ring; unmatched nodes dim to 40% opacity
+- The viewport auto-zooms to fit all matched nodes
+- Match count displayed next to the search box
 
 ## Common Workflows
 
@@ -697,7 +850,16 @@ trap "kill $TASKMD_PID" EXIT
 
 ### Export and Sharing
 
-**Generate static snapshot:**
+**Generate a static site:**
+```bash
+# Export full dashboard as static site
+taskmd web export -o ./public
+
+# For subfolder deployment
+taskmd web export --base-path /demo/
+```
+
+**Generate JSON snapshot:**
 ```bash
 # Create JSON snapshot
 taskmd snapshot --derived > public/tasks.json
@@ -735,23 +897,102 @@ The web interface works on mobile browsers:
 
 ## API Access
 
-The web interface uses a JSON API that you can access directly:
+The web server exposes a JSON API you can access directly. All endpoints return JSON unless noted otherwise.
 
 ### Endpoints
 
+#### Task Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/tasks` | List all tasks (excludes body content) |
+| `GET` | `/api/tasks/{id}` | Get a single task with full body and worklog metadata |
+| `GET` | `/api/tasks/{id}/worklog` | Get worklog entries for a task |
+| `PUT` | `/api/tasks/{id}` | Update task fields (disabled in read-only mode) |
+| `GET` | `/api/search?q=<query>` | Full-text search across task titles and bodies |
+
+#### View Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/board?groupBy=<field>` | Tasks grouped by field (`status`, `priority`, `effort`, `type`, `group`, `tag`) |
+| `GET` | `/api/graph` | Dependency graph as JSON (nodes and edges) |
+| `GET` | `/api/graph/mermaid` | Dependency graph in Mermaid syntax (returns `text/plain`) |
+| `GET` | `/api/stats` | Project statistics and metrics |
+| `GET` | `/api/next?limit=<n>` | Scored task recommendations with reasons |
+| `GET` | `/api/tracks` | Parallel work tracks grouped by scope overlap |
+| `GET` | `/api/validate` | Validation errors and warnings for all tasks |
+
+#### Other Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/config` | Server config (read-only status, version) |
+| `GET` | `/api/events` | Server-Sent Events stream for live reload |
+
+### Examples
+
 ```bash
-# Get all tasks
+# List all tasks
 curl http://localhost:8080/api/tasks
 
-# Get board data
-curl http://localhost:8080/api/board?groupBy=status
+# Get a single task with full body
+curl http://localhost:8080/api/tasks/042
 
-# Get graph data
-curl http://localhost:8080/api/graph
+# Get worklog for a task
+curl http://localhost:8080/api/tasks/042/worklog
 
-# Get statistics
-curl http://localhost:8080/api/stats
+# Update a task's status
+curl -X PUT http://localhost:8080/api/tasks/042 \
+  -H 'Content-Type: application/json' \
+  -d '{"status": "in-progress"}'
+
+# Search tasks
+curl 'http://localhost:8080/api/search?q=authentication'
+
+# Board grouped by priority
+curl 'http://localhost:8080/api/board?groupBy=priority'
+
+# Top 3 recommended tasks
+curl 'http://localhost:8080/api/next?limit=3'
+
+# Graph in Mermaid format
+curl http://localhost:8080/api/graph/mermaid
+
+# Parallel work tracks
+curl http://localhost:8080/api/tracks
+
+# Validation results
+curl http://localhost:8080/api/validate
+
+# SSE stream (keeps connection open)
+curl -N http://localhost:8080/api/events
 ```
+
+### PUT /api/tasks/{id}
+
+Send a JSON body with only the fields you want to change:
+
+```json
+{
+  "title": "Updated title",
+  "status": "in-progress",
+  "priority": "high",
+  "effort": "small",
+  "type": "bug",
+  "owner": "alice",
+  "tags": ["backend", "urgent"],
+  "body": "# Updated description\n\nNew content..."
+}
+```
+
+Valid values:
+- **status**: `pending`, `in-progress`, `in-review`, `blocked`, `completed`, `cancelled`
+- **priority**: `low`, `medium`, `high`, `critical`
+- **effort**: `small`, `medium`, `large`
+- **type**: `feature`, `bug`, `improvement`, `chore`, `docs`
+
+Returns the updated task detail on success, or a `400` with validation errors.
 
 ### Use Cases
 

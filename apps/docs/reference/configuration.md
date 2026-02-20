@@ -37,9 +37,37 @@ Command-line flags always override config file values.
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `dir` | string | `.` | Default task directory |
+| `ignore` | string[] | `[]` | Additional directories to skip when scanning (beyond the built-in skip list) |
+| `worklogs` | boolean | `true` | Enable or disable worklog file creation |
+| `workflow` | string | `"solo"` | Workflow mode: `"solo"` or `"pr-review"` |
+| `todos.exclude` | string[] | `[]` | Glob patterns to exclude from TODO/FIXME scanning |
 | `web.port` | integer | `8080` | Web server port |
 | `web.auto_open_browser` | boolean | `false` | Auto-open browser on `web start` |
 | `scopes` | map | — | Scope-to-path mappings for the `touches` field ([details](#scopes-configuration)) |
+
+**`ignore`** — The scanner already skips common directories (`node_modules`, `vendor`, `dist`, `build`, `.next`, `.nuxt`, `out`, `target`, `__pycache__`, and hidden directories). Use `ignore` to add project-specific directories:
+
+```yaml
+ignore:
+  - "tmp"
+  - "cache"
+  - "legacy"
+```
+
+**`worklogs`** — When set to `false`, agents and workflows skip creating worklog files in `.worklogs/` directories. Existing worklogs can still be read.
+
+**`workflow`** — Controls the development workflow mode:
+- `solo` (default) — optimized for single-developer workflows
+- `pr-review` — optimized for PR-based collaborative workflows
+
+**`todos.exclude`** — Glob patterns to exclude files from `taskmd todos` scanning. These are additive with CLI `--exclude` flags:
+
+```yaml
+todos:
+  exclude:
+    - "parser_test.go"
+    - "**/*_test.go"
+```
 
 ::: tip
 Only project-level settings are supported in config files. Per-invocation preferences like `format`, `verbose`, and `quiet` are intentionally CLI-only.
