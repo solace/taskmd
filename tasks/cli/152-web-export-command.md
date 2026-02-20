@@ -1,7 +1,7 @@
 ---
 id: "152"
 title: "Add `taskmd web export` subcommand for static site export"
-status: in-progress
+status: completed
 priority: medium
 effort: medium
 type: feature

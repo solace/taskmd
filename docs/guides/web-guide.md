@@ -31,7 +31,7 @@ taskmd web start --open
 taskmd web start --port 3000 --open
 
 # Specific tasks directory
-taskmd web start --dir ./my-tasks --open
+taskmd web start --task-dir ./my-tasks --open
 
 # Development mode (CORS for Vite)
 taskmd web start --dev
@@ -178,7 +178,7 @@ Use the "Group by" dropdown to organize by:
 
 **URL:** `http://localhost:8080/graph`
 
-Interactive dependency visualization using Mermaid diagrams.
+Interactive dependency visualization using @xyflow/react (ReactFlow).
 
 **Features:**
 - Visual dependency graph
@@ -599,7 +599,7 @@ taskmd web start --port 8080
 ### No Tasks Showing
 
 **Check:**
-1. Correct directory: `--dir ./tasks`
+1. Correct directory: `--task-dir ./tasks`
 2. Files have `.md` extension
 3. Files have valid YAML frontmatter
 4. Browser console for errors (F12)
@@ -628,7 +628,7 @@ taskmd web start --verbose
 
 ### Graph Not Rendering
 
-**Mermaid rendering issues:**
+**Graph rendering issues:**
 1. Wait a few seconds (large graphs take time)
 2. Check browser console for errors
 3. Try a different browser
@@ -668,10 +668,10 @@ open http://localhost:8080
 **Switch directories:**
 ```bash
 # Project 1
-taskmd web start --dir ~/project1/tasks --port 8081
+taskmd web start --task-dir ~/project1/tasks --port 8081
 
 # Project 2
-taskmd web start --dir ~/project2/tasks --port 8082
+taskmd web start --task-dir ~/project2/tasks --port 8082
 ```
 
 **Use tabs** in your browser to manage multiple projects.
@@ -685,7 +685,7 @@ Create a `start-dev.sh` script:
 #!/bin/bash
 
 # Start taskmd in background
-taskmd web start --dir ./tasks &
+taskmd web start --task-dir ./tasks &
 TASKMD_PID=$!
 
 # Start your app
@@ -762,20 +762,26 @@ curl http://localhost:8080/api/stats
 
 ## Configuration
 
-### Config File (Coming Soon)
+### Config File
 
-Configuration file support is **planned but not yet implemented**. See [task 056](../../tasks/056-implement-taskmd-yaml-config.md).
+Configuration is supported via `.taskmd.yaml`. See the [CLI Guide](cli-guide.md#configuration) for full details.
 
-### Current Options
+```yaml
+# .taskmd.yaml
+dir: ./tasks
+web:
+  port: 8080
+  auto_open_browser: true
+```
 
-Use command-line flags:
+### Command-Line Flags
 
 ```bash
 # Set port and auto-open
-taskmd web start --port 3000 --open --dir ./tasks
+taskmd web start --port 3000 --open --task-dir ./tasks
 
 # Or create a shell alias
-alias tmweb='taskmd web start --port 8080 --open --dir ./tasks'
+alias tmweb='taskmd web start --port 8080 --open --task-dir ./tasks'
 ```
 
 ### Environment Variables
@@ -825,11 +831,8 @@ When reporting problems, include:
 
 Planned enhancements:
 
-- [ ] **Inline editing** - Edit tasks in web interface
-- [ ] **Drag and drop** - Reorder and change status
 - [ ] **Dark mode** - Theme toggle
 - [ ] **Keyboard shortcuts** - Power user features
-- [ ] **Task creation** - Create tasks via web
 - [ ] **Filtering UI** - Advanced filter builder
 - [ ] **Export from UI** - Download reports
 - [ ] **User preferences** - Save view settings

@@ -1,7 +1,7 @@
 ---
 id: "170"
 title: "Fix documentation inaccuracies found in audit"
-status: pending
+status: completed
 priority: high
 effort: small
 type: docs
@@ -20,13 +20,13 @@ Fix factual errors and stale information in documentation that could mislead use
 
 ## Tasks
 
-- [ ] Fix `--dir` vs `--task-dir` mismatch in Global Flags sections of `apps/docs/guide/cli.md` and `docs/guides/cli-guide.md` (actual flag is `--task-dir` / `-d`, not `--dir`)
-- [ ] Add `in-review` to `set --status` valid values in both CLI guides
-- [ ] Add missing `set` flags to both CLI guides: `--add-pr`, `--remove-pr`, `--type`, `--verify`
-- [ ] Fix stale "config not implemented" text in `docs/guides/web-guide.md:765-767` (config IS implemented)
-- [ ] Fix Graph view description in `apps/docs/guide/web.md` and `docs/guides/web-guide.md` — uses @xyflow/react (ReactFlow), not Mermaid diagrams
-- [ ] Update future features list in `docs/guides/web-guide.md:828-836` — remove items that are already implemented (drag-and-drop on Board, task editing)
-- [ ] Add `--debug` and `--no-color` global flags to the Global Flags sections in both CLI guides
+- [x] Fix `--dir` vs `--task-dir` mismatch in Global Flags sections of `apps/docs/guide/cli.md` and `docs/guides/cli-guide.md` (actual flag is `--task-dir` / `-d`, not `--dir`)
+- [x] Add `in-review` to `set --status` valid values in both CLI guides
+- [x] Add missing `set` flags to both CLI guides: `--add-pr`, `--remove-pr`, `--type`, `--verify`
+- [x] Fix stale "config not implemented" text in `docs/guides/web-guide.md:765-767` (config IS implemented)
+- [x] Fix Graph view description in `apps/docs/guide/web.md` and `docs/guides/web-guide.md` — uses @xyflow/react (ReactFlow), not Mermaid diagrams
+- [x] Update future features list in `docs/guides/web-guide.md:828-836` — remove items that are already implemented (drag-and-drop on Board, task editing)
+- [x] Add `--debug` and `--no-color` global flags to the Global Flags sections in both CLI guides
 
 ## Acceptance Criteria
 

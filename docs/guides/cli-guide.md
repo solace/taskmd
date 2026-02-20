@@ -594,7 +594,7 @@ taskmd web start [flags]
 - `--port int` - Server port (default 8080)
 - `--open` - Open browser automatically
 - `--dev` - Enable dev mode with CORS
-- `--dir string` - Task directory to serve
+- `-d, --task-dir string` - Task directory to scan
 
 **Examples:**
 ```bash
@@ -605,7 +605,7 @@ taskmd web start --open
 taskmd web start --port 3000 --open
 
 # Specific tasks directory
-taskmd web start --dir ./my-tasks --open
+taskmd web start --task-dir ./my-tasks --open
 
 # Development with Vite
 taskmd web start --dev --port 8080
@@ -696,7 +696,7 @@ taskmd set 042 --done
 |------|---------|-------------|
 | `[task-id]` | | Task ID as positional argument |
 | `--task-id string` | | Task ID to update (alternative to positional) |
-| `--status string` | | New status (`pending`, `in-progress`, `completed`, `blocked`, `cancelled`) |
+| `--status string` | | New status (`pending`, `in-progress`, `in-review`, `completed`, `blocked`, `cancelled`) |
 | `--priority string` | | New priority (`low`, `medium`, `high`, `critical`) |
 | `--effort string` | | New effort (`small`, `medium`, `large`) |
 | `--owner string` | | Owner/assignee of the task |
@@ -705,6 +705,10 @@ taskmd set 042 --done
 | `--dry-run` | `false` | Preview changes without writing to disk |
 | `--add-tag string` | | Add a tag (repeatable) |
 | `--remove-tag string` | | Remove a tag (repeatable) |
+| `--add-pr string` | | Add a PR URL (repeatable) |
+| `--remove-pr string` | | Remove a PR URL (repeatable) |
+| `--type string` | | Work type (`feature`, `bug`, `improvement`, `chore`, `docs`) |
+| `--verify` | `false` | Run verification checks before completing a task |
 
 **Tag management:**
 ```bash
@@ -1246,7 +1250,7 @@ taskmd list              # Uses ./tasks directory
 taskmd web start        # Uses port 3000 and opens browser
 
 # CLI flags still override config
-taskmd list --dir ./other-tasks  # Overrides config dir
+taskmd list --task-dir ./other-tasks  # Overrides config dir
 taskmd web start --port 8080     # Overrides config port
 ```
 
@@ -1343,7 +1347,7 @@ Jira uses Basic authentication (email + API token). Both `token_env` and `user_e
 **1. Shell Aliases:**
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
-alias tm='taskmd --dir ./tasks'
+alias tm='taskmd --task-dir ./tasks'
 alias tmw='taskmd web start --port 8080 --open'
 ```
 
@@ -1357,12 +1361,14 @@ export TASKMD_DIR=./tasks
 Global flags (available for all commands):
 
 ```bash
---config string    # Config file path
---dir string       # Task directory (default ".")
---format string    # Output format (table, json, yaml)
---verbose         # Verbose logging
---quiet           # Suppress non-essential output
---stdin           # Read from stdin instead of files
+--config string       # Config file path
+-d, --task-dir string # Task directory to scan (default ".")
+--format string       # Output format (table, json, yaml)
+--verbose             # Verbose logging
+--quiet               # Suppress non-essential output
+--stdin               # Read from stdin instead of files
+--debug               # Enable debug output (prints to stderr)
+--no-color            # Disable colored output
 ```
 
 ### Environment Variables

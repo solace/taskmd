@@ -360,7 +360,7 @@ taskmd set 042 --priority critical --dry-run
 |------|---------|-------------|
 | `[task-id]` | | Task ID as positional argument |
 | `--task-id` | | Task ID to update (alternative to positional) |
-| `--status` | | New status (`pending`, `in-progress`, `completed`, `blocked`, `cancelled`) |
+| `--status` | | New status (`pending`, `in-progress`, `in-review`, `completed`, `blocked`, `cancelled`) |
 | `--priority` | | New priority (`low`, `medium`, `high`, `critical`) |
 | `--effort` | | New effort (`small`, `medium`, `large`) |
 | `--owner` | | Owner/assignee |
@@ -369,6 +369,10 @@ taskmd set 042 --priority critical --dry-run
 | `--dry-run` | `false` | Preview changes without writing to disk |
 | `--add-tag` | | Add a tag (repeatable) |
 | `--remove-tag` | | Remove a tag (repeatable) |
+| `--add-pr` | | Add a PR URL (repeatable) |
+| `--remove-pr` | | Remove a PR URL (repeatable) |
+| `--type` | | Work type (`feature`, `bug`, `improvement`, `chore`, `docs`) |
+| `--verify` | `false` | Run verification checks before completing a task |
 
 **Tag management:**
 ```bash
@@ -907,7 +911,7 @@ taskmd web start --open
 taskmd web start --port 3000
 
 # Specific tasks directory
-taskmd web start --dir ./my-tasks --open
+taskmd web start --task-dir ./my-tasks --open
 ```
 
 See the [Web Interface Guide](./web) for detailed web UI documentation.
@@ -917,12 +921,14 @@ See the [Web Interface Guide](./web) for detailed web UI documentation.
 Available for all commands:
 
 ```bash
---config string    # Config file path
---dir string       # Task directory (default ".")
---format string    # Output format (table, json, yaml)
---verbose          # Verbose logging
---quiet            # Suppress non-essential output
---stdin            # Read from stdin instead of files
+--config string       # Config file path
+-d, --task-dir string # Task directory to scan (default ".")
+--format string       # Output format (table, json, yaml)
+--verbose             # Verbose logging
+--quiet               # Suppress non-essential output
+--stdin               # Read from stdin instead of files
+--debug               # Enable debug output (prints to stderr)
+--no-color            # Disable colored output
 ```
 
 ## Common Workflows

@@ -17,7 +17,7 @@ taskmd web start --open
 taskmd web start --port 3000 --open
 
 # Specific tasks directory
-taskmd web start --dir ./my-tasks --open
+taskmd web start --task-dir ./my-tasks --open
 ```
 
 The server starts on `http://localhost:8080` by default.
@@ -75,7 +75,7 @@ Visual board with tasks organized in columns.
 
 **URL:** `/graph`
 
-Interactive dependency visualization using Mermaid diagrams.
+Interactive dependency visualization using @xyflow/react (ReactFlow).
 
 ![Graph view showing interactive dependency graph with color-coded task nodes](/images/web/graph.view.png)
 
@@ -191,8 +191,8 @@ open http://localhost:8080
 Run separate instances on different ports:
 
 ```bash
-taskmd web start --dir ~/project1/tasks --port 8081
-taskmd web start --dir ~/project2/tasks --port 8082
+taskmd web start --task-dir ~/project1/tasks --port 8081
+taskmd web start --task-dir ~/project2/tasks --port 8082
 ```
 
 ## Troubleshooting
@@ -209,7 +209,7 @@ taskmd web start --port 3000
 
 ### No Tasks Showing
 
-1. Verify the correct directory: `--dir ./tasks`
+1. Verify the correct directory: `--task-dir ./tasks`
 2. Ensure files have `.md` extension and valid YAML frontmatter
 3. Check browser console (F12) for errors
 4. Run `taskmd validate ./tasks` from the CLI
