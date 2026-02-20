@@ -1,4 +1,4 @@
-.PHONY: build run clean install install-full install-dev install-dev-full test lint lint-fix tidy check web-build web-embed build-full man sync-spec mcpb mcpb-all
+.PHONY: build run clean install install-full install-dev install-dev-full test lint lint-fix tidy check web-build web-embed build-full sync-spec mcpb mcpb-all
 
 # Build the binary
 build:
@@ -74,12 +74,6 @@ web-embed: web-build
 # Build Go binary with embedded web assets
 build-full: web-embed
 	go build -tags embed_web -o taskmd ./cmd/taskmd
-
-# Generate man pages
-man: build
-	mkdir -p man
-	./taskmd man man/
-	@echo "Man pages generated in man/"
 
 # Sync spec copies from the canonical source (docs/taskmd_specification.md).
 # Run this after editing the spec.

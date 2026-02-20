@@ -27,7 +27,6 @@ Fix factual errors and stale information in documentation that could mislead use
 - [ ] Fix Graph view description in `apps/docs/guide/web.md` and `docs/guides/web-guide.md` — uses @xyflow/react (ReactFlow), not Mermaid diagrams
 - [ ] Update future features list in `docs/guides/web-guide.md:828-836` — remove items that are already implemented (drag-and-drop on Board, task editing)
 - [ ] Add `--debug` and `--no-color` global flags to the Global Flags sections in both CLI guides
-- [ ] Remove `man` from VitePress Quick Reference table (it's a hidden command not shown in `--help`)
 
 ## Acceptance Criteria
 

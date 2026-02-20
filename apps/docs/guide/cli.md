@@ -35,7 +35,6 @@ Complete reference for using taskmd from the command line.
 | `init` | Initialize a project with agent configuration and spec files |
 | `commit-msg` | Generate conventional commit messages from task metadata |
 | `mcp` | Start MCP server over stdio |
-| `man` | Generate man pages |
 | `completion` | Generate shell completion scripts |
 
 ---
@@ -805,15 +804,6 @@ taskmd mcp
     }
   }
 }
-```
-
-### man - Generate Man Pages
-
-Generate man pages for all taskmd commands. This command is hidden from normal help output.
-
-```bash
-# Generate man pages to a directory
-taskmd man ./man
 ```
 
 ### report - Generate Reports
