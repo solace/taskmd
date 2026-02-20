@@ -39,9 +39,9 @@ function TableSkeleton() {
 
 function BoardSkeleton() {
   return (
-    <div className="animate-pulse flex gap-4">
+    <div className="animate-pulse flex flex-col sm:flex-row gap-4">
       {Array.from({ length: 4 }, (_, col) => (
-        <div key={col} className="flex-1 min-w-[200px]">
+        <div key={col} className="flex-1 sm:min-w-[200px]">
           <div className="h-6 bg-gray-100 dark:bg-gray-700 rounded mb-3 w-24" />
           {Array.from({ length: 3 - col % 2 }, (_, row) => (
             <div
@@ -57,7 +57,7 @@ function BoardSkeleton() {
 
 function GraphSkeleton() {
   return (
-    <div className="animate-pulse bg-white rounded-lg border border-gray-200 h-[calc(100vh-200px)] min-h-[500px] flex items-center justify-center dark:bg-gray-800 dark:border-gray-700">
+    <div className="animate-pulse bg-white rounded-lg border border-gray-200 h-[calc(100vh-160px)] md:h-[calc(100vh-200px)] min-h-[400px] md:min-h-[500px] flex items-center justify-center dark:bg-gray-800 dark:border-gray-700">
       <div className="text-center">
         <div className="h-8 w-8 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-gray-700" />
         <div className="h-4 bg-gray-100 dark:bg-gray-700 rounded w-32 mx-auto" />

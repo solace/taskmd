@@ -42,7 +42,7 @@ export function FilterBar({
         {hasActiveFilters && (
           <button
             onClick={onClearFilters}
-            className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline"
+            className="min-h-[44px] sm:min-h-0 inline-flex items-center text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline"
           >
             Clear filters
           </button>
@@ -57,7 +57,7 @@ export function FilterBar({
             <button
               key={s}
               onClick={() => onToggleStatus(s)}
-              className={`px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
+              className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
                 active
                   ? STATUS_COLORS[s]
                   : "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400"
@@ -77,7 +77,7 @@ export function FilterBar({
             <button
               key={p}
               onClick={() => onTogglePriority(p)}
-              className={`px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
+              className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
                 active
                   ? PRIORITY_COLORS[p]
                   : "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400"
@@ -97,7 +97,7 @@ export function FilterBar({
             <button
               key={ty}
               onClick={() => onToggleType(ty)}
-              className={`px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
+              className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
                 active
                   ? TYPE_COLORS[ty]
                   : "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400"
@@ -116,7 +116,7 @@ export function FilterBar({
             <button
               key={tag}
               onClick={() => onRemoveTag(tag)}
-              className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full ring-1 ring-blue-300 flex items-center gap-1 transition-colors duration-150 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-700 dark:hover:bg-blue-900/50"
+              className="min-h-[44px] sm:min-h-0 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full ring-1 ring-blue-300 inline-flex items-center gap-1 transition-colors duration-150 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:ring-blue-700 dark:hover:bg-blue-900/50"
             >
               {tag}
               <span className="text-blue-400 dark:text-blue-500">&times;</span>

@@ -86,7 +86,7 @@ export function TaskEditForm({ task, onSave, onCancel, error }: TaskEditFormProp
         />
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Status
@@ -159,7 +159,7 @@ export function TaskEditForm({ task, onSave, onCancel, error }: TaskEditFormProp
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Owner

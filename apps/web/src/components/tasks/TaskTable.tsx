@@ -7,11 +7,12 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useState, useMemo, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import type { Task } from "../../api/types.ts";
 import { STATUSES, PRIORITIES, TYPES } from "./TaskTable/constants.ts";
 import { FilterBar } from "./TaskTable/FilterBar.tsx";
 import { createTaskColumns } from "./TaskTable/columns.tsx";
+import { StatusBadge, PriorityBadge } from "./TaskTable/Badges.tsx";
 import { toggleInSet } from "./TaskTable/utils.ts";
 
 interface TaskTableProps {
@@ -127,7 +128,45 @@ export function TaskTable({ tasks, initialTags }: TaskTableProps) {
         onClearFilters={clearFilters}
         hasActiveFilters={hasActiveFilters}
       />
-      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+      {/* Mobile card list */}
+      <div className="sm:hidden space-y-2">
+        {visibleCount === 0 ? (
+          <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            No tasks match your filters.{" "}
+            <button
+              onClick={clearFilters}
+              className="text-blue-600 hover:underline dark:text-blue-400"
+            >
+              Clear filters
+            </button>
+          </p>
+        ) : (
+          table.getRowModel().rows.map((row) => {
+            const task = row.original;
+            return (
+              <Link
+                key={row.id}
+                to={`/tasks/${task.id}`}
+                className="block rounded-lg border border-gray-200 bg-white p-3 active:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:active:bg-gray-700"
+              >
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="font-mono text-xs text-gray-400">{task.id}</span>
+                  <div className="flex items-center gap-1.5">
+                    <StatusBadge status={task.status} />
+                    {task.priority && <PriorityBadge priority={task.priority} />}
+                  </div>
+                </div>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
+                  {task.title}
+                </p>
+              </Link>
+            );
+          })
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden sm:block overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-50 dark:bg-gray-800">
             {table.getHeaderGroups().map((hg) => (

@@ -35,7 +35,7 @@ function PillRow({ label, items, selected, colors, onToggle }: PillRowProps) {
           <button
             key={item}
             onClick={() => onToggle(item)}
-            className={`px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
+            className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
               active ? (colors[item] ?? "") : INACTIVE_PILL
             }`}
           >

@@ -49,6 +49,7 @@ export function createTaskColumns(
     }),
     columnHelper.accessor("priority", {
       header: "Priority",
+      meta: { className: "hidden sm:table-cell" },
       cell: (info) => {
         const v = info.getValue();
         return v ? <PriorityBadge priority={v} /> : null;

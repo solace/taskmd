@@ -1,7 +1,7 @@
 ---
 id: "181"
 title: "Add responsive mobile design to web UI"
-status: pending
+status: completed
 priority: medium
 effort: large
 type: improvement

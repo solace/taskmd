@@ -46,7 +46,7 @@ export function GraphSearch({ query, onQueryChange, matchedNodeIds }: GraphSearc
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
         placeholder="Search tasks..."
-        className="w-48 px-2.5 py-1 text-xs border border-gray-200 rounded-full bg-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+        className="w-full sm:w-48 px-2.5 py-1 text-xs border border-gray-200 rounded-full bg-white focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
       />
       {query && (
         <>

@@ -55,7 +55,7 @@ export function TaskDetailPage() {
 
   return (
     <div>
-      <div className="bg-white border border-gray-200 rounded-lg p-6 dark:bg-gray-800 dark:border-gray-700">
+      <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 dark:bg-gray-800 dark:border-gray-700">
         {isEditing && !readonly ? (
           <TaskEditForm
             task={task}
@@ -80,7 +80,7 @@ export function TaskDetailPage() {
                 {!readonly && (
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
+                    className="min-h-[44px] sm:min-h-0 inline-flex items-center px-3 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded hover:bg-gray-200 dark:text-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
                   >
                     Edit
                   </button>
@@ -121,7 +121,7 @@ export function TaskDetailPage() {
                     <Link
                       key={dep}
                       to={`/tasks/${dep}`}
-                      className="px-2 py-1 text-xs font-mono bg-gray-100 rounded hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
+                      className="min-h-[44px] sm:min-h-0 inline-flex items-center px-2 py-1 text-xs font-mono bg-gray-100 rounded hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600"
                     >
                       {dep}
                     </Link>
@@ -140,7 +140,7 @@ export function TaskDetailPage() {
                     <Link
                       key={t}
                       to={`/tasks?tag=${encodeURIComponent(t)}`}
-                      className="px-1.5 py-0.5 text-xs bg-gray-100 rounded cursor-pointer hover:bg-gray-200 transition-colors duration-150 dark:bg-gray-700 dark:hover:bg-gray-600"
+                      className="min-h-[44px] sm:min-h-0 inline-flex items-center px-1.5 py-0.5 text-xs bg-gray-100 rounded cursor-pointer hover:bg-gray-200 transition-colors duration-150 dark:bg-gray-700 dark:hover:bg-gray-600"
                     >
                       {t}
                     </Link>
@@ -191,7 +191,7 @@ export function TaskDetailPage() {
             )}
 
             {task.file_path && (
-              <div className="mt-4 text-xs text-gray-400 font-mono">
+              <div className="mt-4 text-xs text-gray-400 font-mono break-all">
                 {task.file_path}
               </div>
             )}

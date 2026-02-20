@@ -18,7 +18,7 @@ export function GraphFilters({ selectedStatuses, onToggleStatus, onClearFilters 
           <button
             key={s}
             onClick={() => onToggleStatus(s)}
-            className={`px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
+            className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
               active
                 ? STATUS_COLORS[s]
                 : "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400"
@@ -31,7 +31,7 @@ export function GraphFilters({ selectedStatuses, onToggleStatus, onClearFilters 
       {hasFilters && (
         <button
           onClick={onClearFilters}
-          className="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline ml-1"
+          className="min-h-[44px] sm:min-h-0 inline-flex items-center text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 underline ml-1"
         >
           Clear
         </button>
