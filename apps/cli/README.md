@@ -69,8 +69,11 @@ make run
 # Clean
 make clean
 
-# Run tests
+# Run unit/integration tests
 make test
+
+# Run e2e tests (builds binary, tests full CLI)
+make e2e
 
 # Run linter
 make lint

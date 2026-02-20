@@ -1,7 +1,7 @@
 ---
 id: "177"
 title: "E2e tests for config loading and precedence"
-status: pending
+status: completed
 priority: medium
 effort: small
 type: improvement
@@ -22,11 +22,11 @@ Test that `.taskmd.yaml` configuration files are loaded correctly and that the p
 
 ## Tasks
 
-- [ ] Test project-level `.taskmd.yaml`: create config in task dir, verify it affects command behavior
-- [ ] Test home-level config: create `.taskmd.yaml` in overridden HOME, verify it's picked up
-- [ ] Test CLI flag overrides config: set a value in config, override with flag, verify flag wins
-- [ ] Test default behavior with no config file present
-- [ ] Test config options that affect output: e.g. `worklogs: false`, default format settings
+- [x] Test project-level `.taskmd.yaml`: create config in task dir, verify it affects command behavior
+- [x] Test home-level config: create `.taskmd.yaml` in overridden HOME, verify it's picked up
+- [x] Test CLI flag overrides config: set a value in config, override with flag, verify flag wins
+- [x] Test default behavior with no config file present
+- [x] Test config options that affect output: e.g. `worklogs: false`, default format settings
 
 ## Acceptance Criteria
 

@@ -70,7 +70,7 @@ When implementing new CLI commands or features:
 ### Running Tests
 
 ```bash
-# Run all tests
+# Run unit/integration tests
 cd apps/cli && go test ./...
 
 # Run specific test
@@ -82,6 +82,23 @@ go test -v ./internal/cli -run TestGraphCommand
 # Run with coverage
 go test -cover ./...
 ```
+
+### Running E2E Tests
+
+E2E tests build the real binary and invoke it as a subprocess, testing the full CLI including config loading, argument parsing, and output formatting.
+
+```bash
+# Run all e2e tests
+cd apps/cli && make e2e
+
+# Run a specific e2e test group
+go test -tags e2e -count=1 -run TestConfig ./internal/e2e/...
+
+# Run with verbose output
+go test -tags e2e -count=1 -v ./internal/e2e/...
+```
+
+**Note:** `make test` does **not** include e2e tests. Run `make e2e` separately.
 
 ### Test Coverage Goals
 
@@ -433,15 +450,16 @@ Types:
 ### Before Committing
 
 1. **Run tests:** `make test` or `go test ./...`
-2. **Run linter:** `make lint` or `golangci-lint run`
-3. **Build successfully:** `make build` or `go build ./...`
-4. **Test with development binary:** Install and test your changes
+2. **Run e2e tests:** `make e2e`
+3. **Run linter:** `make lint` or `golangci-lint run`
+4. **Build successfully:** `make build` or `go build ./...`
+5. **Test with development binary:** Install and test your changes
    ```bash
    make install-dev
    taskmd-dev list    # Test basic functionality
    taskmd-dev next    # Test your specific changes
    ```
-5. **Update relevant documentation**
+6. **Update relevant documentation**
 
 All checks (test, lint, build, manual testing) should pass before committing.
 

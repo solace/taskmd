@@ -67,6 +67,23 @@ jobs:
         working-directory: apps/cli
         run: go build -v ./cmd/taskmd
 
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [build-cli]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run e2e tests
+        working-directory: apps/cli
+        run: go test -tags e2e -count=1 -v ./internal/e2e/...
+
   build-web:
     name: Build Web Frontend
     runs-on: ubuntu-latest

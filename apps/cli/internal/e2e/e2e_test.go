@@ -73,30 +73,22 @@ type runResult struct {
 	ExitCode int
 }
 
-// run executes the taskmd binary with the given arguments in the specified
-// working directory. It returns stdout, stderr, and any error.
-//
-// The subprocess environment is isolated:
-//   - HOME is set to a temp directory (prevents loading user config)
-//   - NO_COLOR=1 is set for deterministic output
-//   - XDG_CONFIG_HOME is cleared
-func run(t *testing.T, dir string, args ...string) runResult {
-	t.Helper()
-
+// buildCmd creates an exec.Cmd for the taskmd binary with the given working
+// directory and arguments. The caller is responsible for setting Env and
+// capturing output.
+func buildCmd(dir string, args ...string) *exec.Cmd {
 	cmd := exec.Command(binaryPath, args...)
 	cmd.Dir = dir
+	return cmd
+}
+
+// execCmd runs a prepared command and returns the result.
+func execCmd(t *testing.T, cmd *exec.Cmd, args []string) runResult {
+	t.Helper()
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-
-	// Isolate from user environment.
-	homeDir := t.TempDir()
-	cmd.Env = []string{
-		"HOME=" + homeDir,
-		"NO_COLOR=1",
-		"PATH=" + os.Getenv("PATH"),
-	}
 
 	err := cmd.Run()
 
@@ -114,6 +106,29 @@ func run(t *testing.T, dir string, args ...string) runResult {
 		Stderr:   stderr.String(),
 		ExitCode: exitCode,
 	}
+}
+
+// run executes the taskmd binary with the given arguments in the specified
+// working directory. It returns stdout, stderr, and any error.
+//
+// The subprocess environment is isolated:
+//   - HOME is set to a temp directory (prevents loading user config)
+//   - NO_COLOR=1 is set for deterministic output
+//   - XDG_CONFIG_HOME is cleared
+func run(t *testing.T, dir string, args ...string) runResult {
+	t.Helper()
+
+	cmd := buildCmd(dir, args...)
+
+	// Isolate from user environment.
+	homeDir := t.TempDir()
+	cmd.Env = []string{
+		"HOME=" + homeDir,
+		"NO_COLOR=1",
+		"PATH=" + os.Getenv("PATH"),
+	}
+
+	return execCmd(t, cmd, args)
 }
 
 // mustRun executes the taskmd binary and fails the test if it returns a
