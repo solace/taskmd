@@ -1,4 +1,4 @@
-.PHONY: build run clean install install-full install-dev install-dev-full test lint lint-fix tidy check web-build web-embed build-full sync-spec mcpb mcpb-all
+.PHONY: build run clean install install-full install-dev install-dev-full test e2e lint lint-fix tidy check web-build web-embed build-full sync-spec mcpb mcpb-all
 
 # Build the binary
 build:
@@ -39,9 +39,13 @@ install-dev-full: web-embed
 	@echo "Installed development binary (with web) to ~/bin/taskmd-dev"
 	@echo "Usage: taskmd-dev [command]"
 
-# Run tests
+# Run unit and integration tests (excludes e2e)
 test:
 	go test ./...
+
+# Run end-to-end tests (builds binary and tests as subprocess)
+e2e:
+	go test -tags e2e -count=1 ./internal/e2e/...
 
 GOLANGCI_LINT := $(shell command -v golangci-lint 2>/dev/null || echo $(shell go env GOPATH)/bin/golangci-lint)
 

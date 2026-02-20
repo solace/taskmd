@@ -1,7 +1,7 @@
 ---
 id: "174"
 title: "Set up e2e test foundation and helpers"
-status: pending
+status: completed
 priority: medium
 effort: medium
 type: improvement
@@ -20,16 +20,16 @@ Create the e2e test package, build infrastructure, and shared helpers that all s
 
 ## Tasks
 
-- [ ] Create test package (e.g. `apps/cli/internal/e2e/e2e_test.go`)
-- [ ] Implement `TestMain` that builds the `taskmd` binary once into a temp directory
-- [ ] Implement `run(t, dir, args...) (stdout, stderr, error)` helper that invokes the binary as a subprocess
-- [ ] Implement `mustRun(t, dir, args...)` helper that fails the test on non-zero exit
-- [ ] Implement `writeTask(t, dir, filename, id, title, status, deps)` helper for creating test task files
-- [ ] Isolate tests from user config by overriding `HOME` env var to a temp directory
-- [ ] Set `NO_COLOR=1` in subprocess env for deterministic output
-- [ ] Add `make e2e` target to Makefile that runs only the e2e test package
-- [ ] Ensure `make test` still runs unit/integration tests and does not include e2e tests
-- [ ] Add a basic smoke test: `taskmd --help` returns exit code 0 and includes expected output
+- [x] Create test package (e.g. `apps/cli/internal/e2e/e2e_test.go`)
+- [x] Implement `TestMain` that builds the `taskmd` binary once into a temp directory
+- [x] Implement `run(t, dir, args...) (stdout, stderr, error)` helper that invokes the binary as a subprocess
+- [x] Implement `mustRun(t, dir, args...)` helper that fails the test on non-zero exit
+- [x] Implement `writeTask(t, dir, filename, id, title, status, deps)` helper for creating test task files
+- [x] Isolate tests from user config by overriding `HOME` env var to a temp directory
+- [x] Set `NO_COLOR=1` in subprocess env for deterministic output
+- [x] Add `make e2e` target to Makefile that runs only the e2e test package
+- [x] Ensure `make test` still runs unit/integration tests and does not include e2e tests
+- [x] Add a basic smoke test: `taskmd --help` returns exit code 0 and includes expected output
 
 ## Acceptance Criteria
 
