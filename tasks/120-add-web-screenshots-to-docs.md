@@ -1,7 +1,7 @@
 ---
 id: "120"
 title: "Add web interface screenshots to documentation"
-status: in-progress
+status: completed
 priority: medium
 effort: medium
 tags: [documentation, web]
