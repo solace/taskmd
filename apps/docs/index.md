@@ -8,7 +8,7 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: /getting-started/
+      link: /getting-started/tutorial
     - theme: alt
       text: View on GitHub
       link: https://github.com/driangle/taskmd

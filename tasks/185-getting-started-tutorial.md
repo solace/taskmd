@@ -1,7 +1,7 @@
 ---
 id: "185"
 title: "Write a getting started tutorial guide"
-status: pending
+status: completed
 priority: high
 effort: medium
 type: docs
@@ -19,18 +19,18 @@ Create a step-by-step tutorial that walks new users through setting up taskmd an
 
 ## Tasks
 
-- [ ] Write an introductory section explaining what taskmd is and who it's for
-- [ ] Write a step-by-step installation section (Homebrew, GitHub releases, from source)
-- [ ] Walk through `taskmd init` to set up a new project
-- [ ] Show creating the first task with `taskmd add`
-- [ ] Demonstrate listing and filtering tasks with `taskmd list`
-- [ ] Show updating task status with `taskmd set`
-- [ ] Introduce the dependency graph with `taskmd graph`
-- [ ] Walk through using `taskmd next` for task recommendations
-- [ ] Show launching the web dashboard with `taskmd web start`
-- [ ] Add a section on using taskmd with AI assistants (Claude Code, Cursor)
-- [ ] Include screenshots or terminal output examples for each step
-- [ ] Add the guide to the docs site navigation
+- [x] Write an introductory section explaining what taskmd is and who it's for
+- [x] Write a step-by-step installation section (Homebrew, GitHub releases, from source)
+- [x] Walk through `taskmd init` to set up a new project
+- [x] Show creating the first task with `taskmd add`
+- [x] Demonstrate listing and filtering tasks with `taskmd list`
+- [x] Show updating task status with `taskmd set`
+- [x] Introduce the dependency graph with `taskmd graph`
+- [x] Walk through using `taskmd next` for task recommendations
+- [x] Show launching the web dashboard with `taskmd web start`
+- [x] Add a section on using taskmd with AI assistants (Claude Code, Cursor)
+- [x] Include screenshots or terminal output examples for each step
+- [x] Add the guide to the docs site navigation
 
 ## Acceptance Criteria
 

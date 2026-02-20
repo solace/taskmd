@@ -2,6 +2,10 @@
 
 Get up and running with taskmd in under 5 minutes.
 
+::: tip Looking for a full walkthrough?
+See the **[Tutorial](/getting-started/tutorial)** for a comprehensive, step-by-step guide covering installation, project setup, CLI usage, the web dashboard, and AI assistant integration.
+:::
+
 ## What You'll Learn
 
 - Install taskmd
