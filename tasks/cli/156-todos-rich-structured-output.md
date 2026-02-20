@@ -1,7 +1,7 @@
 ---
 id: "156"
 title: "Extend todos list with rich structured output for agent consumption"
-status: in-progress
+status: completed
 priority: medium
 effort: large
 type: feature
@@ -24,31 +24,31 @@ Extend the `taskmd todos list` command so every TODO is a structured object that
 
 **Default output** (always included — cheap to compute):
 
-| Field | Description |
-|-------|-------------|
-| `id` | Stable fingerprint hash (file + line + marker + text) |
-| `file` | Relative file path (already exists) |
-| `line` | Line number (already exists) |
-| `column` | Character offset of the marker within the line |
-| `language` | Language name derived from extension (e.g. "go", "python") |
-| `tag` | Marker type: TODO, FIXME, HACK, etc. (rename of existing `marker` field) |
-| `text` | Cleaned comment text (already exists) |
+| Field      | Description                                                              |
+| ---------- | ------------------------------------------------------------------------ |
+| `id`       | Stable fingerprint hash (file + line + marker + text)                    |
+| `file`     | Relative file path (already exists)                                      |
+| `line`     | Line number (already exists)                                             |
+| `column`   | Character offset of the marker within the line                           |
+| `language` | Language name derived from extension (e.g. "go", "python")               |
+| `tag`      | Marker type: TODO, FIXME, HACK, etc. (rename of existing `marker` field) |
+| `text`     | Cleaned comment text (already exists)                                    |
 
 **Optional flags:**
 
-| Flag | Field | Description |
-|------|-------|-------------|
+| Flag         | Field      | Description                                                           |
+| ------------ | ---------- | --------------------------------------------------------------------- |
 | `--raw-text` | `raw_text` | Include unprocessed original comment line(s) as they appear in source |
 
 **Rich output** (`--rich` flag — requires git calls / code analysis):
 
-| Field | Description |
-|-------|-------------|
-| `scope` | Enclosing function/class/component name |
-| `blame.author` | Author from `git blame` |
-| `blame.commit` | Commit hash from `git blame` |
-| `blame.date` | Commit date from `git blame` |
-| `age` | Days since the blame commit date |
+| Field          | Description                             |
+| -------------- | --------------------------------------- |
+| `scope`        | Enclosing function/class/component name |
+| `blame.author` | Author from `git blame`                 |
+| `blame.commit` | Commit hash from `git blame`            |
+| `blame.date`   | Commit date from `git blame`            |
+| `age`          | Days since the blame commit date        |
 
 ## Tasks
 
