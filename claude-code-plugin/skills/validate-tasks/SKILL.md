@@ -1,5 +1,5 @@
 ---
-name: validate
+name: validate-tasks
 description: Validate task files for format and convention errors. Use when the user wants to check their task files.
 allowed-tools: Bash
 ---
