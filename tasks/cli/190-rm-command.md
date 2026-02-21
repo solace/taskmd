@@ -27,20 +27,21 @@ Add a new `rm` CLI command that deletes a task file by ID. This provides a direc
   - Scan for the task, resolve it by ID
   - Display task details (ID, title, file path) and prompt for confirmation
   - Delete the task file on confirmation
-- [ ] Add `--yes` / `-y` flag to skip interactive confirmation
+- [ ] Add `--force` / `-f` flag to skip interactive confirmation
 - [ ] Add `--dry-run` flag to preview what would be deleted without acting
 - [ ] Handle edge cases: task not found, file already deleted, permission errors
 - [ ] Create `internal/cli/rm_test.go` with comprehensive tests
   - Test successful deletion
   - Test dry-run mode
   - Test task not found error
-  - Test with `--yes` flag
+  - Test with `--force` flag
 - [ ] Update help text with examples
 
 ## Acceptance Criteria
 
 - `taskmd rm 042` prompts for confirmation then deletes the task file
-- `taskmd rm 042 -y` deletes without prompting
+- `taskmd rm 042 -f` deletes without prompting
+- `taskmd rm 042 --force` deletes without prompting
 - `taskmd rm 042 --dry-run` shows what would be deleted without acting
 - Clear error message when task ID doesn't exist
 - All existing tests continue to pass
