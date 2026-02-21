@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/driangle/taskmd/apps/cli/internal/graph"
+	"github.com/driangle/taskmd/apps/cli/internal/markdown"
 	"github.com/driangle/taskmd/apps/cli/internal/model"
 	"github.com/driangle/taskmd/apps/cli/internal/scanner"
 	"github.com/driangle/taskmd/apps/cli/internal/taskcontext"
@@ -24,6 +25,7 @@ var (
 	getExact       bool
 	getThreshold   float64
 	getShowContext bool
+	getRawMarkdown bool
 )
 
 // getStdinReader is the reader used for interactive selection prompts.
@@ -75,11 +77,13 @@ func init() {
 	getCmd.Flags().BoolVar(&getExact, "exact", false, "disable fuzzy matching, exact only")
 	getCmd.Flags().Float64Var(&getThreshold, "threshold", 0.6, "fuzzy match sensitivity (0.0-1.0)")
 	getCmd.Flags().BoolVar(&getShowContext, "context", false, "include context files in output")
+	getCmd.Flags().BoolVar(&getRawMarkdown, "raw-markdown", false, "display raw markdown without formatting")
 
 	showCmd.Flags().StringVar(&getFormat, "format", "text", "output format (text, json, yaml)")
 	showCmd.Flags().BoolVar(&getExact, "exact", false, "disable fuzzy matching, exact only")
 	showCmd.Flags().Float64Var(&getThreshold, "threshold", 0.6, "fuzzy match sensitivity (0.0-1.0)")
 	showCmd.Flags().BoolVar(&getShowContext, "context", false, "include context files in output")
+	showCmd.Flags().BoolVar(&getRawMarkdown, "raw-markdown", false, "display raw markdown without formatting")
 }
 
 func runGet(cmd *cobra.Command, args []string) error {
@@ -430,7 +434,7 @@ func outputGetText(task *model.Task, deps dependencyInfo, ctxFiles []taskcontext
 	}
 	fmt.Fprintf(w, "%s %s\n", formatLabel("File:", r), formatDim(task.FilePath, r))
 	printWorklogInfo(w, wl, r)
-	printDescription(w, task.Body)
+	printDescription(w, task.Body, r, getRawMarkdown)
 	printDependencies(w, deps, r)
 	printChildren(w, deps.Children, r)
 	printGetContextFiles(w, ctxFiles, r)
@@ -475,12 +479,16 @@ func printPRs(w io.Writer, prs []string, r *lipgloss.Renderer) {
 	}
 }
 
-func printDescription(w io.Writer, body string) {
+func printDescription(w io.Writer, body string, r *lipgloss.Renderer, raw bool) {
 	if body == "" {
 		return
 	}
 	separator := strings.Repeat("\u2500", 49)
-	fmt.Fprintf(w, "\nDescription:\n%s\n%s\n%s\n", separator, strings.TrimSpace(body), separator)
+	content := strings.TrimSpace(body)
+	if !raw {
+		content = markdown.Render(content, r)
+	}
+	fmt.Fprintf(w, "\nDescription:\n%s\n%s\n%s\n", separator, content, separator)
 }
 
 func printDependencies(w io.Writer, deps dependencyInfo, r *lipgloss.Renderer) {

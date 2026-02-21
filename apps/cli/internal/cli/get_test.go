@@ -78,6 +78,7 @@ func resetGetFlags() {
 	getFormat = "text"
 	getExact = false
 	getThreshold = 0.6
+	getRawMarkdown = false
 	taskDir = "."
 }
 
@@ -814,5 +815,86 @@ func TestGet_ChildrenJSON(t *testing.T) {
 	}
 	if result.Children[0].ID != "011" {
 		t.Errorf("Expected child ID '011', got %q", result.Children[0].ID)
+	}
+}
+
+func createMarkdownTestFiles(t *testing.T) string {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+
+	task := `---
+id: "md-001"
+title: "Markdown test task"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+
+# Heading
+
+This has **bold** and ` + "`code`" + ` text.
+
+- [ ] Unchecked
+- [x] Checked
+`
+	path := filepath.Join(tmpDir, "md-001-test.md")
+	if err := os.WriteFile(path, []byte(task), 0644); err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+	return tmpDir
+}
+
+func TestGet_RawMarkdown(t *testing.T) {
+	tmpDir := createMarkdownTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+	getRawMarkdown = true
+
+	output := captureGetOutput(t, "md-001")
+
+	// Raw mode: markdown delimiters should be preserved
+	if !strings.Contains(output, "# Heading") {
+		t.Error("Expected raw '# Heading' preserved with --raw-markdown")
+	}
+	if !strings.Contains(output, "**bold**") {
+		t.Error("Expected raw '**bold**' preserved with --raw-markdown")
+	}
+	if !strings.Contains(output, "- [ ] Unchecked") {
+		t.Error("Expected raw '- [ ]' preserved with --raw-markdown")
+	}
+	if !strings.Contains(output, "- [x] Checked") {
+		t.Error("Expected raw '- [x]' preserved with --raw-markdown")
+	}
+}
+
+func TestGet_FormattedMarkdown(t *testing.T) {
+	tmpDir := createMarkdownTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+	noColor = false
+	forceColor = true
+	defer func() { forceColor = false }()
+
+	output := captureGetOutput(t, "md-001")
+
+	// Formatted mode: markdown delimiters should be stripped
+	if strings.Contains(output, "# Heading") {
+		t.Error("Expected '# Heading' to be formatted, not raw")
+	}
+	if strings.Contains(output, "**bold**") {
+		t.Error("Expected '**bold**' to be formatted, not raw")
+	}
+	if !strings.Contains(output, "Heading") {
+		t.Error("Expected heading text preserved after formatting")
+	}
+	if !strings.Contains(output, "bold") {
+		t.Error("Expected bold text preserved after formatting")
+	}
+	// Should contain ANSI codes since we forced color
+	if !strings.Contains(output, "\x1b[") {
+		t.Error("Expected ANSI codes in formatted output")
 	}
 }
