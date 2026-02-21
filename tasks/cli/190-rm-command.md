@@ -1,7 +1,7 @@
 ---
 id: "190"
 title: "Add rm command to delete task files"
-status: pending
+status: completed
 priority: medium
 effort: small
 type: feature
@@ -21,21 +21,21 @@ Add a new `rm` CLI command that deletes a task file by ID. This provides a direc
 
 ## Tasks
 
-- [ ] Create `internal/cli/rm.go` with cobra command
+- [x] Create `internal/cli/rm.go` with cobra command
   - Use: `rm <task-id>`
   - Accept task ID as required positional argument (`cobra.ExactArgs(1)`)
   - Scan for the task, resolve it by ID
   - Display task details (ID, title, file path) and prompt for confirmation
   - Delete the task file on confirmation
-- [ ] Add `--force` / `-f` flag to skip interactive confirmation
-- [ ] Add `--dry-run` flag to preview what would be deleted without acting
-- [ ] Handle edge cases: task not found, file already deleted, permission errors
-- [ ] Create `internal/cli/rm_test.go` with comprehensive tests
+- [x] Add `--force` / `-f` flag to skip interactive confirmation
+- [x] Add `--dry-run` flag to preview what would be deleted without acting
+- [x] Handle edge cases: task not found, file already deleted, permission errors
+- [x] Create `internal/cli/rm_test.go` with comprehensive tests
   - Test successful deletion
   - Test dry-run mode
   - Test task not found error
   - Test with `--force` flag
-- [ ] Update help text with examples
+- [x] Update help text with examples
 
 ## Acceptance Criteria
 
