@@ -41,3 +41,5 @@ settings.local.json
 
 # VitePress (docs)
 apps/docs/.vitepress/cache
+
+coverage.out
