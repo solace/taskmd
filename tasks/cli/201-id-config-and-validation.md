@@ -1,7 +1,7 @@
 ---
 id: "201"
 title: "Add ID strategy config section to .taskmd.yaml"
-status: in-progress
+status: completed
 priority: high
 effort: medium
 type: feature
@@ -29,13 +29,13 @@ id:
 
 ## Tasks
 
-- [ ] Add `"id"` to `knownConfigKeys` in `validator/validator.go`
-- [ ] Add `IDConfig` struct to `ConfigData` in `validator/validator.go`
-- [ ] Add config validation: valid strategy enum, prefix required for `prefixed`, length/padding > 0
-- [ ] Expose resolved ID config via viper in `cli/root.go` (helper function)
-- [ ] Update `deriveFieldsFromFilename()` in `parser/markdown.go` to handle non-digit-starting filenames (prefix and random IDs)
-- [ ] Add `id` section to `docs/taskmd_specification.md` and run `make sync-spec`
-- [ ] Add tests for config validation and parser changes
+- [x] Add `"id"` to `knownConfigKeys` in `validator/validator.go`
+- [x] Add `IDConfig` struct to `ConfigData` in `validator/validator.go`
+- [x] Add config validation: valid strategy enum, prefix required for `prefixed`, length/padding > 0
+- [x] Expose resolved ID config via viper in `cli/root.go` (helper function)
+- [x] Update `deriveFieldsFromFilename()` in `parser/markdown.go` to handle non-digit-starting filenames (prefix and random IDs)
+- [x] Add `id` section to `docs/taskmd_specification.md` and run `make sync-spec`
+- [x] Add tests for config validation and parser changes
 
 ## Acceptance Criteria
 
