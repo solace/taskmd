@@ -218,6 +218,47 @@ workflow: pr-review
 
 When using `--done` in `pr-review` mode, the CLI sets status to `in-review` instead of `completed`.
 
+## ID Generation
+
+The `id` section in `.taskmd.yaml` configures how task IDs are generated.
+
+### Configuration
+
+```yaml
+# .taskmd.yaml
+id:
+  strategy: sequential  # "sequential", "prefixed", or "random"
+  prefix: ""            # required when strategy is "prefixed"
+  length: 6             # ID length (used by random strategy)
+  padding: 3            # zero-padding width (used by sequential strategy)
+```
+
+### Strategies
+
+| Strategy | Format | Example Filename | Derived ID |
+|----------|--------|-----------------|------------|
+| `sequential` (default) | Zero-padded number | `009-add-feature.md` | `009` |
+| `prefixed` | Prefix + number | `dr-001-fix-login.md` | `dr-001` |
+| `random` | Alphanumeric string | `a3f9x2-slug-title.md` | `a3f9x2` |
+
+### Defaults
+
+When the `id` section is omitted, the following defaults apply:
+
+| Field | Default |
+|-------|---------|
+| `strategy` | `sequential` |
+| `length` | `6` |
+| `padding` | `3` |
+
+### Filename Patterns
+
+The parser automatically derives task IDs from filenames based on these patterns:
+
+- **Sequential**: Filename starts with digits — `001-slug.md` → ID `001`
+- **Prefixed**: Lowercase alpha prefix, hyphen, digits — `dr-001-slug.md` → ID `dr-001`
+- **Random**: 3-8 lowercase alphanumeric chars with at least one digit — `a3f9x2-slug.md` → ID `a3f9x2`
+
 ## File Organization
 
 ### File Naming

@@ -746,6 +746,96 @@ func TestValidateConfig_WithScopes(t *testing.T) {
 	}
 }
 
+// --- parseIDConfig tests ---
+
+func TestParseIDConfig_FullConfig(t *testing.T) {
+	raw := map[string]any{
+		"strategy": "prefixed",
+		"prefix":   "dr",
+		"length":   6,
+		"padding":  3,
+	}
+
+	cfg := parseIDConfig(raw)
+
+	if cfg == nil {
+		t.Fatal("expected non-nil IDConfig")
+	}
+	if cfg.Strategy != "prefixed" {
+		t.Errorf("Strategy = %q, want %q", cfg.Strategy, "prefixed")
+	}
+	if cfg.Prefix != "dr" {
+		t.Errorf("Prefix = %q, want %q", cfg.Prefix, "dr")
+	}
+	if cfg.Length != 6 {
+		t.Errorf("Length = %d, want 6", cfg.Length)
+	}
+	if cfg.Padding != 3 {
+		t.Errorf("Padding = %d, want 3", cfg.Padding)
+	}
+}
+
+func TestParseIDConfig_PartialConfig(t *testing.T) {
+	raw := map[string]any{
+		"strategy": "sequential",
+	}
+
+	cfg := parseIDConfig(raw)
+
+	if cfg == nil {
+		t.Fatal("expected non-nil IDConfig")
+	}
+	if cfg.Strategy != "sequential" {
+		t.Errorf("Strategy = %q, want %q", cfg.Strategy, "sequential")
+	}
+	if cfg.Prefix != "" {
+		t.Errorf("Prefix = %q, want empty", cfg.Prefix)
+	}
+	if cfg.Length != 0 {
+		t.Errorf("Length = %d, want 0", cfg.Length)
+	}
+	if cfg.Padding != 0 {
+		t.Errorf("Padding = %d, want 0", cfg.Padding)
+	}
+}
+
+func TestParseIDConfig_Nil(t *testing.T) {
+	cfg := parseIDConfig(nil)
+
+	if cfg != nil {
+		t.Errorf("expected nil, got %+v", cfg)
+	}
+}
+
+func TestParseIDConfig_NotAMap(t *testing.T) {
+	cfg := parseIDConfig("not-a-map")
+
+	if cfg != nil {
+		t.Errorf("expected nil for non-map input, got %+v", cfg)
+	}
+}
+
+func TestParseIDConfig_ViperIntTypes(t *testing.T) {
+	// Viper may return int64 or float64 for numeric values
+	raw := map[string]any{
+		"strategy": "random",
+		"length":   int64(8),
+		"padding":  float64(4),
+	}
+
+	cfg := parseIDConfig(raw)
+
+	if cfg == nil {
+		t.Fatal("expected non-nil IDConfig")
+	}
+	if cfg.Length != 8 {
+		t.Errorf("Length = %d, want 8", cfg.Length)
+	}
+	if cfg.Padding != 4 {
+		t.Errorf("Padding = %d, want 4", cfg.Padding)
+	}
+}
+
 func TestParseScopeEntries_NonMapEntry(t *testing.T) {
 	// Test with a scope value that is not a map (e.g., a string)
 	scopeMap := map[string]any{

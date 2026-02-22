@@ -92,25 +92,111 @@ func ParseTaskContent(filePath string, content []byte) (*model.Task, error) {
 	return task, nil
 }
 
-// deriveFieldsFromFilename extracts ID and title from a filename like "009-add-microsoft-oauth.md".
-// Only derives fields when the filename starts with a digit (task ID convention).
+// deriveFieldsFromFilename extracts ID and title from a filename.
+// Supports three patterns:
+//  1. Sequential: "009-add-feature.md" → ID="009"
+//  2. Prefixed:   "dr-001-fix-login.md" → ID="dr-001"
+//  3. Random:     "a3f9x2-slug-title.md" → ID="a3f9x2"
 func deriveFieldsFromFilename(task *model.Task) {
 	base := filepath.Base(task.FilePath)
 	name := strings.TrimSuffix(base, filepath.Ext(base))
 
-	if len(name) == 0 || name[0] < '0' || name[0] > '9' {
+	if len(name) == 0 {
 		return
 	}
 
-	parts := strings.SplitN(name, "-", 2)
+	id, slug := splitFilenameID(name)
+	if id == "" {
+		return
+	}
 
 	if task.ID == "" {
-		task.ID = parts[0]
+		task.ID = id
+	}
+	if task.Title == "" && slug != "" {
+		task.Title = strings.ReplaceAll(slug, "-", " ")
+	}
+}
+
+// splitFilenameID identifies the ID portion and remaining slug from a filename stem.
+// Returns ("", "") if no ID pattern matches.
+func splitFilenameID(name string) (id, slug string) {
+	parts := strings.SplitN(name, "-", 2)
+
+	// Pattern 1: Sequential — starts with digit (e.g. "009-add-feature")
+	if name[0] >= '0' && name[0] <= '9' {
+		slug := ""
+		if len(parts) == 2 {
+			slug = parts[1]
+		}
+		return parts[0], slug
 	}
 
-	if task.Title == "" && len(parts) == 2 {
-		task.Title = strings.ReplaceAll(parts[1], "-", " ")
+	if len(parts) < 2 {
+		return "", ""
 	}
+
+	// Pattern 2: Prefixed — alpha prefix + hyphen + digits (e.g. "dr-001-fix-login")
+	if isAlpha(parts[0]) {
+		restParts := strings.SplitN(parts[1], "-", 2)
+		if isNumeric(restParts[0]) {
+			slug := ""
+			if len(restParts) == 2 {
+				slug = restParts[1]
+			}
+			return parts[0] + "-" + restParts[0], slug
+		}
+	}
+
+	// Pattern 3: Random — 3-8 lowercase alphanumeric with at least one digit
+	if isAlphanumericID(parts[0]) {
+		return parts[0], parts[1]
+	}
+
+	return "", ""
+}
+
+// isNumeric returns true if s is non-empty and all characters are digits.
+func isNumeric(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// isAlpha returns true if s is non-empty and all characters are lowercase letters.
+func isAlpha(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for _, c := range s {
+		if c < 'a' || c > 'z' {
+			return false
+		}
+	}
+	return true
+}
+
+// isAlphanumericID returns true if s is 3-8 lowercase alphanumeric chars with at least one digit.
+// This avoids false-positives on English words like "readme".
+func isAlphanumericID(s string) bool {
+	if len(s) < 3 || len(s) > 8 {
+		return false
+	}
+	hasDigit := false
+	for _, c := range s {
+		if c >= '0' && c <= '9' {
+			hasDigit = true
+		} else if c < 'a' || c > 'z' {
+			return false
+		}
+	}
+	return hasDigit
 }
 
 // extractFrontmatter splits content into frontmatter and body

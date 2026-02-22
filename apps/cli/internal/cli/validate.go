@@ -231,16 +231,56 @@ func loadConfigForValidation() *validator.ConfigData {
 	}
 
 	raw := viper.Get("scopes")
-	if raw == nil {
-		return config
-	}
-	scopeMap, ok := raw.(map[string]any)
-	if !ok {
-		return config
+	if raw != nil {
+		if scopeMap, ok := raw.(map[string]any); ok {
+			config.Scopes = parseScopeEntries(scopeMap)
+		}
 	}
 
-	config.Scopes = parseScopeEntries(scopeMap)
+	if viper.InConfig("id") {
+		config.ID = parseIDConfig(viper.Get("id"))
+	}
+
 	return config
+}
+
+// parseIDConfig converts raw viper id data into a typed IDConfig.
+// Returns nil if raw is nil or not a map.
+func parseIDConfig(raw any) *validator.IDConfig {
+	if raw == nil {
+		return nil
+	}
+	m, ok := raw.(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	cfg := &validator.IDConfig{}
+
+	if s, ok := m["strategy"].(string); ok {
+		cfg.Strategy = s
+	}
+	if s, ok := m["prefix"].(string); ok {
+		cfg.Prefix = s
+	}
+	cfg.Length = toInt(m["length"])
+	cfg.Padding = toInt(m["padding"])
+
+	return cfg
+}
+
+// toInt converts a viper numeric value (int, int64, float64) to int.
+func toInt(v any) int {
+	switch n := v.(type) {
+	case int:
+		return n
+	case int64:
+		return int(n)
+	case float64:
+		return int(n)
+	default:
+		return 0
+	}
 }
 
 // parseScopeEntries converts raw viper scope data into typed ScopeConfig entries.

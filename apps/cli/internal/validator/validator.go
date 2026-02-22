@@ -64,6 +64,15 @@ type ConfigData struct {
 	TopKeys    []string
 	ConfigPath string
 	Workflow   string
+	ID         *IDConfig
+}
+
+// IDConfig holds the configuration for task ID generation.
+type IDConfig struct {
+	Strategy string // "sequential", "prefixed", or "random"
+	Prefix   string // required when strategy is "prefixed"
+	Length   int    // ID length (e.g. 6 for random IDs)
+	Padding  int    // zero-padding width for sequential IDs
 }
 
 // ScopeConfig holds the configuration for a single scope entry.
@@ -352,8 +361,44 @@ func (v *Validator) ValidateConfig(config *ConfigData) *ValidationResult {
 	v.checkConfigScopes(config, result)
 	v.checkUnknownConfigKeys(config, result)
 	v.checkWorkflowValue(config, result)
+	v.checkIDConfig(config, result)
 
 	return result
+}
+
+// validIDStrategies lists the allowed values for the id.strategy field.
+var validIDStrategies = map[string]bool{
+	"sequential": true,
+	"prefixed":   true,
+	"random":     true,
+}
+
+// checkIDConfig validates the id config section.
+func (v *Validator) checkIDConfig(config *ConfigData, result *ValidationResult) {
+	if config.ID == nil {
+		return
+	}
+	id := config.ID
+
+	if id.Strategy != "" && !validIDStrategies[id.Strategy] {
+		result.AddIssue(LevelError, "", config.ConfigPath,
+			fmt.Sprintf("invalid id strategy: '%s' (valid values: sequential, prefixed, random)", id.Strategy))
+	}
+
+	if id.Strategy == "prefixed" && id.Prefix == "" {
+		result.AddIssue(LevelError, "", config.ConfigPath,
+			"id strategy 'prefixed' requires a non-empty prefix")
+	}
+
+	if id.Length < 0 {
+		result.AddIssue(LevelError, "", config.ConfigPath,
+			fmt.Sprintf("id length must not be negative, got %d", id.Length))
+	}
+
+	if id.Padding < 0 {
+		result.AddIssue(LevelError, "", config.ConfigPath,
+			fmt.Sprintf("id padding must not be negative, got %d", id.Padding))
+	}
 }
 
 // checkConfigScopes validates each scope entry has a non-empty paths array.
@@ -387,6 +432,7 @@ var knownConfigKeys = map[string]bool{
 	"ignore":   true,
 	"workflow": true,
 	"todos":    true,
+	"id":       true,
 }
 
 // checkUnknownConfigKeys warns about unrecognized top-level config keys.

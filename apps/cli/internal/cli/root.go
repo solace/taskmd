@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/driangle/taskmd/apps/cli/internal/validator"
 )
 
 var (
@@ -205,4 +207,40 @@ func ResolveScanDir(args []string) string {
 		return args[0]
 	}
 	return GetGlobalFlags().TaskDir
+}
+
+// resolveIDConfig returns the ID generation config with defaults applied.
+// Not yet consumed by any command — plumbing for task 202.
+//
+//nolint:unused // Plumbing for future task 202 (ID generation command)
+func resolveIDConfig() validator.IDConfig {
+	cfg := validator.IDConfig{
+		Strategy: "sequential",
+		Length:   6,
+		Padding:  3,
+	}
+
+	raw := viper.Get("id")
+	if raw == nil {
+		return cfg
+	}
+	parsed := parseIDConfig(raw)
+	if parsed == nil {
+		return cfg
+	}
+
+	if parsed.Strategy != "" {
+		cfg.Strategy = parsed.Strategy
+	}
+	if parsed.Prefix != "" {
+		cfg.Prefix = parsed.Prefix
+	}
+	if parsed.Length != 0 {
+		cfg.Length = parsed.Length
+	}
+	if parsed.Padding != 0 {
+		cfg.Padding = parsed.Padding
+	}
+
+	return cfg
 }

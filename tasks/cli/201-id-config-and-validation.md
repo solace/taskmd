@@ -1,7 +1,7 @@
 ---
 id: "201"
 title: "Add ID strategy config section to .taskmd.yaml"
-status: pending
+status: in-progress
 priority: high
 effort: medium
 type: feature

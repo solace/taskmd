@@ -1157,3 +1157,162 @@ func TestValidateConfig_WorkflowIsKnownKey(t *testing.T) {
 		}
 	}
 }
+
+// --- ID config validation tests ---
+
+func TestValidateConfig_IDConfig_ValidStrategies(t *testing.T) {
+	for _, strategy := range []string{"sequential", "prefixed", "random"} {
+		t.Run(strategy, func(t *testing.T) {
+			v := NewValidator(false)
+			id := &IDConfig{Strategy: strategy}
+			if strategy == "prefixed" {
+				id.Prefix = "dr"
+			}
+			config := &ConfigData{
+				ID:         id,
+				TopKeys:    []string{"id"},
+				ConfigPath: ".taskmd.yaml",
+			}
+
+			result := v.ValidateConfig(config)
+
+			if result.Errors != 0 {
+				t.Errorf("Expected no errors for strategy=%q, got %d", strategy, result.Errors)
+				for _, issue := range result.Issues {
+					t.Logf("  Issue: [%s] %s", issue.Level, issue.Message)
+				}
+			}
+		})
+	}
+}
+
+func TestValidateConfig_IDConfig_InvalidStrategy(t *testing.T) {
+	v := NewValidator(false)
+	config := &ConfigData{
+		ID:         &IDConfig{Strategy: "uuid"},
+		TopKeys:    []string{"id"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	if result.Errors != 1 {
+		t.Errorf("Expected 1 error for invalid strategy, got %d", result.Errors)
+	}
+
+	found := false
+	for _, issue := range result.Issues {
+		if issue.Level == LevelError && issue.Message == "invalid id strategy: 'uuid' (valid values: sequential, prefixed, random)" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Expected invalid strategy error")
+	}
+}
+
+func TestValidateConfig_IDConfig_PrefixedWithoutPrefix(t *testing.T) {
+	v := NewValidator(false)
+	config := &ConfigData{
+		ID:         &IDConfig{Strategy: "prefixed"},
+		TopKeys:    []string{"id"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	if result.Errors != 1 {
+		t.Errorf("Expected 1 error for prefixed without prefix, got %d", result.Errors)
+	}
+
+	found := false
+	for _, issue := range result.Issues {
+		if issue.Level == LevelError && issue.Message == "id strategy 'prefixed' requires a non-empty prefix" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Expected missing prefix error")
+	}
+}
+
+func TestValidateConfig_IDConfig_NegativeLength(t *testing.T) {
+	v := NewValidator(false)
+	config := &ConfigData{
+		ID:         &IDConfig{Strategy: "random", Length: -1},
+		TopKeys:    []string{"id"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	if result.Errors != 1 {
+		t.Errorf("Expected 1 error for negative length, got %d", result.Errors)
+	}
+
+	found := false
+	for _, issue := range result.Issues {
+		if issue.Level == LevelError && issue.Message == "id length must not be negative, got -1" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Expected negative length error")
+	}
+}
+
+func TestValidateConfig_IDConfig_NegativePadding(t *testing.T) {
+	v := NewValidator(false)
+	config := &ConfigData{
+		ID:         &IDConfig{Strategy: "sequential", Padding: -2},
+		TopKeys:    []string{"id"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	if result.Errors != 1 {
+		t.Errorf("Expected 1 error for negative padding, got %d", result.Errors)
+	}
+
+	found := false
+	for _, issue := range result.Issues {
+		if issue.Level == LevelError && issue.Message == "id padding must not be negative, got -2" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Expected negative padding error")
+	}
+}
+
+func TestValidateConfig_IDConfig_NilProducesNoIssues(t *testing.T) {
+	v := NewValidator(false)
+	config := &ConfigData{
+		TopKeys:    []string{"dir"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	if result.Errors != 0 || result.Warnings != 0 {
+		t.Errorf("Expected no issues for nil IDConfig, got %d errors, %d warnings", result.Errors, result.Warnings)
+	}
+}
+
+func TestValidateConfig_IDIsKnownKey(t *testing.T) {
+	v := NewValidator(false)
+	config := &ConfigData{
+		TopKeys:    []string{"id"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	if result.Warnings != 0 {
+		t.Errorf("Expected no warnings for 'id' config key, got %d", result.Warnings)
+		for _, issue := range result.Issues {
+			t.Logf("  Issue: [%s] %s", issue.Level, issue.Message)
+		}
+	}
+}

@@ -382,6 +382,154 @@ status: pending
 	}
 }
 
+func TestDeriveFieldsFromFilename_PrefixedID(t *testing.T) {
+	content := []byte(`---
+title: "Fix Login"
+status: pending
+---
+
+Body
+`)
+
+	task, err := ParseTaskContent("dr-001-fix-login.md", content)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if task.ID != "dr-001" {
+		t.Errorf("expected ID 'dr-001' derived from prefixed filename, got '%s'", task.ID)
+	}
+
+	if task.Title != "Fix Login" {
+		t.Errorf("expected title from frontmatter, got '%s'", task.Title)
+	}
+}
+
+func TestDeriveFieldsFromFilename_PrefixedTitleDerivation(t *testing.T) {
+	content := []byte(`---
+status: pending
+---
+
+Body
+`)
+
+	task, err := ParseTaskContent("dr-001-fix-login.md", content)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if task.ID != "dr-001" {
+		t.Errorf("expected ID 'dr-001', got '%s'", task.ID)
+	}
+
+	if task.Title != "fix login" {
+		t.Errorf("expected title 'fix login' derived from slug, got '%s'", task.Title)
+	}
+}
+
+func TestDeriveFieldsFromFilename_RandomID(t *testing.T) {
+	content := []byte(`---
+status: pending
+---
+
+Body
+`)
+
+	task, err := ParseTaskContent("a3f9x2-slug-title.md", content)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if task.ID != "a3f9x2" {
+		t.Errorf("expected ID 'a3f9x2' from random filename, got '%s'", task.ID)
+	}
+
+	if task.Title != "slug title" {
+		t.Errorf("expected title 'slug title', got '%s'", task.Title)
+	}
+}
+
+func TestDeriveFieldsFromFilename_SequentialRegression(t *testing.T) {
+	content := []byte(`---
+status: pending
+---
+
+Body
+`)
+
+	task, err := ParseTaskContent("009-add-feature.md", content)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if task.ID != "009" {
+		t.Errorf("expected ID '009', got '%s'", task.ID)
+	}
+
+	if task.Title != "add feature" {
+		t.Errorf("expected title 'add feature', got '%s'", task.Title)
+	}
+}
+
+func TestDeriveFieldsFromFilename_NonIDRejection(t *testing.T) {
+	content := []byte(`---
+title: "Some Task"
+---
+
+Body
+`)
+
+	_, err := ParseTaskContent("readme.md", content)
+	if err == nil {
+		t.Error("expected error for non-ID filename with missing ID")
+	}
+}
+
+func TestIsNumeric(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bool
+	}{
+		{"123", true},
+		{"0", true},
+		{"", false},
+		{"12a", false},
+		{"abc", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			if got := isNumeric(tt.input); got != tt.want {
+				t.Errorf("isNumeric(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIsAlphanumericID(t *testing.T) {
+	tests := []struct {
+		input string
+		want  bool
+	}{
+		{"a3f9x2", true},
+		{"ab1", true},
+		{"a1b2c3d4", true},
+		{"abc", false},
+		{"readme", false},
+		{"ab", false},
+		{"a1b2c3d4e", false},
+		{"A3F9X2", false},
+		{"a3-f9", false},
+		{"", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			if got := isAlphanumericID(tt.input); got != tt.want {
+				t.Errorf("isAlphanumericID(%q) = %v, want %v", tt.input, got, tt.want)
+			}
+		})
+	}
+}
+
 // Helper function
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) &&
