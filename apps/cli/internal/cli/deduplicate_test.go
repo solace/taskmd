@@ -12,6 +12,7 @@ import (
 func resetDedupFlags() {
 	dedupDryRun = false
 	dedupFormat = "text"
+	dedupNoInteractive = false
 	taskDir = "."
 }
 
@@ -44,6 +45,7 @@ func captureDedup(t *testing.T, dir string) (string, error) {
 func TestDeduplicate_NoDuplicates(t *testing.T) {
 	tmpDir := t.TempDir()
 	resetDedupFlags()
+	dedupNoInteractive = true
 
 	createTaskFile(t, tmpDir, "001-task-a.md", `---
 id: "001"
@@ -84,6 +86,7 @@ created: 2026-01-02
 func TestDeduplicate_SingleCollision(t *testing.T) {
 	tmpDir := t.TempDir()
 	resetDedupFlags()
+	dedupNoInteractive = true
 
 	// Two tasks with the same ID "001", different created dates.
 	createTaskFile(t, tmpDir, "001-task-a.md", `---
@@ -153,6 +156,7 @@ created: 2026-01-15
 func TestDeduplicate_MultipleCollisions(t *testing.T) {
 	tmpDir := t.TempDir()
 	resetDedupFlags()
+	dedupNoInteractive = true
 
 	// Collision on ID "001"
 	createTaskFile(t, tmpDir, "001-first.md", `---
@@ -227,6 +231,7 @@ created: 2026-01-10
 func TestDeduplicate_CrossReferenceUpdate(t *testing.T) {
 	tmpDir := t.TempDir()
 	resetDedupFlags()
+	dedupNoInteractive = true
 
 	// Task A: older, keeps ID "001"
 	createTaskFile(t, tmpDir, "001-task-a.md", `---
@@ -311,21 +316,11 @@ created: 2026-01-10
 		t.Fatal("expected Task B to have a new non-001 ID")
 	}
 
-	// Task C's dependencies should NOT have changed (it refers to "001" which is the kept task)
+	// In non-interactive mode, all references to "001" are rewritten to newID.
+	// This is the known limitation documented in the task.
 	contentC, _ := os.ReadFile(filepath.Join(tmpDir, "002-task-c.md"))
-	// The reference to "001" in Task C should now point to the new ID since Task B's old "001" was changed.
-	// But actually, Task C depends on "001" which is the KEPT task, so references should be updated
-	// only for the reassigned task's old ID. Since both were "001", cross-reference update replaces
-	// "001" → newID. But we only want references to the reassigned task's old ID replaced...
-	// In practice, the dependency on "001" in Task C still makes sense because Task A keeps "001".
-	// The ReplaceReference call replaces "001" → newID in dependencies, which is actually wrong here
-	// because Task C depends on the Task A (which keeps "001").
-	//
-	// This is a known limitation: when duplicate IDs exist, we can't know which "001" a reference
-	// means. The command replaces all references, and users should review after running.
 	_ = contentC
 
-	// Task D's parent should be updated too
 	contentD, _ := os.ReadFile(filepath.Join(tmpDir, "003-task-d.md"))
 	_ = contentD
 }
@@ -389,6 +384,7 @@ func TestDeduplicate_JSONFormat(t *testing.T) {
 	tmpDir := t.TempDir()
 	resetDedupFlags()
 	dedupFormat = "json"
+	dedupNoInteractive = true
 
 	createTaskFile(t, tmpDir, "001-task-a.md", `---
 id: "001"
@@ -476,6 +472,7 @@ created: 2026-01-01
 func TestDeduplicate_SameCreatedDate_FallbackToFilepath(t *testing.T) {
 	tmpDir := t.TempDir()
 	resetDedupFlags()
+	dedupNoInteractive = true
 
 	// Both tasks have the same created date — should fall back to filepath order.
 	createTaskFile(t, tmpDir, "001-aaa.md", `---
@@ -567,5 +564,469 @@ func TestBuildNewFilePath(t *testing.T) {
 					tt.oldPath, tt.oldID, tt.newID, got, tt.want)
 			}
 		})
+	}
+}
+
+// --- Interactive disambiguation tests ---
+
+func TestDeduplicate_InteractiveDisambiguation(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetDedupFlags()
+
+	// Override TTY check to return true for interactive mode.
+	oldIsTTY := dedupIsTTY
+	dedupIsTTY = func() bool { return true }
+	defer func() { dedupIsTTY = oldIsTTY }()
+
+	// Task A: older, keeps ID "001"
+	createTaskFile(t, tmpDir, "001-task-a.md", `---
+id: "001"
+title: "Task A"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-01
+---
+
+# Task A
+`)
+
+	// Task B: newer duplicate of "001", will be reassigned
+	createTaskFile(t, tmpDir, "001-task-b.md", `---
+id: "001"
+title: "Task B"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-15
+---
+
+# Task B
+`)
+
+	// Task C: depends on "001" — user will choose [1] (Task A, keeps ID)
+	createTaskFile(t, tmpDir, "002-task-c.md", `---
+id: "002"
+title: "Task C"
+status: pending
+priority: medium
+dependencies: ["001"]
+tags: []
+created: 2026-01-10
+---
+
+# Task C
+`)
+
+	// Simulate user choosing "1" (the oldest task, which keeps ID "001").
+	oldStdin := dedupStdinReader
+	dedupStdinReader = strings.NewReader("1\n")
+	defer func() { dedupStdinReader = oldStdin }()
+
+	_, err := captureDedup(t, tmpDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Task C should still reference "001" because user chose the task that keeps the ID.
+	contentC, _ := os.ReadFile(filepath.Join(tmpDir, "002-task-c.md"))
+	if !strings.Contains(string(contentC), `"001"`) {
+		t.Errorf("expected Task C to still reference '001', got:\n%s", string(contentC))
+	}
+}
+
+func TestDeduplicate_InteractiveChooseReassigned(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetDedupFlags()
+
+	oldIsTTY := dedupIsTTY
+	dedupIsTTY = func() bool { return true }
+	defer func() { dedupIsTTY = oldIsTTY }()
+
+	// Task A: older, keeps ID "001"
+	createTaskFile(t, tmpDir, "001-task-a.md", `---
+id: "001"
+title: "Task A"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-01
+---
+
+# Task A
+`)
+
+	// Task B: newer duplicate, will be reassigned
+	createTaskFile(t, tmpDir, "001-task-b.md", `---
+id: "001"
+title: "Task B"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-15
+---
+
+# Task B
+`)
+
+	// Task C: depends on "001" — user will choose [2] (Task B, gets new ID)
+	createTaskFile(t, tmpDir, "002-task-c.md", `---
+id: "002"
+title: "Task C"
+status: pending
+priority: medium
+dependencies: ["001"]
+tags: []
+created: 2026-01-10
+---
+
+# Task C
+`)
+
+	// Simulate user choosing "2" (the reassigned task).
+	oldStdin := dedupStdinReader
+	dedupStdinReader = strings.NewReader("2\n")
+	defer func() { dedupStdinReader = oldStdin }()
+
+	_, err := captureDedup(t, tmpDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Task C should now reference the new ID (not "001").
+	contentC, _ := os.ReadFile(filepath.Join(tmpDir, "002-task-c.md"))
+	if strings.Contains(string(contentC), `"001"`) {
+		t.Errorf("expected Task C's reference to be updated to new ID, got:\n%s", string(contentC))
+	}
+}
+
+func TestDeduplicate_InteractiveMultipleRefs(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetDedupFlags()
+
+	oldIsTTY := dedupIsTTY
+	dedupIsTTY = func() bool { return true }
+	defer func() { dedupIsTTY = oldIsTTY }()
+
+	// Task A: older, keeps ID "001"
+	createTaskFile(t, tmpDir, "001-task-a.md", `---
+id: "001"
+title: "Task A"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-01
+---
+
+# Task A
+`)
+
+	// Task B: newer duplicate of "001"
+	createTaskFile(t, tmpDir, "001-task-b.md", `---
+id: "001"
+title: "Task B"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-15
+---
+
+# Task B
+`)
+
+	// Task C: depends on "001" — user chooses [1] (keep original)
+	createTaskFile(t, tmpDir, "002-task-c.md", `---
+id: "002"
+title: "Task C"
+status: pending
+priority: medium
+dependencies: ["001"]
+tags: []
+created: 2026-01-10
+---
+
+# Task C
+`)
+
+	// Task D: parent "001" — user chooses [2] (reassigned)
+	createTaskFile(t, tmpDir, "003-task-d.md", `---
+id: "003"
+title: "Task D"
+status: pending
+priority: medium
+parent: "001"
+dependencies: []
+tags: []
+created: 2026-01-10
+---
+
+# Task D
+`)
+
+	// Two prompts: first "1\n" for Task C's dep, then "2\n" for Task D's parent.
+	oldStdin := dedupStdinReader
+	dedupStdinReader = strings.NewReader("1\n2\n")
+	defer func() { dedupStdinReader = oldStdin }()
+
+	_, err := captureDedup(t, tmpDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Task C should still reference "001" (chose oldest).
+	contentC, _ := os.ReadFile(filepath.Join(tmpDir, "002-task-c.md"))
+	if !strings.Contains(string(contentC), `"001"`) {
+		t.Errorf("expected Task C to still reference '001', got:\n%s", string(contentC))
+	}
+
+	// Task D should reference the new ID (chose reassigned).
+	contentD, _ := os.ReadFile(filepath.Join(tmpDir, "003-task-d.md"))
+	if strings.Contains(string(contentD), `parent: "001"`) {
+		t.Errorf("expected Task D's parent to be updated to new ID, got:\n%s", string(contentD))
+	}
+}
+
+func TestDeduplicate_NoInteractiveFlag(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetDedupFlags()
+	dedupNoInteractive = true
+
+	oldIsTTY := dedupIsTTY
+	dedupIsTTY = func() bool { return true }
+	defer func() { dedupIsTTY = oldIsTTY }()
+
+	// Task A: older, keeps ID "001"
+	createTaskFile(t, tmpDir, "001-task-a.md", `---
+id: "001"
+title: "Task A"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-01
+---
+
+# Task A
+`)
+
+	// Task B: newer duplicate
+	createTaskFile(t, tmpDir, "001-task-b.md", `---
+id: "001"
+title: "Task B"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-15
+---
+
+# Task B
+`)
+
+	// Task C: depends on "001"
+	createTaskFile(t, tmpDir, "002-task-c.md", `---
+id: "002"
+title: "Task C"
+status: pending
+priority: medium
+dependencies: ["001"]
+tags: []
+created: 2026-01-10
+---
+
+# Task C
+`)
+
+	// Should NOT prompt — no stdin needed.
+	output, err := captureDedup(t, tmpDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(output, "1 duplicate") {
+		t.Errorf("expected '1 duplicate' in output, got: %s", output)
+	}
+
+	// In non-interactive mode, references are blindly rewritten (existing behavior).
+	// Task C's "001" dep gets rewritten to the new ID — we just verify no error occurred.
+}
+
+func TestDeduplicate_NonTTYFallback(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetDedupFlags()
+
+	// Simulate non-TTY environment.
+	oldIsTTY := dedupIsTTY
+	dedupIsTTY = func() bool { return false }
+	defer func() { dedupIsTTY = oldIsTTY }()
+
+	// Task A: older, keeps ID
+	createTaskFile(t, tmpDir, "001-task-a.md", `---
+id: "001"
+title: "Task A"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-01
+---
+
+# Task A
+`)
+
+	// Task B: newer duplicate
+	createTaskFile(t, tmpDir, "001-task-b.md", `---
+id: "001"
+title: "Task B"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-15
+---
+
+# Task B
+`)
+
+	// Task C: depends on "001"
+	createTaskFile(t, tmpDir, "002-task-c.md", `---
+id: "002"
+title: "Task C"
+status: pending
+priority: medium
+dependencies: ["001"]
+tags: []
+created: 2026-01-10
+---
+
+# Task C
+`)
+
+	// Should NOT prompt (non-TTY) — no stdin input needed.
+	output, err := captureDedup(t, tmpDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(output, "Resolved") {
+		t.Errorf("expected 'Resolved' in output, got: %s", output)
+	}
+}
+
+func TestDeduplicate_DryRunShowsAmbiguous(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetDedupFlags()
+	dedupDryRun = true
+
+	// Task A: older, keeps ID "001"
+	createTaskFile(t, tmpDir, "001-task-a.md", `---
+id: "001"
+title: "Task A"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-01
+---
+
+# Task A
+`)
+
+	// Task B: newer duplicate of "001"
+	createTaskFile(t, tmpDir, "001-task-b.md", `---
+id: "001"
+title: "Task B"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-15
+---
+
+# Task B
+`)
+
+	// Task C: depends on "001" — ambiguous reference
+	createTaskFile(t, tmpDir, "002-task-c.md", `---
+id: "002"
+title: "Task C"
+status: pending
+priority: medium
+dependencies: ["001"]
+tags: []
+created: 2026-01-10
+---
+
+# Task C
+`)
+
+	output, err := captureDedup(t, tmpDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(output, "Ambiguous references detected") {
+		t.Errorf("expected dry-run to show ambiguous references, got:\n%s", output)
+	}
+	if !strings.Contains(output, "002-task-c.md") {
+		t.Errorf("expected dry-run to mention the referencing file, got:\n%s", output)
+	}
+	if !strings.Contains(output, "2 candidates") {
+		t.Errorf("expected dry-run to show candidate count, got:\n%s", output)
+	}
+	if !strings.Contains(output, "No changes made") {
+		t.Errorf("expected 'No changes made' in dry-run output, got:\n%s", output)
+	}
+}
+
+func TestDeduplicate_NoAmbiguousRefs(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetDedupFlags()
+
+	oldIsTTY := dedupIsTTY
+	dedupIsTTY = func() bool { return true }
+	defer func() { dedupIsTTY = oldIsTTY }()
+
+	// Two tasks with same ID but no other task references them.
+	createTaskFile(t, tmpDir, "001-task-a.md", `---
+id: "001"
+title: "Task A"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-01
+---
+
+# Task A
+`)
+
+	createTaskFile(t, tmpDir, "001-task-b.md", `---
+id: "001"
+title: "Task B"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-01-15
+---
+
+# Task B
+`)
+
+	// No stdin input needed — no ambiguous refs means no prompting.
+	output, err := captureDedup(t, tmpDir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(output, "Resolved") {
+		t.Errorf("expected 'Resolved' in output, got: %s", output)
 	}
 }

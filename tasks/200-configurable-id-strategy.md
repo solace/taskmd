@@ -1,7 +1,7 @@
 ---
 id: "200"
 title: "Configurable task ID strategy"
-status: in-progress
+status: completed
 priority: high
 effort: large
 type: feature
