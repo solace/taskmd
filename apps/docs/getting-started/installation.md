@@ -34,15 +34,22 @@ Available platforms:
 - **macOS**: AMD64 (Intel), ARM64 (Apple Silicon)
 - **Windows**: AMD64
 
-## Docker (Web Dashboard)
+## Docker
 
-Run the web dashboard in a container — no Go or Node.js required:
+The Docker image includes the full CLI and the embedded web dashboard. No Go or Node.js required.
 
+**Web dashboard** (default):
 ```bash
 docker run --rm -p 8080:8080 -v ./tasks:/tasks:ro ghcr.io/driangle/taskmd
 ```
 
 Open [http://localhost:8080](http://localhost:8080) to view the dashboard.
+
+**CLI commands:**
+```bash
+docker run --rm -v ./tasks:/tasks ghcr.io/driangle/taskmd taskmd list
+docker run --rm -v ./tasks:/tasks ghcr.io/driangle/taskmd taskmd next
+```
 
 **Custom port:**
 ```bash

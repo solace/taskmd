@@ -47,6 +47,15 @@ RUN CGO_ENABLED=0 go build \
 # Stage 3: Minimal runtime image
 FROM alpine:3.20
 
+ARG VERSION=dev
+
+LABEL org.opencontainers.image.title="taskmd" \
+      org.opencontainers.image.description="Markdown-based task management CLI and web dashboard" \
+      org.opencontainers.image.url="https://github.com/driangle/taskmd" \
+      org.opencontainers.image.source="https://github.com/driangle/taskmd" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.version="${VERSION}"
+
 RUN apk add --no-cache ca-certificates tini
 
 # Run as non-root user

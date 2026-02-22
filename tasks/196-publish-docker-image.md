@@ -1,7 +1,7 @@
 ---
 id: "196"
 title: "Publish Docker image to GitHub Container Registry"
-status: pending
+status: completed
 priority: medium
 effort: medium
 type: chore
@@ -17,13 +17,13 @@ Publish the taskmd Docker image to GitHub Container Registry (ghcr.io) so that u
 
 ## Tasks
 
-- [ ] Review and update the existing `Dockerfile` as needed
-- [ ] Set up GitHub Actions workflow to build and push the Docker image to `ghcr.io`
-- [ ] Configure image tagging strategy (latest, semver, git SHA)
-- [ ] Ensure the package visibility is set to public on GitHub
-- [ ] Add labels and metadata to the Docker image (version, description, source URL)
-- [ ] Test pulling and running the image from the public registry
-- [ ] Document Docker usage in the README or docs
+- [x] Review and update the existing `Dockerfile` as needed
+- [x] Set up GitHub Actions workflow to build and push the Docker image to `ghcr.io`
+- [x] Configure image tagging strategy (latest, semver, git SHA)
+- [x] Ensure the package visibility is set to public on GitHub
+- [x] Add labels and metadata to the Docker image (version, description, source URL)
+- [x] Test pulling and running the image from the public registry
+- [x] Document Docker usage in the README or docs
 
 ## Acceptance Criteria
 
