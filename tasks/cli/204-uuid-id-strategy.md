@@ -1,7 +1,7 @@
 ---
 id: "204"
 title: "Support uuid ID strategy"
-status: in-progress
+status: completed
 priority: medium
 effort: medium
 type: feature
