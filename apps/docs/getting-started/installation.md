@@ -43,7 +43,7 @@ The Docker image includes the full CLI and the embedded web dashboard. No Go or 
 docker run --rm -p 8080:8080 -v ./tasks:/tasks:ro ghcr.io/driangle/taskmd
 ```
 
-Open [http://localhost:8080](http://localhost:8080) to view the dashboard.
+Open `http://localhost:8080` to view the dashboard.
 
 **CLI commands:**
 ```bash
