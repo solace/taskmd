@@ -477,6 +477,98 @@ func TestPatchIndexHTML_AlwaysHasBaseTag(t *testing.T) {
 	}
 }
 
+func TestExport_TaskWithWorklog(t *testing.T) {
+	taskDir := createTestTaskDir(t)
+
+	// Create a worklog file for task 001
+	wlDir := filepath.Join(taskDir, ".worklogs")
+	if err := os.MkdirAll(wlDir, 0755); err != nil {
+		t.Fatalf("failed to create worklogs dir: %v", err)
+	}
+	worklogContent := `## 2025-01-15T10:00:00Z
+
+Started working on task one.
+
+## 2025-01-15T14:30:00Z
+
+Completed initial implementation.
+`
+	if err := os.WriteFile(filepath.Join(wlDir, "001.md"), []byte(worklogContent), 0644); err != nil {
+		t.Fatalf("failed to write worklog: %v", err)
+	}
+
+	outDir := filepath.Join(t.TempDir(), "export")
+
+	err := exportWithMockFS(t, ExportConfig{
+		OutputDir: outDir,
+		ScanDir:   taskDir,
+		BasePath:  "/",
+		Version:   "test",
+	})
+	if err != nil {
+		t.Fatalf("Export failed: %v", err)
+	}
+
+	// Verify task detail includes worklog metadata
+	detailData, err := os.ReadFile(filepath.Join(outDir, "api", "tasks", "001.json"))
+	if err != nil {
+		t.Fatalf("failed to read task detail: %v", err)
+	}
+
+	var detail map[string]any
+	if err := json.Unmarshal(detailData, &detail); err != nil {
+		t.Fatalf("invalid JSON in task detail: %v", err)
+	}
+
+	entryCount, ok := detail["worklog_entries"].(float64)
+	if !ok || int(entryCount) != 2 {
+		t.Errorf("expected worklog_entries=2, got %v", detail["worklog_entries"])
+	}
+
+	updated, ok := detail["worklog_updated"].(string)
+	if !ok || updated == "" {
+		t.Error("expected non-empty worklog_updated field")
+	}
+	if !strings.Contains(updated, "2025-01-15") {
+		t.Errorf("expected worklog_updated to contain '2025-01-15', got %q", updated)
+	}
+
+	// Verify worklog.json was generated
+	wlData, err := os.ReadFile(filepath.Join(outDir, "api", "tasks", "001", "worklog.json"))
+	if err != nil {
+		t.Fatalf("failed to read worklog.json: %v", err)
+	}
+
+	var entries []WorklogEntryJSON
+	if err := json.Unmarshal(wlData, &entries); err != nil {
+		t.Fatalf("invalid JSON in worklog.json: %v", err)
+	}
+
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 worklog entries, got %d", len(entries))
+	}
+	if entries[0].Timestamp != "2025-01-15T10:00:00Z" {
+		t.Errorf("expected first timestamp, got %q", entries[0].Timestamp)
+	}
+	if !strings.Contains(entries[0].Content, "Started working") {
+		t.Errorf("expected first entry content, got %q", entries[0].Content)
+	}
+
+	// Verify task 002 (no worklog) has empty worklog.json
+	wl2Data, err := os.ReadFile(filepath.Join(outDir, "api", "tasks", "002", "worklog.json"))
+	if err != nil {
+		t.Fatalf("failed to read task 002 worklog.json: %v", err)
+	}
+
+	var entries2 []WorklogEntryJSON
+	if err := json.Unmarshal(wl2Data, &entries2); err != nil {
+		t.Fatalf("invalid JSON in task 002 worklog.json: %v", err)
+	}
+	if len(entries2) != 0 {
+		t.Errorf("expected empty worklog for task 002, got %d entries", len(entries2))
+	}
+}
+
 func TestFetchInterceptor_QueryParamsStripped(t *testing.T) {
 	script := fetchInterceptorScript()
 

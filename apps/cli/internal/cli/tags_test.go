@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -186,6 +187,181 @@ func TestOutputTagsJSON(t *testing.T) {
 	}
 	if parsed[1].Tag != "web" || parsed[1].Count != 3 {
 		t.Errorf("expected web:3, got %s:%d", parsed[1].Tag, parsed[1].Count)
+	}
+}
+
+func createTagsTestFiles(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+
+	task1 := `---
+id: "001"
+title: "Task One"
+status: pending
+tags:
+  - cli
+  - mvp
+---
+# Task One
+`
+	task2 := `---
+id: "002"
+title: "Task Two"
+status: completed
+tags:
+  - cli
+  - web
+---
+# Task Two
+`
+	task3 := `---
+id: "003"
+title: "Task Three"
+status: pending
+tags:
+  - mvp
+  - docs
+---
+# Task Three
+`
+	os.WriteFile(filepath.Join(dir, "001-task-one.md"), []byte(task1), 0644)
+	os.WriteFile(filepath.Join(dir, "002-task-two.md"), []byte(task2), 0644)
+	os.WriteFile(filepath.Join(dir, "003-task-three.md"), []byte(task3), 0644)
+	return dir
+}
+
+func captureRunTagsOutput(t *testing.T, args []string) string {
+	t.Helper()
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := runTags(tagsCmd, args)
+	w.Close()
+	os.Stdout = oldStdout
+
+	if err != nil {
+		t.Fatalf("runTags failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	return buf.String()
+}
+
+func TestRunTags_TableOutput(t *testing.T) {
+	dir := createTagsTestFiles(t)
+	resetTagsFlags()
+	tagsFormat = "table"
+
+	output := captureRunTagsOutput(t, []string{dir})
+
+	if !strings.Contains(output, "TAG") || !strings.Contains(output, "COUNT") {
+		t.Error("expected TAG and COUNT headers in table output")
+	}
+	if !strings.Contains(output, "cli") {
+		t.Error("expected 'cli' tag in output")
+	}
+	if !strings.Contains(output, "mvp") {
+		t.Error("expected 'mvp' tag in output")
+	}
+}
+
+func TestRunTags_JSONOutput(t *testing.T) {
+	dir := createTagsTestFiles(t)
+	resetTagsFlags()
+	tagsFormat = "json"
+
+	output := captureRunTagsOutput(t, []string{dir})
+
+	var parsed []TagInfo
+	if err := json.Unmarshal([]byte(output), &parsed); err != nil {
+		t.Fatalf("failed to parse JSON output: %v", err)
+	}
+
+	if len(parsed) != 4 {
+		t.Fatalf("expected 4 tags, got %d", len(parsed))
+	}
+
+	// cli and mvp should have count 2
+	tagMap := make(map[string]int)
+	for _, ti := range parsed {
+		tagMap[ti.Tag] = ti.Count
+	}
+	if tagMap["cli"] != 2 {
+		t.Errorf("expected cli:2, got %d", tagMap["cli"])
+	}
+	if tagMap["mvp"] != 2 {
+		t.Errorf("expected mvp:2, got %d", tagMap["mvp"])
+	}
+}
+
+func TestRunTags_YAMLOutput(t *testing.T) {
+	dir := createTagsTestFiles(t)
+	resetTagsFlags()
+	tagsFormat = "yaml"
+
+	output := captureRunTagsOutput(t, []string{dir})
+
+	if !strings.Contains(output, "tag:") || !strings.Contains(output, "count:") {
+		t.Error("expected YAML keys 'tag:' and 'count:' in output")
+	}
+}
+
+func TestRunTags_InvalidFormat(t *testing.T) {
+	dir := createTagsTestFiles(t)
+	resetTagsFlags()
+	tagsFormat = "invalid"
+
+	err := runTags(tagsCmd, []string{dir})
+	if err == nil {
+		t.Fatal("expected error for invalid format")
+	}
+	if !strings.Contains(err.Error(), "unsupported format") {
+		t.Errorf("expected 'unsupported format' error, got: %v", err)
+	}
+}
+
+func TestRunTags_WithFilter(t *testing.T) {
+	dir := createTagsTestFiles(t)
+	resetTagsFlags()
+	tagsFormat = "json"
+	tagsFilters = []string{"status=pending"}
+
+	output := captureRunTagsOutput(t, []string{dir})
+
+	var parsed []TagInfo
+	if err := json.Unmarshal([]byte(output), &parsed); err != nil {
+		t.Fatalf("failed to parse JSON output: %v", err)
+	}
+
+	tagMap := make(map[string]int)
+	for _, ti := range parsed {
+		tagMap[ti.Tag] = ti.Count
+	}
+
+	// Only pending tasks: 001 (cli, mvp) and 003 (mvp, docs)
+	if tagMap["cli"] != 1 {
+		t.Errorf("expected cli:1, got %d", tagMap["cli"])
+	}
+	if tagMap["mvp"] != 2 {
+		t.Errorf("expected mvp:2, got %d", tagMap["mvp"])
+	}
+	if _, ok := tagMap["web"]; ok {
+		t.Error("expected 'web' tag to be absent after filtering to pending")
+	}
+}
+
+func TestRunTags_EmptyDir(t *testing.T) {
+	dir := t.TempDir()
+	resetTagsFlags()
+	tagsFormat = "table"
+
+	output := captureRunTagsOutput(t, []string{dir})
+
+	if !strings.Contains(output, "No tags found") {
+		t.Error("expected 'No tags found' for empty directory")
 	}
 }
 

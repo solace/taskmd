@@ -3,6 +3,7 @@ package cli
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -703,5 +704,141 @@ func TestImportCommand_JiraExplicitEnvOverridesDefaults(t *testing.T) {
 	}
 	if cfg.SourceCfg.UserEnv != "MY_JIRA_USER" {
 		t.Errorf("expected explicit user env, got %q", cfg.SourceCfg.UserEnv)
+	}
+}
+
+func TestProjectHint(t *testing.T) {
+	tests := []struct {
+		source   string
+		expected string
+	}{
+		{"github", "GitHub repository (e.g. owner/repo)"},
+		{"jira", "Jira project key (e.g. PROJ)"},
+		{"unknown", "Project identifier"},
+		{"", "Project identifier"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.source, func(t *testing.T) {
+			got := projectHint(tt.source)
+			if got != tt.expected {
+				t.Errorf("projectHint(%q) = %q, want %q", tt.source, got, tt.expected)
+			}
+		})
+	}
+}
+
+func capturePrintImportTable(t *testing.T, result *sync.ImportResult, summary importSummary, quietMode bool) string {
+	t.Helper()
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := printImportTable(result, summary, quietMode)
+	w.Close()
+	os.Stdout = oldStdout
+
+	if err != nil {
+		t.Fatalf("printImportTable failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	return buf.String()
+}
+
+func TestPrintImportTable_QuietMode(t *testing.T) {
+	result := &sync.ImportResult{
+		Created: []sync.ImportAction{{ExternalID: "1", LocalID: "001", Title: "Task"}},
+	}
+	summary := importSummary{Total: 1, Created: 1}
+
+	output := capturePrintImportTable(t, result, summary, true)
+
+	if output != "" {
+		t.Errorf("expected no output in quiet mode, got %q", output)
+	}
+}
+
+func TestPrintImportTable_WithCreated(t *testing.T) {
+	result := &sync.ImportResult{
+		Created: []sync.ImportAction{
+			{ExternalID: "GH-1", LocalID: "001", Title: "First task"},
+			{ExternalID: "GH-2", LocalID: "002", Title: "Second task"},
+		},
+	}
+	summary := importSummary{Total: 2, Created: 2}
+
+	output := capturePrintImportTable(t, result, summary, false)
+
+	if !strings.Contains(output, "Created 2 task(s)") {
+		t.Errorf("expected 'Created 2 task(s)', got %q", output)
+	}
+	if !strings.Contains(output, "[001] First task") {
+		t.Error("expected first task ID and title in output")
+	}
+	if !strings.Contains(output, "[002] Second task") {
+		t.Error("expected second task ID and title in output")
+	}
+}
+
+func TestPrintImportTable_WithSkipped(t *testing.T) {
+	result := &sync.ImportResult{
+		Skipped: []sync.ImportAction{
+			{ExternalID: "GH-5", Title: "Duplicate task"},
+		},
+	}
+	summary := importSummary{Total: 1, Skipped: 1}
+
+	output := capturePrintImportTable(t, result, summary, false)
+
+	if !strings.Contains(output, "Skipped 1 task(s)") {
+		t.Errorf("expected 'Skipped 1 task(s)', got %q", output)
+	}
+	if !strings.Contains(output, "[GH-5] Duplicate task") {
+		t.Error("expected skipped task external ID and title in output")
+	}
+}
+
+func TestPrintImportTable_WithErrors(t *testing.T) {
+	result := &sync.ImportResult{
+		Errors: []sync.SyncError{
+			{ExternalID: "GH-9", Title: "Bad task", Err: fmt.Errorf("write failed")},
+		},
+	}
+	summary := importSummary{Total: 1, Errors: 1}
+
+	output := capturePrintImportTable(t, result, summary, false)
+
+	if !strings.Contains(output, "Errors 1 task(s)") {
+		t.Errorf("expected 'Errors 1 task(s)', got %q", output)
+	}
+	if !strings.Contains(output, "[GH-9] Bad task") {
+		t.Error("expected error task external ID and title in output")
+	}
+	if !strings.Contains(output, "write failed") {
+		t.Error("expected error message in output")
+	}
+}
+
+func TestPrintImportTable_Summary(t *testing.T) {
+	result := &sync.ImportResult{
+		Created: []sync.ImportAction{
+			{ExternalID: "1", LocalID: "001", Title: "Created"},
+		},
+		Skipped: []sync.ImportAction{
+			{ExternalID: "2", Title: "Skipped"},
+		},
+		Errors: []sync.SyncError{
+			{ExternalID: "3", Title: "Error", Err: fmt.Errorf("fail")},
+		},
+	}
+	summary := importSummary{Total: 3, Created: 1, Skipped: 1, Errors: 1}
+
+	output := capturePrintImportTable(t, result, summary, false)
+
+	if !strings.Contains(output, "Done: 3 total, 1 created, 1 skipped, 1 errors") {
+		t.Errorf("expected summary line, got %q", output)
 	}
 }

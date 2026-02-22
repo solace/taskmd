@@ -121,6 +121,61 @@ func TestHandleTaskByID_Success(t *testing.T) {
 	}
 }
 
+func TestHandleTaskByID_WithWorklog(t *testing.T) {
+	dir := createTestTaskDir(t)
+
+	worklogContent := `## 2025-01-15T10:00:00Z
+
+Started working.
+
+## 2025-01-15T14:30:00Z
+
+Done.
+`
+	createWorklogFile(t, dir, "001", worklogContent)
+
+	dp := NewDataProvider(dir, false)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/tasks/001", nil)
+	req.SetPathValue("id", "001")
+	rec := httptest.NewRecorder()
+
+	handleTaskByID(dp)(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var task map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &task); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+
+	entryCount, ok := task["worklog_entries"].(float64)
+	if !ok || int(entryCount) != 2 {
+		t.Errorf("expected worklog_entries=2, got %v", task["worklog_entries"])
+	}
+
+	updated, ok := task["worklog_updated"].(string)
+	if !ok || !strings.Contains(updated, "2025-01-15") {
+		t.Errorf("expected worklog_updated with 2025-01-15, got %v", task["worklog_updated"])
+	}
+}
+
+func TestHandleTaskByID_EmptyID(t *testing.T) {
+	dir := createTestTaskDir(t)
+	dp := NewDataProvider(dir, false)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/tasks/", nil)
+	rec := httptest.NewRecorder()
+
+	handleTaskByID(dp)(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
 func TestHandleTaskByID_NotFound(t *testing.T) {
 	dir := createTestTaskDir(t)
 	dp := NewDataProvider(dir, false)
@@ -320,6 +375,22 @@ func TestHandleUpdateTask_Success(t *testing.T) {
 	content, _ := os.ReadFile(filepath.Join(dir, "001-task-one.md"))
 	if !strings.Contains(string(content), "status: completed") {
 		t.Error("expected file to contain updated status")
+	}
+}
+
+func TestHandleUpdateTask_EmptyID(t *testing.T) {
+	dir := createTestTaskDir(t)
+	dp := NewDataProvider(dir, false)
+
+	body := strings.NewReader(`{"status":"completed"}`)
+	req := httptest.NewRequest(http.MethodPut, "/api/tasks/", body)
+	// Don't set path value to simulate empty ID
+	rec := httptest.NewRecorder()
+
+	handleUpdateTask(dp, false)(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
 	}
 }
 
@@ -952,6 +1023,158 @@ func TestHandleSearch_NoResults(t *testing.T) {
 
 	if len(results) != 0 {
 		t.Fatalf("expected 0 results, got %d", len(results))
+	}
+}
+
+// GET /api/tasks/{id}/worklog tests
+
+func createWorklogFile(t *testing.T, dir, taskID, content string) {
+	t.Helper()
+	wlDir := filepath.Join(dir, ".worklogs")
+	if err := os.MkdirAll(wlDir, 0755); err != nil {
+		t.Fatalf("failed to create worklogs dir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(wlDir, taskID+".md"), []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write worklog file: %v", err)
+	}
+}
+
+func TestHandleWorklog_NoWorklog(t *testing.T) {
+	dir := createTestTaskDir(t)
+	dp := NewDataProvider(dir, false)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/tasks/001/worklog", nil)
+	req.SetPathValue("id", "001")
+	rec := httptest.NewRecorder()
+
+	handleWorklog(dp)(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var entries []WorklogEntryJSON
+	if err := json.Unmarshal(rec.Body.Bytes(), &entries); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("expected empty worklog, got %d entries", len(entries))
+	}
+}
+
+func TestHandleWorklog_WithEntries(t *testing.T) {
+	dir := createTestTaskDir(t)
+
+	worklogContent := `## 2025-01-15T10:00:00Z
+
+Started working on task one.
+
+## 2025-01-15T14:30:00Z
+
+Completed initial implementation.
+`
+	createWorklogFile(t, dir, "001", worklogContent)
+
+	dp := NewDataProvider(dir, false)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/tasks/001/worklog", nil)
+	req.SetPathValue("id", "001")
+	rec := httptest.NewRecorder()
+
+	handleWorklog(dp)(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var entries []WorklogEntryJSON
+	if err := json.Unmarshal(rec.Body.Bytes(), &entries); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 worklog entries, got %d", len(entries))
+	}
+
+	if entries[0].Timestamp != "2025-01-15T10:00:00Z" {
+		t.Errorf("expected first timestamp 2025-01-15T10:00:00Z, got %s", entries[0].Timestamp)
+	}
+	if !strings.Contains(entries[0].Content, "Started working") {
+		t.Errorf("expected first entry content about starting, got %q", entries[0].Content)
+	}
+	if !strings.Contains(entries[1].Content, "Completed initial") {
+		t.Errorf("expected second entry content about completing, got %q", entries[1].Content)
+	}
+}
+
+func TestHandleWorklog_TaskNotFound(t *testing.T) {
+	dir := createTestTaskDir(t)
+	dp := NewDataProvider(dir, false)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/tasks/999/worklog", nil)
+	req.SetPathValue("id", "999")
+	rec := httptest.NewRecorder()
+
+	handleWorklog(dp)(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d", rec.Code)
+	}
+}
+
+func TestHandleWorklog_EmptyID(t *testing.T) {
+	dir := createTestTaskDir(t)
+	dp := NewDataProvider(dir, false)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/tasks//worklog", nil)
+	// Don't set path value to simulate empty ID
+	rec := httptest.NewRecorder()
+
+	handleWorklog(dp)(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+// handleFileUpdateError tests
+
+func TestHandleFileUpdateError_ValidationError(t *testing.T) {
+	rec := httptest.NewRecorder()
+	err := fmt.Errorf("no valid frontmatter found in file")
+	handleFileUpdateError(rec, err)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+
+	var resp ErrorResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if !strings.Contains(resp.Error, "no valid frontmatter") {
+		t.Errorf("expected error message about frontmatter, got %q", resp.Error)
+	}
+}
+
+func TestHandleFileUpdateError_OtherError(t *testing.T) {
+	rec := httptest.NewRecorder()
+	err := fmt.Errorf("permission denied")
+	handleFileUpdateError(rec, err)
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("expected 500, got %d", rec.Code)
+	}
+
+	var resp ErrorResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if resp.Error != "failed to update task file" {
+		t.Errorf("expected generic error message, got %q", resp.Error)
+	}
+	if len(resp.Details) != 1 || resp.Details[0] != "permission denied" {
+		t.Errorf("expected detail 'permission denied', got %v", resp.Details)
 	}
 }
 
