@@ -1,7 +1,7 @@
 ---
 id: "203"
 title: "Add deduplicate command for ID collision resolution"
-status: pending
+status: completed
 priority: medium
 effort: medium
 type: feature
