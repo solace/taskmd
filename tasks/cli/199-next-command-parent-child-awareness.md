@@ -1,7 +1,7 @@
 ---
 id: "199"
 title: "Next command parent/child awareness"
-status: pending
+status: completed
 priority: medium
 effort: small
 tags: [cli, next]
@@ -16,11 +16,11 @@ Update `taskmd next` to consider parent/child relationships when recommending ta
 
 ## Tasks
 
-- [ ] Add a helper to compute children for each task (build a parent-to-children map)
-- [ ] Update `IsActionable` or `filterActionable` in `internal/next/next.go` to exclude parent tasks with incomplete children
-- [ ] Allow parent tasks with all children completed to remain actionable
-- [ ] Tasks with no children should be unaffected
-- [ ] Add unit tests covering all three cases (incomplete children, all children completed, no children)
+- [x] Add a helper to compute children for each task (build a parent-to-children map)
+- [x] Update `IsActionable` or `filterActionable` in `internal/next/next.go` to exclude parent tasks with incomplete children
+- [x] Allow parent tasks with all children completed to remain actionable
+- [x] Tasks with no children should be unaffected
+- [x] Add unit tests covering all three cases (incomplete children, all children completed, no children)
 
 ## Acceptance Criteria
 
