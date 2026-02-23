@@ -130,8 +130,12 @@ func outputTracksTable(result *tracks.Result) error {
 	}
 
 	for _, track := range result.Tracks {
-		scopeLabel := strings.Join(track.Scopes, ", ")
-		header := fmt.Sprintf("Track %d (%s):", track.ID, scopeLabel)
+		var header string
+		if len(track.Scopes) > 0 {
+			header = fmt.Sprintf("Track %d (%s):", track.ID, strings.Join(track.Scopes, ", "))
+		} else {
+			header = fmt.Sprintf("Track %d:", track.ID)
+		}
 		fmt.Println(formatLabel(header, r))
 
 		tw := NewTableWriter()

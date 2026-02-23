@@ -407,6 +407,53 @@ func TestTracks_FilterFlag(t *testing.T) {
 	}
 }
 
+func TestTracks_TableHeaderWithScopes(t *testing.T) {
+	resetTracksFlags()
+	tracksFormat = "table"
+
+	result := &tracks.Result{
+		Tracks: []tracks.Track{
+			{
+				ID:     1,
+				Scopes: []string{"scope-a", "scope-b"},
+				Tasks:  []tracks.TrackTask{{ID: "001", Title: "Task one", Priority: "high"}},
+			},
+			{
+				ID:     2,
+				Scopes: []string{},
+				Tasks:  []tracks.TrackTask{{ID: "002", Title: "Task two", Priority: "medium"}},
+			},
+		},
+	}
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := outputTracksTable(result)
+
+	w.Close()
+	os.Stdout = oldStdout
+
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	output := buf.String()
+
+	if err != nil {
+		t.Fatalf("outputTracksTable failed: %v", err)
+	}
+
+	if !strings.Contains(output, "Track 1 (scope-a, scope-b):") {
+		t.Errorf("Expected 'Track 1 (scope-a, scope-b):', got:\n%s", output)
+	}
+	if !strings.Contains(output, "Track 2:") {
+		t.Errorf("Expected 'Track 2:' without parentheses, got:\n%s", output)
+	}
+	if strings.Contains(output, "Track 2 ()") {
+		t.Error("Track with no scopes should not have empty parentheses")
+	}
+}
+
 func TestTracks_LimitFlag(t *testing.T) {
 	tmpDir := createTracksTestTaskFiles(t)
 	resetTracksFlags()
