@@ -1,44 +1,50 @@
 ---
 name: add-task
 description: Create a new task file following the taskmd specification. Use when the user wants to add a new task to the project.
-allowed-tools: Read, Glob, Write, Bash
+allowed-tools: Read, Edit, Bash
 ---
 
 # Add Task
 
-Create a new task file under `./tasks/` following the taskmd specification.
+Create a new task file using the `taskmd add` CLI command.
 
 ## Instructions
 
 The user's task description is in `$ARGUMENTS`.
 
-1. **Read the specification** at `docs/taskmd_specification.md` (or `docs/TASKMD_SPEC.md`) for the correct format
-2. **Determine the next task ID**:
-   - Run `taskmd next-id` in Bash and use the returned ID
-   - The command respects the project's configured ID strategy (sequential, prefixed, or random) from `.taskmd.yaml`
-3. **Choose the subdirectory** based on the task's domain:
-   - `tasks/cli/` — CLI commands, Go backend, terminal features
-   - `tasks/web/` — Web frontend, UI, React components
-   - `tasks/` (root) — Cross-cutting, infrastructure, documentation, or unclear domain
-4. **Create the task file** named `<ID>-<slug>.md` with:
+1. **Parse the user's input** from `$ARGUMENTS` to extract:
+   - The task **title** (required)
+   - An optional **template** name (e.g. "bug", "feature", "chore", or a custom template)
+   - Any optional flags: `--priority`, `--effort`, `--tags`, `--group`, `--depends-on`, `--parent`, `--owner`
 
-```yaml
----
-id: "<NNN>"
-title: "<title from user>"
-status: pending
-priority: medium
-effort: medium
-tags: []
-created: <today's date YYYY-MM-DD>
----
-```
+2. **Choose the group** based on the task's domain (pass with `--group`):
+   - `cli` — CLI commands, Go backend, terminal features
+   - `web` — Web frontend, UI, React components
+   - Omit `--group` for cross-cutting, infrastructure, documentation, or unclear domain
 
-Followed by a markdown body with:
-- An H1 heading matching the title
-- An `## Objective` section describing the goal
-- A `## Tasks` section with a checkbox list of subtasks
-- An `## Acceptance Criteria` section
+3. **Run `taskmd add`** with the appropriate flags:
 
-5. **Validate** by running `taskmd validate` to ensure the new task file is valid. If validation fails, fix the issues before proceeding.
-6. **Confirm** the created file path and ID to the user
+   ```bash
+   # Basic task
+   taskmd add "Fix the login bug" --group cli
+
+   # With a template
+   taskmd add "Login fails on Safari" --template bug --group cli
+
+   # With extra flags
+   taskmd add "Dark mode support" --template feature --priority high --tags ui,frontend --group web
+   ```
+
+   Available templates can be listed with `taskmd templates list`. Built-in templates include `bug`, `feature`, and `chore`. Projects may define custom templates in `.taskmd/templates/`.
+
+4. **Fill in the task content**: Read the created file and replace placeholder content (HTML comments like `<!-- ... -->`, `TODO`, `1. ...`) with real content derived from the user's description in `$ARGUMENTS`. Fill in:
+   - The **Objective** section with a clear description of the goal
+   - The **Tasks** section with specific, actionable subtasks
+   - The **Acceptance Criteria** with concrete, verifiable criteria
+   - Any template-specific sections (e.g. "Steps to Reproduce", "Expected Behavior" for bug templates)
+
+   Use your understanding of the user's request to write meaningful content — don't leave placeholders.
+
+5. **Validate** by running `taskmd validate` to ensure the task file is valid. If validation fails, fix the issues.
+
+6. **Confirm** the created file path and ID to the user.
