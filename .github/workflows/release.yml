@@ -226,6 +226,12 @@ jobs:
           sed -i "s/SHA256_LINUX_ARM64_PLACEHOLDER/${SHA256_LINUX_ARM64}/g" Formula/taskmd.rb
           sed -i "s/SHA256_LINUX_AMD64_PLACEHOLDER/${SHA256_LINUX_AMD64}/g" Formula/taskmd.rb
 
+          # Install Homebrew on Linux for formula auditing
+          if ! command -v brew &> /dev/null; then
+            NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          fi
+
           # Audit formula before pushing
           brew audit --strict Formula/taskmd.rb
 
