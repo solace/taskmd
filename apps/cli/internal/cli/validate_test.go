@@ -757,9 +757,9 @@ func TestParseIDConfig_FullConfig(t *testing.T) {
 	}
 
 	cfg := parseIDConfig(raw)
-
 	if cfg == nil {
 		t.Fatal("expected non-nil IDConfig")
+		return
 	}
 	if cfg.Strategy != "prefixed" {
 		t.Errorf("Strategy = %q, want %q", cfg.Strategy, "prefixed")
@@ -781,9 +781,9 @@ func TestParseIDConfig_PartialConfig(t *testing.T) {
 	}
 
 	cfg := parseIDConfig(raw)
-
 	if cfg == nil {
 		t.Fatal("expected non-nil IDConfig")
+		return
 	}
 	if cfg.Strategy != "sequential" {
 		t.Errorf("Strategy = %q, want %q", cfg.Strategy, "sequential")
@@ -824,9 +824,9 @@ func TestParseIDConfig_ViperIntTypes(t *testing.T) {
 	}
 
 	cfg := parseIDConfig(raw)
-
 	if cfg == nil {
 		t.Fatal("expected non-nil IDConfig")
+		return
 	}
 	if cfg.Length != 8 {
 		t.Errorf("Length = %d, want 8", cfg.Length)
