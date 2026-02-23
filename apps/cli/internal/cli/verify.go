@@ -25,6 +25,7 @@ var (
 	verifyFormat  string
 	verifyDryRun  bool
 	verifyTimeout int
+	verifyAll     bool
 )
 
 var verifyCmd = &cobra.Command{
@@ -36,12 +37,16 @@ Each verify step has a type:
   bash   — runs a shell command, reports pass/fail based on exit code
   assert — displays a check for the agent to evaluate (not executed)
 
+By default, verification stops at the first failure (fail-fast). Use --all
+to run every check regardless of failures.
+
 Exit codes:
   0 - All executable checks passed
   1 - One or more executable checks failed
 
 Examples:
   taskmd verify --task-id 042
+  taskmd verify --task-id 042 --all
   taskmd verify --task-id 042 --format json
   taskmd verify --task-id 042 --dry-run
   taskmd verify --task-id 042 --timeout 120`,
@@ -56,6 +61,7 @@ func init() {
 	verifyCmd.Flags().StringVar(&verifyFormat, "format", "table", "output format (table, json)")
 	verifyCmd.Flags().BoolVar(&verifyDryRun, "dry-run", false, "list checks without executing")
 	verifyCmd.Flags().IntVar(&verifyTimeout, "timeout", 60, "per-command timeout in seconds")
+	verifyCmd.Flags().BoolVar(&verifyAll, "all", false, "run all checks even if one fails")
 
 	_ = verifyCmd.MarkFlagRequired("task-id")
 }
@@ -88,6 +94,7 @@ func runVerify(cmd *cobra.Command, _ []string) error {
 	opts := verify.Options{
 		ProjectRoot: projectRoot,
 		DryRun:      verifyDryRun,
+		FailFast:    !verifyAll,
 		Timeout:     time.Duration(verifyTimeout) * time.Second,
 		Verbose:     flags.Verbose,
 		LogFunc: func(format string, args ...any) {

@@ -105,6 +105,22 @@ verify:
 
 # Task with custom dir
 `,
+		"008-failfast.md": `---
+id: "008"
+title: "Task for fail-fast testing"
+status: pending
+created: 2026-02-14
+verify:
+  - type: bash
+    run: "exit 1"
+  - type: bash
+    run: "echo should-not-run"
+  - type: bash
+    run: "echo also-skipped"
+---
+
+# Task for fail-fast testing
+`,
 	}
 
 	for filename, content := range tasks {
@@ -122,6 +138,7 @@ func resetVerifyFlags() {
 	verifyFormat = "table"
 	verifyDryRun = false
 	verifyTimeout = 60
+	verifyAll = false
 	taskDir = "."
 }
 
@@ -224,6 +241,7 @@ func TestVerify_Mixed(t *testing.T) {
 	resetVerifyFlags()
 	taskDir = tmpDir
 	verifyTaskID = "004"
+	verifyAll = true // run all steps despite failures
 
 	output, err := captureVerifyOutput(t)
 	if err == nil {
@@ -353,6 +371,68 @@ func TestVerify_CustomDir(t *testing.T) {
 
 	if !strings.Contains(output, "PASS") {
 		t.Errorf("expected PASS in output, got: %s", output)
+	}
+}
+
+func TestVerify_FailFast(t *testing.T) {
+	tmpDir := createVerifyTestFiles(t)
+	resetVerifyFlags()
+	taskDir = tmpDir
+	verifyTaskID = "008"
+
+	output, err := captureVerifyOutput(t)
+	if err == nil {
+		t.Fatal("expected error for failing check")
+	}
+	if !errors.Is(err, ErrVerifyFailed) {
+		t.Fatalf("expected ErrVerifyFailed, got: %v", err)
+	}
+
+	if !strings.Contains(output, "FAIL") {
+		t.Errorf("expected FAIL in output, got: %s", output)
+	}
+	if !strings.Contains(output, "SKIP") {
+		t.Errorf("expected SKIP for remaining steps, got: %s", output)
+	}
+	// With fail-fast, only 1 step should fail and 2 should be skipped (not passed)
+	if strings.Contains(output, "PASS") {
+		t.Errorf("expected no PASS with fail-fast, but got: %s", output)
+	}
+	if !strings.Contains(output, "1 failed") {
+		t.Errorf("expected '1 failed' in output, got: %s", output)
+	}
+	if !strings.Contains(output, "2 skipped") {
+		t.Errorf("expected '2 skipped' in output, got: %s", output)
+	}
+}
+
+func TestVerify_All(t *testing.T) {
+	tmpDir := createVerifyTestFiles(t)
+	resetVerifyFlags()
+	taskDir = tmpDir
+	verifyTaskID = "008"
+	verifyAll = true
+
+	output, err := captureVerifyOutput(t)
+	if err == nil {
+		t.Fatal("expected error for failing check")
+	}
+	if !errors.Is(err, ErrVerifyFailed) {
+		t.Fatalf("expected ErrVerifyFailed, got: %v", err)
+	}
+
+	if !strings.Contains(output, "FAIL") {
+		t.Errorf("expected FAIL in output, got: %s", output)
+	}
+	// With --all, subsequent steps should run (PASS, not SKIP)
+	if !strings.Contains(output, "PASS") {
+		t.Errorf("expected PASS for subsequent steps with --all, got: %s", output)
+	}
+	if !strings.Contains(output, "1 failed") {
+		t.Errorf("expected '1 failed' in output, got: %s", output)
+	}
+	if !strings.Contains(output, "2 passed") {
+		t.Errorf("expected '2 passed' in output, got: %s", output)
 	}
 }
 

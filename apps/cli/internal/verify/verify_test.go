@@ -154,7 +154,7 @@ func TestRun_Mixed(t *testing.T) {
 		{Type: "assert", Check: "something"},
 		{Type: "unknown"},
 	}
-	result := Run(steps, Options{})
+	result := Run(steps, Options{FailFast: false})
 
 	if result.Passed != 1 {
 		t.Errorf("expected 1 passed, got %d", result.Passed)
@@ -167,6 +167,63 @@ func TestRun_Mixed(t *testing.T) {
 	}
 	if result.Skipped != 1 {
 		t.Errorf("expected 1 skipped, got %d", result.Skipped)
+	}
+}
+
+func TestRun_FailFast(t *testing.T) {
+	steps := []model.VerifyStep{
+		{Type: "bash", Run: "exit 1"},
+		{Type: "bash", Run: "echo should-not-run"},
+		{Type: "assert", Check: "also skipped"},
+	}
+	result := Run(steps, Options{FailFast: true})
+
+	if len(result.Steps) != 3 {
+		t.Fatalf("expected 3 steps, got %d", len(result.Steps))
+	}
+	if result.Steps[0].Status != StatusFail {
+		t.Errorf("step 0: expected fail, got %s", result.Steps[0].Status)
+	}
+	if result.Steps[1].Status != StatusSkip {
+		t.Errorf("step 1: expected skip, got %s", result.Steps[1].Status)
+	}
+	if result.Steps[1].Warning != "skipped (fail-fast)" {
+		t.Errorf("step 1: expected fail-fast warning, got %q", result.Steps[1].Warning)
+	}
+	if result.Steps[2].Status != StatusSkip {
+		t.Errorf("step 2: expected skip, got %s", result.Steps[2].Status)
+	}
+	if result.Failed != 1 {
+		t.Errorf("expected 1 failed, got %d", result.Failed)
+	}
+	if result.Skipped != 2 {
+		t.Errorf("expected 2 skipped, got %d", result.Skipped)
+	}
+	// Verify stdout is empty for skipped step (command didn't run)
+	if result.Steps[1].Stdout != "" {
+		t.Errorf("step 1: expected empty stdout, got %q", result.Steps[1].Stdout)
+	}
+}
+
+func TestRun_FailFastAllPass(t *testing.T) {
+	steps := []model.VerifyStep{
+		{Type: "bash", Run: "echo one"},
+		{Type: "bash", Run: "echo two"},
+		{Type: "bash", Run: "echo three"},
+	}
+	result := Run(steps, Options{FailFast: true})
+
+	if len(result.Steps) != 3 {
+		t.Fatalf("expected 3 steps, got %d", len(result.Steps))
+	}
+	if result.Passed != 3 {
+		t.Errorf("expected 3 passed, got %d", result.Passed)
+	}
+	if result.Skipped != 0 {
+		t.Errorf("expected 0 skipped, got %d", result.Skipped)
+	}
+	if result.HasFailures() {
+		t.Error("expected no failures")
 	}
 }
 

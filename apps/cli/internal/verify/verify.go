@@ -54,6 +54,7 @@ func (r *Result) HasFailures() bool {
 type Options struct {
 	ProjectRoot string
 	DryRun      bool
+	FailFast    bool
 	Timeout     time.Duration
 	Verbose     bool
 	LogFunc     func(format string, args ...any) // called before each step
@@ -74,6 +75,21 @@ func Run(steps []model.VerifyStep, opts Options) *Result {
 			result.Pending++
 		case StatusSkip:
 			result.Skipped++
+		}
+
+		if sr.Status == StatusFail && opts.FailFast {
+			for j := i + 1; j < len(steps); j++ {
+				result.Steps = append(result.Steps, StepResult{
+					Index:   j,
+					Type:    steps[j].Type,
+					Status:  StatusSkip,
+					Command: steps[j].Run,
+					Check:   steps[j].Check,
+					Warning: "skipped (fail-fast)",
+				})
+				result.Skipped++
+			}
+			break
 		}
 	}
 	return result

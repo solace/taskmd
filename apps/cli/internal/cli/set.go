@@ -325,6 +325,7 @@ func runSetVerification(task *model.Task, req taskfile.UpdateRequest) error {
 	projectRoot := resolveProjectRoot()
 	opts := verify.Options{
 		ProjectRoot: projectRoot,
+		FailFast:    true,
 		Timeout:     60 * time.Second,
 		Verbose:     flags.Verbose,
 		LogFunc: func(format string, args ...any) {
