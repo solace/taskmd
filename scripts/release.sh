@@ -317,6 +317,20 @@ update_versions() {
             log_warning "jq not installed, skipping $vscode_pkg"
         fi
     fi
+
+    # Update claude-code-plugin/.claude-plugin/plugin.json
+    local plugin_json="$PROJECT_ROOT/claude-code-plugin/.claude-plugin/plugin.json"
+    if [[ -f "$plugin_json" ]]; then
+        if command -v jq &> /dev/null; then
+            local tmp_file
+            tmp_file=$(mktemp)
+            jq --arg ver "$version" '.version = $ver' "$plugin_json" > "$tmp_file"
+            mv "$tmp_file" "$plugin_json"
+            log_success "Updated $plugin_json"
+        else
+            log_warning "jq not installed, skipping $plugin_json"
+        fi
+    fi
 }
 
 # Commit version changes
@@ -325,7 +339,7 @@ commit_version_changes() {
 
     log_step "Committing version changes"
 
-    git add package.json apps/web/package.json apps/vscode/package.json apps/cli/internal/cli/root.go 2>/dev/null || true
+    git add package.json apps/web/package.json apps/vscode/package.json apps/cli/internal/cli/root.go claude-code-plugin/.claude-plugin/plugin.json 2>/dev/null || true
 
     if [[ -z $(git diff --cached --name-only) ]]; then
         log_warning "No version changes to commit"
