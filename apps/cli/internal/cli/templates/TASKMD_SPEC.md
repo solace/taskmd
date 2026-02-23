@@ -166,7 +166,7 @@ parent: "045"
 
 **`created`** — Date when the task was created, in `YYYY-MM-DD` format.
 
-**`verify`** — List of typed acceptance checks for validating task completion. Each entry is a map with a `type` field that determines the check kind. Run checks with `taskmd verify --task-id <ID>`.
+**`verify`** — List of typed acceptance checks for validating task completion. Each entry is a map with a `type` field that determines the check kind. Run checks with `taskmd verify <ID>`.
 
 | Type | Fields | Behavior |
 |------|--------|----------|

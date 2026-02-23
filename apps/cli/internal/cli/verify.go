@@ -29,9 +29,11 @@ var (
 )
 
 var verifyCmd = &cobra.Command{
-	Use:   "verify",
+	Use:   "verify [task-id]",
 	Short: "Run verification checks for a task",
 	Long: `Verify runs the acceptance checks defined in a task's verify field.
+
+The task is identified by a positional argument or --task-id (exact match only).
 
 Each verify step has a type:
   bash   — runs a shell command, reports pass/fail based on exit code
@@ -45,28 +47,51 @@ Exit codes:
   1 - One or more executable checks failed
 
 Examples:
-  taskmd verify --task-id 042
-  taskmd verify --task-id 042 --all
-  taskmd verify --task-id 042 --format json
-  taskmd verify --task-id 042 --dry-run
+  taskmd verify 042
+  taskmd verify 042 --all
+  taskmd verify 042 --format json
+  taskmd verify 042 --dry-run
   taskmd verify --task-id 042 --timeout 120`,
-	Args: cobra.NoArgs,
+	Args: cobra.MaximumNArgs(1),
 	RunE: runVerify,
 }
 
 func init() {
 	rootCmd.AddCommand(verifyCmd)
 
-	verifyCmd.Flags().StringVar(&verifyTaskID, "task-id", "", "task ID to verify (required)")
+	verifyCmd.Flags().StringVar(&verifyTaskID, "task-id", "", "task ID to verify")
 	verifyCmd.Flags().StringVar(&verifyFormat, "format", "table", "output format (table, json)")
 	verifyCmd.Flags().BoolVar(&verifyDryRun, "dry-run", false, "list checks without executing")
 	verifyCmd.Flags().IntVar(&verifyTimeout, "timeout", 60, "per-command timeout in seconds")
 	verifyCmd.Flags().BoolVar(&verifyAll, "all", false, "run all checks even if one fails")
-
-	_ = verifyCmd.MarkFlagRequired("task-id")
 }
 
-func runVerify(cmd *cobra.Command, _ []string) error {
+func resolveVerifyTaskID(args []string) (string, error) {
+	positional := ""
+	if len(args) > 0 {
+		positional = args[0]
+	}
+	flagVal := verifyTaskID
+
+	if positional != "" && flagVal != "" && positional != flagVal {
+		return "", fmt.Errorf("conflicting task ID: positional argument %q and --task-id %q differ", positional, flagVal)
+	}
+
+	if positional != "" {
+		return positional, nil
+	}
+	if flagVal != "" {
+		return flagVal, nil
+	}
+	return "", fmt.Errorf("task ID required: provide as positional argument or --task-id flag")
+}
+
+func runVerify(cmd *cobra.Command, args []string) error {
+	taskID, err := resolveVerifyTaskID(args)
+	if err != nil {
+		return err
+	}
+
 	flags := GetGlobalFlags()
 	scanDir := ResolveScanDir(nil)
 
@@ -76,9 +101,9 @@ func runVerify(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("scan failed: %w", err)
 	}
 
-	task := findExactMatch(verifyTaskID, result.Tasks)
+	task := findExactMatch(taskID, result.Tasks)
 	if task == nil {
-		return fmt.Errorf("task not found: %s", verifyTaskID)
+		return fmt.Errorf("task not found: %s", taskID)
 	}
 
 	if len(task.Verify) == 0 {

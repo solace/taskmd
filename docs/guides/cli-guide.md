@@ -780,23 +780,26 @@ Run the acceptance checks defined in a task's `verify` field. Each verify step h
 **Basic usage:**
 ```bash
 # Verify a task
-taskmd verify --task-id 042
+taskmd verify 042
 
 # JSON output
-taskmd verify --task-id 042 --format json
+taskmd verify 042 --format json
 
 # Preview checks without executing
-taskmd verify --task-id 042 --dry-run
+taskmd verify 042 --dry-run
 
 # Custom timeout (seconds) per command
-taskmd verify --task-id 042 --timeout 120
+taskmd verify 042 --timeout 120
+
+# --task-id flag also works
+taskmd verify --task-id 042
 ```
 
 **Flags:**
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--task-id` | *(required)* | Task ID to verify |
+| `--task-id` | | Task ID to verify (alternative to positional argument) |
 | `--format` | `table` | Output format (`table`, `json`) |
 | `--dry-run` | `false` | List checks without executing |
 | `--timeout` | `60` | Per-command timeout in seconds |

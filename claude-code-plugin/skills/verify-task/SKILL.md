@@ -12,7 +12,7 @@ Run a task's verification checks and evaluate the results.
 
 The user's query is in `$ARGUMENTS` (a task ID like `077`).
 
-1. **Run verification**: Execute `taskmd verify --task-id $ARGUMENTS --format json`
+1. **Run verification**: Execute `taskmd verify $ARGUMENTS --format json`
 2. **Interpret results**:
    - For `bash` steps: report pass/fail based on the JSON output (status field)
    - For `assert` steps: read each `check` assertion and evaluate whether the current codebase satisfies it by inspecting relevant files
