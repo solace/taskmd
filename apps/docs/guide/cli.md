@@ -8,38 +8,38 @@ Complete reference for using taskmd from the command line.
 
 | Command | Description |
 |---------|-------------|
-| `list` | List tasks in a quick textual format |
-| `get` | Get detailed information about a specific task |
-| `set` | Set a task's frontmatter fields |
-| `next` | Recommend what task to work on next |
-| `validate` | Lint and validate tasks |
-| `graph` | Export task dependency graph |
-| `board` | Display tasks grouped in a kanban-like board view |
-| `stats` | Show computed metrics about tasks |
-| `tags` | List all tags with task counts |
-| `snapshot` | Produce a frozen, machine-readable representation of tasks |
-| `report` | Generate a comprehensive project report |
-| `tracks` | Show parallel work tracks based on scope overlap |
-| `archive` | Archive or delete completed/cancelled tasks |
-| `rm` | Delete a task file permanently |
-| `deduplicate` | Detect and resolve duplicate task IDs |
-| `next-id` | Show the next available task ID |
-| `add` | Create a new task file with proper frontmatter |
-| `search` | Full-text search across task titles and bodies |
-| `templates` | List and manage task templates |
-| `verify` | Run verification checks for a task |
-| `status` | Get lightweight metadata for a task |
-| `context` | Show file context for a task |
-| `worklog` | View or add worklog entries for a task |
-| `import` | Import tasks from external sources |
-| `spec` | Generate the taskmd specification file |
-| `sync` | Sync tasks from external sources |
-| `web` | Web dashboard commands |
-| `init` | Initialize a project with agent configuration and spec files |
-| `commit-msg` | Generate conventional commit messages from task metadata |
-| `mcp` | Start MCP server over stdio |
-| `todos` | Find TODO/FIXME comments in source code |
-| `completion` | Generate shell completion scripts |
+| [`list`](#list-view-and-filter-tasks) | List tasks in a quick textual format |
+| [`get`](#get-view-task-details) | Get detailed information about a specific task |
+| [`set`](#set-update-task-fields) | Set a task's frontmatter fields |
+| [`next`](#next-find-what-to-work-on) | Recommend what task to work on next |
+| [`validate`](#validate-check-task-files) | Lint and validate tasks |
+| [`graph`](#graph-visualize-dependencies) | Export task dependency graph |
+| [`board`](#board-kanban-view) | Display tasks grouped in a kanban-like board view |
+| [`stats`](#stats-project-metrics) | Show computed metrics about tasks |
+| [`tags`](#tags-list-tags) | List all tags with task counts |
+| [`snapshot`](#snapshot-machine-readable-export) | Produce a frozen, machine-readable representation of tasks |
+| [`report`](#report-generate-reports) | Generate a comprehensive project report |
+| [`tracks`](#tracks-parallel-work-tracks) | Show parallel work tracks based on scope overlap |
+| [`archive`](#archive-archive-completed-tasks) | Archive or delete completed/cancelled tasks |
+| [`rm`](#rm-delete-a-task) | Delete a task file permanently |
+| [`deduplicate`](#deduplicate-resolve-duplicate-ids) | Detect and resolve duplicate task IDs |
+| [`next-id`](#next-id-get-next-available-id) | Show the next available task ID |
+| [`add`](#add-create-a-new-task) | Create a new task file with proper frontmatter |
+| [`search`](#search-full-text-search) | Full-text search across task titles and bodies |
+| [`templates`](#templates-manage-task-templates) | List and manage task templates |
+| [`verify`](#verify-run-verification-checks) | Run verification checks for a task |
+| [`status`](#status-lightweight-task-metadata) | Get lightweight metadata for a task |
+| [`context`](#context-show-file-context) | Show file context for a task |
+| [`worklog`](#worklog-view-or-add-worklog-entries) | View or add worklog entries for a task |
+| [`import`](#import-import-tasks-from-external-sources) | Import tasks from external sources |
+| [`spec`](#spec-generate-specification-file) | Generate the taskmd specification file |
+| [`sync`](#sync-sync-external-sources) | Sync tasks from external sources |
+| [`web`](#web-web-dashboard) | Web dashboard commands |
+| [`init`](#init-initialize-a-project) | Initialize a project with agent configuration and spec files |
+| [`commit-msg`](#commit-msg-generate-commit-messages) | Generate conventional commit messages from task metadata |
+| [`mcp`](#mcp-start-mcp-server) | Start MCP server over stdio |
+| [`todos`](#todos-find-todo-fixme-comments) | Find TODO/FIXME comments in source code |
+| [`completion`](#completion-generate-shell-completions) | Generate shell completion scripts |
 
 ---
 
@@ -1117,6 +1117,93 @@ taskmd todos list --rich
 | `--raw-text` | `false` | Include original source line text in output |
 
 Exclude patterns can also be configured in `.taskmd.yaml` under `todos.exclude`. CLI `--exclude` flags are additive with config patterns.
+
+### init - Initialize a Project
+
+Set up a complete taskmd project in the current directory. Creates a task directory, `.taskmd.yaml` config, agent configuration files, the taskmd specification document, and built-in task templates.
+
+When run interactively (in a terminal), prompts for any values not provided via flags. In non-interactive mode, defaults to Claude agent configuration.
+
+```bash
+# Interactive setup (prompts for missing info)
+taskmd init
+
+# Set task directory, prompt for agents
+taskmd init --task-dir ./tasks
+
+# Claude agent config, prompt for task directory
+taskmd init --claude
+
+# Fully non-interactive
+taskmd init --task-dir ./tasks --claude
+
+# Multiple agents
+taskmd init --claude --gemini
+
+# Skip specific outputs
+taskmd init --no-spec         # Skip TASKMD_SPEC.md
+taskmd init --no-agent        # Skip agent configs
+taskmd init --no-templates    # Skip task templates
+
+# Overwrite existing files
+taskmd init --force
+
+# Print all content to stdout instead of writing files
+taskmd init --stdout
+```
+
+**Flags:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--task-dir` | `./tasks` | Task directory path to create |
+| `--claude` | `false` | Initialize for Claude Code |
+| `--gemini` | `false` | Initialize for Gemini |
+| `--codex` | `false` | Initialize for Codex |
+| `--no-spec` | `false` | Skip generating TASKMD_SPEC.md |
+| `--no-agent` | `false` | Skip generating agent configuration files |
+| `--no-templates` | `false` | Skip copying built-in task templates |
+| `--force` | `false` | Overwrite existing files |
+| `--stdout` | `false` | Print all content to stdout instead of writing files |
+
+If a file already exists and `--force` is not set, it is skipped with a warning.
+
+### completion - Generate Shell Completions
+
+Generate shell completion scripts for taskmd. Supports Bash, Zsh, Fish, and PowerShell.
+
+```bash
+# Bash
+source <(taskmd completion bash)
+
+# Bash (persistent - Linux)
+taskmd completion bash > /etc/bash_completion.d/taskmd
+
+# Bash (persistent - macOS with Homebrew)
+taskmd completion bash > $(brew --prefix)/etc/bash_completion.d/taskmd
+
+# Zsh (persistent)
+taskmd completion zsh > "${fpath[1]}/_taskmd"
+
+# Fish
+taskmd completion fish | source
+
+# Fish (persistent)
+taskmd completion fish > ~/.config/fish/completions/taskmd.fish
+
+# PowerShell
+taskmd completion powershell | Out-String | Invoke-Expression
+```
+
+**Arguments:**
+
+| Argument | Required | Description |
+|----------|----------|-------------|
+| `bash\|zsh\|fish\|powershell` | Yes | Shell type to generate completions for |
+
+::: tip
+After installing completions, start a new shell session for them to take effect. For Zsh, ensure `compinit` is loaded: `echo "autoload -U compinit; compinit" >> ~/.zshrc`
+:::
 
 ## Global Flags
 
