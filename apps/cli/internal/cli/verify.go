@@ -140,10 +140,8 @@ func printVerifyStep(step verify.StepResult, r *lipgloss.Renderer) {
 		if step.Dir != "" {
 			fmt.Printf("       dir: %s\n", formatDim(step.Dir, r))
 		}
-		if step.Status == verify.StatusFail && step.Stderr != "" {
-			for _, line := range strings.Split(strings.TrimRight(step.Stderr, "\n"), "\n") {
-				fmt.Printf("       %s\n", formatDim(line, r))
-			}
+		if step.Status == verify.StatusFail {
+			printFailureOutput(step, r)
 		}
 	case "assert":
 		fmt.Printf("  %s  %s\n", statusStr, step.Check)
@@ -153,6 +151,21 @@ func printVerifyStep(step verify.StepResult, r *lipgloss.Renderer) {
 			label = step.Warning
 		}
 		fmt.Printf("  %s  %s\n", statusStr, label)
+	}
+}
+
+func printFailureOutput(step verify.StepResult, r *lipgloss.Renderer) {
+	printDimLines := func(s string) {
+		for _, line := range strings.Split(strings.TrimRight(s, "\n"), "\n") {
+			fmt.Printf("       %s\n", formatDim(line, r))
+		}
+	}
+
+	if step.Stdout != "" {
+		printDimLines(step.Stdout)
+	}
+	if step.Stderr != "" {
+		printDimLines(step.Stderr)
 	}
 }
 
