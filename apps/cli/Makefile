@@ -91,13 +91,21 @@ mcpb: build
 	../../scripts/build-mcpb.sh ./taskmd "$$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.0.0-dev)" $$(go env GOOS) $$(go env GOARCH) .
 	@echo "MCPB bundle created in current directory"
 
-# Build MCPB bundles for macOS platforms
+# Build MCPB bundles for all platforms
 mcpb-all:
 	GOOS=darwin GOARCH=amd64 go build -o taskmd-darwin-amd64 ./cmd/taskmd
 	GOOS=darwin GOARCH=arm64 go build -o taskmd-darwin-arm64 ./cmd/taskmd
+	GOOS=linux GOARCH=amd64 go build -o taskmd-linux-amd64 ./cmd/taskmd
+	GOOS=linux GOARCH=arm64 go build -o taskmd-linux-arm64 ./cmd/taskmd
+	GOOS=windows GOARCH=amd64 go build -o taskmd-windows-amd64.exe ./cmd/taskmd
+	GOOS=windows GOARCH=arm64 go build -o taskmd-windows-arm64.exe ./cmd/taskmd
 	../../scripts/build-mcpb.sh ./taskmd-darwin-amd64 "$$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.0.0-dev)" darwin amd64 .
 	../../scripts/build-mcpb.sh ./taskmd-darwin-arm64 "$$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.0.0-dev)" darwin arm64 .
-	@echo "MCPB bundles created for darwin-amd64 and darwin-arm64"
+	../../scripts/build-mcpb.sh ./taskmd-linux-amd64 "$$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.0.0-dev)" linux amd64 .
+	../../scripts/build-mcpb.sh ./taskmd-linux-arm64 "$$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.0.0-dev)" linux arm64 .
+	../../scripts/build-mcpb.sh ./taskmd-windows-amd64.exe "$$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.0.0-dev)" windows amd64 .
+	../../scripts/build-mcpb.sh ./taskmd-windows-arm64.exe "$$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo 0.0.0-dev)" windows arm64 .
+	@echo "MCPB bundles created for all platforms"
 
 # Build for multiple platforms
 build-all:

@@ -1,7 +1,7 @@
 ---
 id: "159"
 title: "Add MCPB bundles for Linux and Windows platforms"
-status: pending
+status: completed
 priority: low
 effort: small
 tags:
@@ -23,12 +23,12 @@ Task 122 added `.mcpb` artifact generation for macOS (darwin-amd64, darwin-arm64
 
 ## Tasks
 
-- [ ] Update `.github/workflows/release.yml` to call `build-mcpb.sh` for linux-amd64, linux-arm64, windows-amd64, windows-arm64
-- [ ] Update release.yml release file list to include the 4 new `.mcpb` artifacts
-- [ ] Update `apps/cli/Makefile` `mcpb-all` target to build Linux and Windows bundles
-- [ ] Update `scripts/release.sh` success output to list all 6 `.mcpb` artifacts
-- [ ] Verify `scripts/build-mcpb.sh` correctly handles Windows `.exe` suffix and `win32` platform name
-- [ ] Test bundles install correctly on target platforms
+- [x] Update `.github/workflows/release.yml` to call `build-mcpb.sh` for linux-amd64, linux-arm64, windows-amd64, windows-arm64
+- [x] Update release.yml release file list to include the 4 new `.mcpb` artifacts
+- [x] Update `apps/cli/Makefile` `mcpb-all` target to build Linux and Windows bundles
+- [x] Update `scripts/release.sh` success output to list all 6 `.mcpb` artifacts
+- [x] Verify `scripts/build-mcpb.sh` correctly handles Windows `.exe` suffix and `win32` platform name
+- [x] Test bundles install correctly on target platforms
 
 ## Acceptance Criteria
 

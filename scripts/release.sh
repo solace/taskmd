@@ -372,7 +372,7 @@ This release includes pre-built binaries for:
 
 All binaries include the embedded web dashboard.
 
-MCPB bundles (one-click MCP server install) are included for macOS."
+MCPB bundles (one-click MCP server install) are included for all platforms."
 
     git tag -a "$tag" -m "$tag_msg"
     log_success "Created tag $tag"
@@ -634,6 +634,10 @@ main() {
             log_info "  • taskmd-$tag-windows-amd64.zip"
             log_info "  • taskmd-v${clean_version}-darwin-arm64.mcpb"
             log_info "  • taskmd-v${clean_version}-darwin-amd64.mcpb"
+            log_info "  • taskmd-v${clean_version}-linux-amd64.mcpb"
+            log_info "  • taskmd-v${clean_version}-linux-arm64.mcpb"
+            log_info "  • taskmd-v${clean_version}-windows-amd64.mcpb"
+            log_info "  • taskmd-v${clean_version}-windows-arm64.mcpb"
             log_info "  • checksums.txt"
         fi
 

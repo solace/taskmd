@@ -131,6 +131,18 @@ jobs:
           # macOS AMD64
           ./scripts/build-mcpb.sh dist/taskmd-darwin-amd64 ${{ steps.version.outputs.version }} darwin amd64 dist
 
+          # Linux AMD64
+          ./scripts/build-mcpb.sh dist/taskmd-linux-amd64 ${{ steps.version.outputs.version }} linux amd64 dist
+
+          # Linux ARM64
+          ./scripts/build-mcpb.sh dist/taskmd-linux-arm64 ${{ steps.version.outputs.version }} linux arm64 dist
+
+          # Windows AMD64
+          ./scripts/build-mcpb.sh dist/taskmd-windows-amd64.exe ${{ steps.version.outputs.version }} windows amd64 dist
+
+          # Windows ARM64
+          ./scripts/build-mcpb.sh dist/taskmd-windows-arm64.exe ${{ steps.version.outputs.version }} windows arm64 dist
+
       - name: Generate checksums
         working-directory: dist
         run: |
@@ -149,6 +161,10 @@ jobs:
             dist/taskmd-${{ steps.version.outputs.tag }}-windows-arm64.zip
             dist/taskmd-v${{ steps.version.outputs.version }}-darwin-arm64.mcpb
             dist/taskmd-v${{ steps.version.outputs.version }}-darwin-amd64.mcpb
+            dist/taskmd-v${{ steps.version.outputs.version }}-linux-amd64.mcpb
+            dist/taskmd-v${{ steps.version.outputs.version }}-linux-arm64.mcpb
+            dist/taskmd-v${{ steps.version.outputs.version }}-windows-amd64.mcpb
+            dist/taskmd-v${{ steps.version.outputs.version }}-windows-arm64.mcpb
             dist/checksums.txt
           draft: false
           prerelease: false
