@@ -167,8 +167,9 @@ type dependencyInfo struct {
 
 // depEntry is a single dependency reference.
 type depEntry struct {
-	ID    string `json:"id" yaml:"id"`
-	Title string `json:"title" yaml:"title"`
+	ID     string `json:"id" yaml:"id"`
+	Title  string `json:"title" yaml:"title"`
+	Status string `json:"status,omitempty" yaml:"status,omitempty"`
 }
 
 // resolveTask finds a task by exact match, file path, or fuzzy match.
@@ -394,7 +395,7 @@ func buildDependencyInfo(task *model.Task, allTasks []*model.Task) dependencyInf
 	}
 	for _, t := range allTasks {
 		if t.Parent == task.ID {
-			entry := depEntry{ID: t.ID, Title: t.Title}
+			entry := depEntry{ID: t.ID, Title: t.Title, Status: string(t.Status)}
 			info.Children = append(info.Children, entry)
 		}
 	}
@@ -517,7 +518,11 @@ func printChildren(w io.Writer, children []depEntry, r *lipgloss.Renderer) {
 	}
 	fmt.Fprintf(w, "\n%s\n", formatLabel("Children:", r))
 	for _, c := range children {
-		fmt.Fprintf(w, "  %s\n", formatDepEntry(c, r))
+		entry := formatDepEntry(c, r)
+		if c.Status != "" {
+			entry += " " + formatStatus(c.Status, r)
+		}
+		fmt.Fprintf(w, "  %s\n", entry)
 	}
 }
 

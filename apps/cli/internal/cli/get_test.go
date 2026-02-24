@@ -734,6 +734,19 @@ created: 2026-02-08
 
 # Child task
 `,
+		"012-child-done.md": `---
+id: "012"
+title: "Completed child"
+status: completed
+priority: low
+parent: "010"
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+
+# Completed child
+`,
 	}
 
 	for filename, content := range tasks {
@@ -774,6 +787,15 @@ func TestGet_ChildrenDisplay(t *testing.T) {
 	if !strings.Contains(output, "011") {
 		t.Error("Expected output to contain child ID '011'")
 	}
+	if !strings.Contains(output, "pending") {
+		t.Error("Expected output to contain child status 'pending'")
+	}
+	if !strings.Contains(output, "012") {
+		t.Error("Expected output to contain child ID '012'")
+	}
+	if !strings.Contains(output, "completed") {
+		t.Error("Expected output to contain child status 'completed'")
+	}
 }
 
 func TestGet_ParentJSON(t *testing.T) {
@@ -810,11 +832,37 @@ func TestGet_ChildrenJSON(t *testing.T) {
 		t.Fatalf("Failed to parse JSON output: %v\nOutput: %s", err, output)
 	}
 
-	if len(result.Children) != 1 {
-		t.Fatalf("Expected 1 child, got %d", len(result.Children))
+	if len(result.Children) != 2 {
+		t.Fatalf("Expected 2 children, got %d", len(result.Children))
 	}
-	if result.Children[0].ID != "011" {
-		t.Errorf("Expected child ID '011', got %q", result.Children[0].ID)
+
+	childByID := make(map[string]depEntry)
+	for _, c := range result.Children {
+		childByID[c.ID] = c
+	}
+
+	if c, ok := childByID["011"]; !ok {
+		t.Error("Expected child with ID '011'")
+	} else if c.Status != "pending" {
+		t.Errorf("Expected child 011 status 'pending', got %q", c.Status)
+	}
+
+	if c, ok := childByID["012"]; !ok {
+		t.Error("Expected child with ID '012'")
+	} else if c.Status != "completed" {
+		t.Errorf("Expected child 012 status 'completed', got %q", c.Status)
+	}
+}
+
+func TestGet_LeafTaskNoChildren(t *testing.T) {
+	tmpDir := createParentTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+
+	output := captureGetOutput(t, "011")
+
+	if strings.Contains(output, "Children:") {
+		t.Error("Leaf task should not have 'Children:' section")
 	}
 }
 
