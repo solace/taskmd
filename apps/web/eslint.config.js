@@ -27,10 +27,13 @@ export default [
         project: "./tsconfig.json",
       },
       globals: {
+        React: "readonly",
         fetch: "readonly",
         document: "readonly",
         window: "readonly",
         console: "readonly",
+        localStorage: "readonly",
+        requestAnimationFrame: "readonly",
         setTimeout: "readonly",
         clearTimeout: "readonly",
         setInterval: "readonly",

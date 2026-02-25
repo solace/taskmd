@@ -27,9 +27,8 @@ export function TagAutocomplete({
   }, [availableTags, selectedTags, query]);
 
   // Reset active index when suggestions change
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [suggestions]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setActiveIndex(0); }, [suggestions]);
 
   // Scroll active item into view
   useEffect(() => {

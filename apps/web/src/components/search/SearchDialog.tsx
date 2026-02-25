@@ -16,6 +16,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery("");
       // Small delay to ensure the dialog is rendered before focusing
       requestAnimationFrame(() => inputRef.current?.focus());
