@@ -18,17 +18,20 @@ import { MobileCardList } from "./TaskTable/MobileCardList.tsx";
 interface TaskTableProps {
   tasks: Task[];
   initialTags?: string[];
+  initialStatuses?: string[];
+  initialPriorities?: string[];
+  initialEffort?: string[];
 }
 
-export function TaskTable({ tasks, initialTags }: TaskTableProps) {
+export function TaskTable({ tasks, initialTags, initialStatuses, initialPriorities, initialEffort }: TaskTableProps) {
   const [, setSearchParams] = useSearchParams();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(
-    new Set(STATUSES),
+    () => initialStatuses && initialStatuses.length > 0 ? new Set(initialStatuses) : new Set(STATUSES),
   );
   const [selectedPriorities, setSelectedPriorities] = useState<Set<string>>(
-    new Set(PRIORITIES),
+    () => initialPriorities && initialPriorities.length > 0 ? new Set(initialPriorities) : new Set(PRIORITIES),
   );
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(
     new Set(TYPES),
@@ -36,20 +39,28 @@ export function TaskTable({ tasks, initialTags }: TaskTableProps) {
   const [selectedTags, setSelectedTags] = useState<Set<string>>(
     () => new Set(initialTags),
   );
+  const [selectedEffort, setSelectedEffort] = useState<Set<string>>(
+    () => initialEffort && initialEffort.length > 0 ? new Set(initialEffort) : new Set(),
+  );
 
   const hasActiveFilters =
     selectedStatuses.size !== STATUSES.length ||
     selectedPriorities.size !== PRIORITIES.length ||
     selectedTypes.size !== TYPES.length ||
     selectedTags.size > 0 ||
+    selectedEffort.size > 0 ||
     globalFilter !== "";
 
-  const syncTagsToUrl = useCallback(
-    (tags: Set<string>) => {
+  const syncFiltersToUrl = useCallback(
+    (updates: { tag?: Set<string>; status?: Set<string>; priority?: Set<string>; effort?: Set<string> }) => {
       setSearchParams(
         (prev) => {
-          prev.delete("tag");
-          tags.forEach((t) => prev.append("tag", t));
+          for (const [param, values] of Object.entries(updates)) {
+            prev.delete(param);
+            if (values) {
+              values.forEach((v: string) => prev.append(param, v));
+            }
+          }
           return prev;
         },
         { replace: true },
@@ -63,14 +74,15 @@ export function TaskTable({ tasks, initialTags }: TaskTableProps) {
     setSelectedPriorities(new Set(PRIORITIES));
     setSelectedTypes(new Set(TYPES));
     setSelectedTags(new Set());
-    syncTagsToUrl(new Set());
+    setSelectedEffort(new Set());
+    syncFiltersToUrl({ tag: new Set(), status: new Set(), priority: new Set(), effort: new Set() });
     setGlobalFilter("");
   }
 
   function toggleTag(tag: string) {
     setSelectedTags((prev) => {
       const next = toggleInSet(prev, tag);
-      syncTagsToUrl(next);
+      syncFiltersToUrl({ tag: next });
       return next;
     });
   }
@@ -84,9 +96,12 @@ export function TaskTable({ tasks, initialTags }: TaskTableProps) {
         if (!task.tags || !task.tags.some((t) => selectedTags.has(t)))
           return false;
       }
+      if (selectedEffort.size > 0) {
+        if (!task.effort || !selectedEffort.has(task.effort)) return false;
+      }
       return true;
     });
-  }, [tasks, selectedStatuses, selectedPriorities, selectedTypes, selectedTags]);
+  }, [tasks, selectedStatuses, selectedPriorities, selectedTypes, selectedTags, selectedEffort]);
 
   const columns = useMemo(
     () => createTaskColumns(selectedTags, toggleTag),
@@ -114,11 +129,19 @@ export function TaskTable({ tasks, initialTags }: TaskTableProps) {
         onGlobalFilterChange={setGlobalFilter}
         selectedStatuses={selectedStatuses}
         onToggleStatus={(s) =>
-          setSelectedStatuses((prev) => toggleInSet(prev, s))
+          setSelectedStatuses((prev) => {
+            const next = toggleInSet(prev, s);
+            syncFiltersToUrl({ status: next.size === STATUSES.length ? new Set() : next });
+            return next;
+          })
         }
         selectedPriorities={selectedPriorities}
         onTogglePriority={(p) =>
-          setSelectedPriorities((prev) => toggleInSet(prev, p))
+          setSelectedPriorities((prev) => {
+            const next = toggleInSet(prev, p);
+            syncFiltersToUrl({ priority: next.size === PRIORITIES.length ? new Set() : next });
+            return next;
+          })
         }
         selectedTypes={selectedTypes}
         onToggleType={(ty) =>

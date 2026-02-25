@@ -22,9 +22,9 @@ export function StatsView({ stats }: StatsViewProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <BreakdownCard title="By Status" data={stats.tasks_by_status} />
-        <BreakdownCard title="By Priority" data={stats.tasks_by_priority} />
-        <BreakdownCard title="By Effort" data={stats.tasks_by_effort} />
+        <BreakdownCard title="By Status" data={stats.tasks_by_status} linkParam="status" />
+        <BreakdownCard title="By Priority" data={stats.tasks_by_priority} linkParam="priority" />
+        <BreakdownCard title="By Effort" data={stats.tasks_by_effort} linkParam="effort" />
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-4 dark:bg-gray-800 dark:border-gray-700">
@@ -69,9 +69,11 @@ function MetricCard({
 function BreakdownCard({
   title,
   data,
+  linkParam,
 }: {
   title: string;
   data: Record<string, number>;
+  linkParam?: string;
 }) {
   const entries = Object.entries(data).filter(([, v]) => v > 0);
   return (
@@ -83,7 +85,16 @@ function BreakdownCard({
         <div className="space-y-2">
           {entries.map(([key, val]) => (
             <div key={key} className="flex justify-between items-center">
-              <span className="text-sm text-gray-600 dark:text-gray-300">{key}</span>
+              {linkParam ? (
+                <Link
+                  to={`/tasks?${linkParam}=${encodeURIComponent(key)}`}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline cursor-pointer"
+                >
+                  {key}
+                </Link>
+              ) : (
+                <span className="text-sm text-gray-600 dark:text-gray-300">{key}</span>
+              )}
               <span className="text-sm font-medium">{val}</span>
             </div>
           ))}

@@ -21,6 +21,17 @@ export function TasksPage() {
   }
 
   const initialTags = searchParams.getAll("tag");
+  const initialStatuses = searchParams.getAll("status");
+  const initialPriorities = searchParams.getAll("priority");
+  const initialEffort = searchParams.getAll("effort");
 
-  return <TaskTable tasks={data} initialTags={initialTags} />;
+  return (
+    <TaskTable
+      tasks={data}
+      initialTags={initialTags}
+      initialStatuses={initialStatuses}
+      initialPriorities={initialPriorities}
+      initialEffort={initialEffort}
+    />
+  );
 }

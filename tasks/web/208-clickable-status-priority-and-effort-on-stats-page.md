@@ -1,7 +1,7 @@
 ---
 title: "Clickable status, priority, and effort on Stats page to filter List view"
 id: "208"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["ui", "navigation"]
@@ -16,11 +16,11 @@ Make status, priority, and effort values on the Stats page clickable so that cli
 
 ## Tasks
 
-- [ ] Add URL param support for `status`, `priority`, and `effort` filters in `TasksPage.tsx` and `TaskTable.tsx` (mirroring the existing `?tag=` pattern)
-- [ ] Sync `selectedStatuses`, `selectedPriorities`, and `selectedTypes` state to/from URL params
-- [ ] In `StatsView.tsx`, make each value in the `BreakdownCard` components ("By Status", "By Priority", "By Effort") clickable
-- [ ] On click, navigate to `/tasks?status=<value>`, `/tasks?priority=<value>`, or `/tasks?effort=<value>`
-- [ ] Style the breakdown values to indicate they are clickable (cursor pointer, hover effect)
+- [x] Add URL param support for `status`, `priority`, and `effort` filters in `TasksPage.tsx` and `TaskTable.tsx` (mirroring the existing `?tag=` pattern)
+- [x] Sync `selectedStatuses`, `selectedPriorities`, and `selectedTypes` state to/from URL params
+- [x] In `StatsView.tsx`, make each value in the `BreakdownCard` components ("By Status", "By Priority", "By Effort") clickable
+- [x] On click, navigate to `/tasks?status=<value>`, `/tasks?priority=<value>`, or `/tasks?effort=<value>`
+- [x] Style the breakdown values to indicate they are clickable (cursor pointer, hover effect)
 
 ## Acceptance Criteria
 
