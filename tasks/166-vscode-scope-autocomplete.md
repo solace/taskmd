@@ -1,7 +1,7 @@
 ---
 id: "166"
 title: "VSCode extension: scope autocomplete for touches field"
-status: pending
+status: completed
 priority: low
 effort: small
 tags: []
@@ -18,10 +18,10 @@ Read scope definitions from `.taskmd.yaml` and suggest them when editing the `to
 
 ## Tasks
 
-- [ ] Read the `scopes` map from `.taskmd.yaml` (reuse config resolution from `config.ts`)
-- [ ] Implement completions inside `touches:` array values
-- [ ] Show scope name as the label and scope description (if present) as the detail
-- [ ] Add tests for scope parsing and completion triggering
+- [x] Read the `scopes` map from `.taskmd.yaml` (reuse config resolution from `config.ts`)
+- [x] Implement completions inside `touches:` array values
+- [x] Show scope name as the label and scope description (if present) as the detail
+- [x] Add tests for scope parsing and completion triggering
 
 ## Acceptance Criteria
 

@@ -1,12 +1,19 @@
 import { describe, it, expect } from "vitest";
 import { findFrontmatterBounds } from "../src/frontmatter";
 import { resolveCompletions } from "../src/completion";
+import type { ScopeEntry } from "../src/config";
 
-function getResult(text: string, line: number, character: number) {
+const TEST_SCOPES: ScopeEntry[] = [
+  { name: "cli", description: "CLI application" },
+  { name: "web", description: "Web frontend" },
+  { name: "cli/graph" },
+];
+
+function getResult(text: string, line: number, character: number, scopes?: ScopeEntry[]) {
   const bounds = findFrontmatterBounds(text);
   if (!bounds) return undefined;
   const lines = text.split("\n");
-  return resolveCompletions(lines, line, character, bounds.startLine, bounds.endLine);
+  return resolveCompletions(lines, line, character, bounds.startLine, bounds.endLine, scopes);
 }
 
 describe("completion logic", () => {
@@ -141,5 +148,103 @@ status:
     const [start, end] = result!.replaceColumns;
     const applied = line.substring(0, start) + result!.insertTexts[0] + line.substring(end);
     expect(applied).toBe("status: pending");
+  });
+});
+
+describe("touches scope completions", () => {
+  it("provides scope completions for block array items under touches", () => {
+    const doc = `---
+id: "042"
+touches:
+  -
+---`;
+    const result = getResult(doc, 3, 4, TEST_SCOPES);
+    expect(result).toBeDefined();
+    expect(result!.fieldName).toBe("touches");
+    expect(result!.values).toEqual(["cli", "web", "cli/graph"]);
+  });
+
+  it("provides scope completions for dash without trailing space", () => {
+    const doc = "---\ntouches:\n  -\n---";
+    const result = getResult(doc, 2, 3, TEST_SCOPES);
+    expect(result).toBeDefined();
+    expect(result!.fieldName).toBe("touches");
+  });
+
+  it("includes scope descriptions as details", () => {
+    const doc = `---
+touches:
+  -
+---`;
+    const result = getResult(doc, 2, 4, TEST_SCOPES);
+    expect(result).toBeDefined();
+    expect(result!.details).toEqual(["CLI application", "Web frontend", undefined]);
+  });
+
+  it("replaces partial text in block array item", () => {
+    const doc = `---
+touches:
+  - cl
+---`;
+    const result = getResult(doc, 2, 6, TEST_SCOPES);
+    expect(result).toBeDefined();
+    expect(result!.replaceColumns).toEqual([4, 6]);
+    expect(result!.insertTexts[0]).toBe("cli");
+  });
+
+  it("no scope completions when scopes are empty", () => {
+    const doc = `---
+touches:
+  -
+---`;
+    const result = getResult(doc, 2, 4, []);
+    expect(result).toBeUndefined();
+  });
+
+  it("no scope completions when scopes are not provided", () => {
+    const doc = `---
+touches:
+  -
+---`;
+    const result = getResult(doc, 2, 4);
+    expect(result).toBeUndefined();
+  });
+
+  it("no scope completions for array items under other fields", () => {
+    const doc = `---
+tags:
+  -
+---`;
+    const result = getResult(doc, 2, 4, TEST_SCOPES);
+    expect(result).toBeUndefined();
+  });
+
+  it("provides scope completions for inline array", () => {
+    const doc = `---
+touches: [
+---`;
+    const result = getResult(doc, 1, 11, TEST_SCOPES);
+    expect(result).toBeDefined();
+    expect(result!.fieldName).toBe("touches");
+    expect(result!.values).toEqual(["cli", "web", "cli/graph"]);
+  });
+
+  it("provides scope completions after comma in inline array", () => {
+    const doc = `---
+touches: [cli,
+---`;
+    const result = getResult(doc, 1, 16, TEST_SCOPES);
+    expect(result).toBeDefined();
+    expect(result!.values).toEqual(["cli", "web", "cli/graph"]);
+  });
+
+  it("enum completions still work when scopes are provided", () => {
+    const doc = `---
+status:
+---`;
+    const result = getResult(doc, 1, 8, TEST_SCOPES);
+    expect(result).toBeDefined();
+    expect(result!.fieldName).toBe("status");
+    expect(result!.values).toContain("pending");
   });
 });

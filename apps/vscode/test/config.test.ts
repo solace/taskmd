@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
-import { findConfigFile, resolveTaskDir, isUnderTaskDir } from "../src/config";
+import { findConfigFile, resolveTaskDir, isUnderTaskDir, readScopes } from "../src/config";
 
 function makeTmpDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), "taskmd-test-"));
@@ -118,5 +118,47 @@ describe("isUnderTaskDir", () => {
     fs.writeFileSync(path.join(tmpDir, ".taskmd.yaml"), "workflow: solo\n");
     expect(isUnderTaskDir(path.join(tmpDir, "tasks", "001.md"))).toBe(true);
     expect(isUnderTaskDir(path.join(tmpDir, "docs", "001.md"))).toBe(false);
+  });
+});
+
+describe("readScopes", () => {
+  let tmpDir: string;
+  beforeEach(() => { tmpDir = makeTmpDir(); });
+  afterEach(() => cleanup(tmpDir));
+
+  it("returns scope names from config", () => {
+    fs.writeFileSync(
+      path.join(tmpDir, ".taskmd.yaml"),
+      `scopes:\n  cli:\n    paths:\n      - "apps/cli/"\n  web:\n    paths:\n      - "apps/web/"\n`
+    );
+    const filePath = path.join(tmpDir, "tasks", "001.md");
+    const scopes = readScopes(filePath);
+    expect(scopes).toEqual([
+      { name: "cli", description: undefined },
+      { name: "web", description: undefined },
+    ]);
+  });
+
+  it("includes scope descriptions when present", () => {
+    fs.writeFileSync(
+      path.join(tmpDir, ".taskmd.yaml"),
+      `scopes:\n  cli:\n    paths:\n      - "apps/cli/"\n    description: "CLI application"\n`
+    );
+    const filePath = path.join(tmpDir, "tasks", "001.md");
+    const scopes = readScopes(filePath);
+    expect(scopes).toEqual([
+      { name: "cli", description: "CLI application" },
+    ]);
+  });
+
+  it("returns empty array when no scopes defined", () => {
+    fs.writeFileSync(path.join(tmpDir, ".taskmd.yaml"), "dir: tasks\n");
+    const filePath = path.join(tmpDir, "tasks", "001.md");
+    expect(readScopes(filePath)).toEqual([]);
+  });
+
+  it("returns empty array when no config exists", () => {
+    const filePath = path.join(tmpDir, "tasks", "001.md");
+    expect(readScopes(filePath)).toEqual([]);
   });
 });

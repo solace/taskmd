@@ -5,9 +5,15 @@ import { parse } from "yaml";
 const CONFIG_FILENAME = ".taskmd.yaml";
 const DEFAULT_TASK_DIR = "tasks";
 
+export interface ScopeDefinition {
+  paths?: string[];
+  description?: string;
+}
+
 interface TaskmdConfig {
   "task-dir"?: string;
   dir?: string;
+  scopes?: Record<string, ScopeDefinition | null>;
 }
 
 /**
@@ -29,19 +35,26 @@ export function findConfigFile(startDir: string): string | null {
 }
 
 /**
+ * Parse a `.taskmd.yaml` config file. Returns null on any error.
+ */
+function readConfig(configPath: string): TaskmdConfig | null {
+  try {
+    const content = fs.readFileSync(configPath, "utf-8");
+    return (parse(content) as TaskmdConfig | null) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Read the task directory from a `.taskmd.yaml` config file.
  * Supports both `task-dir` and `dir` keys (task-dir takes precedence).
  * Returns the raw value, or null if neither key is set.
  */
 function readTaskDirFromConfig(configPath: string): string | null {
-  try {
-    const content = fs.readFileSync(configPath, "utf-8");
-    const config = parse(content) as TaskmdConfig | null;
-    if (!config) return null;
-    return config["task-dir"] ?? config.dir ?? null;
-  } catch {
-    return null;
-  }
+  const config = readConfig(configPath);
+  if (!config) return null;
+  return config["task-dir"] ?? config.dir ?? null;
 }
 
 /**
@@ -86,4 +99,30 @@ export function isUnderTaskDir(filePath: string): boolean {
   const normalizedTaskDir = path.resolve(taskDir);
 
   return normalizedFile.startsWith(normalizedTaskDir + path.sep);
+}
+
+/** A scope entry with its name and optional description. */
+export interface ScopeEntry {
+  name: string;
+  description?: string;
+}
+
+/**
+ * Read scope definitions from `.taskmd.yaml` for a given file path.
+ * Returns an array of scope entries, or an empty array if no scopes are defined.
+ */
+export function readScopes(filePath: string): ScopeEntry[] {
+  const fileDir = path.dirname(filePath);
+  const configPath = findConfigFile(fileDir);
+  if (!configPath) return [];
+
+  const config = readConfig(configPath);
+  if (!config?.scopes) return [];
+
+  return Object.entries(config.scopes)
+    .filter(([, def]) => def !== null)
+    .map(([name, def]) => ({
+      name,
+      description: def?.description,
+    }));
 }
