@@ -1,7 +1,7 @@
 ---
 title: "Clickable tags on Stats page to filter List view"
 id: "207"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["ui", "navigation"]
@@ -16,9 +16,9 @@ Make tags on the Stats page clickable so that clicking a tag navigates the user 
 
 ## Tasks
 
-- [ ] In `StatsView.tsx`, wrap each tag name in the "Tags" section with a clickable element (link or button)
-- [ ] On click, navigate to `/tasks?tag=<tagName>` using React Router's `useNavigate` or a `<Link>` component
-- [ ] Style the tag to indicate it is clickable (cursor pointer, hover effect)
+- [x] In `StatsView.tsx`, wrap each tag name in the "Tags" section with a clickable element (link or button)
+- [x] On click, navigate to `/tasks?tag=<tagName>` using React Router's `useNavigate` or a `<Link>` component
+- [x] Style the tag to indicate it is clickable (cursor pointer, hover effect)
 
 ## Acceptance Criteria
 

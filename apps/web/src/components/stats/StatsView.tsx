@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { Stats } from "../../api/types.ts";
 
 interface StatsViewProps {
@@ -34,7 +35,12 @@ export function StatsView({ stats }: StatsViewProps) {
           <div className="space-y-2">
             {stats.tags_by_count.map(({ tag, count }) => (
               <div key={tag} className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-300">{tag}</span>
+                <Link
+                  to={`/tasks?tag=${encodeURIComponent(tag)}`}
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline cursor-pointer"
+                >
+                  {tag}
+                </Link>
                 <span className="text-sm font-medium">{count}</span>
               </div>
             ))}
