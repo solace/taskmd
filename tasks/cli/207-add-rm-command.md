@@ -1,7 +1,7 @@
 ---
 title: "Add rm command to delete tasks by ID"
 id: "207"
-status: in-progress
+status: completed
 priority: medium
 type: feature
 tags: []
@@ -16,14 +16,14 @@ Add a `taskmd rm <id>` command that safely deletes a task file by ID. Before del
 
 ## Tasks
 
-- [ ] Create `internal/cli/rm.go` with the `rm` command registered under `rootCmd`
-- [ ] Resolve task ID to file path using the scanner
-- [ ] Run validation to check the task is not referenced by other tasks (dependencies, parent, etc.)
-- [ ] If validation passes, delete the task file (and its worklog if present)
-- [ ] If validation fails, print the referencing tasks and abort unless `--force` is provided
-- [ ] With `--force`, skip reference checks and delete the file regardless
-- [ ] Add comprehensive tests in `internal/cli/rm_test.go`
-- [ ] Add e2e tests for the rm command
+- [x] Create `internal/cli/rm.go` with the `rm` command registered under `rootCmd`
+- [x] Resolve task ID to file path using the scanner
+- [x] Run validation to check the task is not referenced by other tasks (dependencies, parent, etc.)
+- [x] If validation passes, delete the task file (and its worklog if present)
+- [x] If validation fails, print the referencing tasks and abort unless `--force` is provided
+- [x] With `--force`, skip reference checks and delete the file regardless
+- [x] Add comprehensive tests in `internal/cli/rm_test.go`
+- [x] Add e2e tests for the rm command
 
 ## Acceptance Criteria
 
