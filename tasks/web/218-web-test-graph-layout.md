@@ -1,7 +1,7 @@
 ---
 id: "218"
 title: "Test graph layout logic and search highlighting"
-status: pending
+status: completed
 priority: medium
 type: chore
 effort: small
@@ -18,10 +18,10 @@ Add tests for the graph feature's core logic: the dagre layout computation in `u
 
 ## Tasks
 
-- [ ] Test `useGraphLayout` in `components/graph/useGraphLayout.ts` (empty data, node positioning, edge mapping)
-- [ ] Refactor: extract the layout computation from the hook into a pure function (e.g. `computeGraphLayout(data)`) so it can be tested without `renderHook`
-- [ ] Test `GraphPage` search matching logic (matched node IDs, filtered data based on status toggles)
-- [ ] Refactor: extract `matchedNodeIds` and `filteredData` computations from `GraphPage.tsx` into pure utility functions if they are complex enough to warrant it
+- [x] Test `useGraphLayout` in `components/graph/useGraphLayout.ts` (empty data, node positioning, edge mapping)
+- [x] Refactor: extracted `computeGraphLayout(data)` as a pure function from the hook
+- [x] Test `GraphPage` search matching logic (matched node IDs, filtered data based on status toggles)
+- [x] Refactor: extracted `findMatchedNodeIds` and `filterGraphByStatus` into `graph-utils.ts`
 
 ## Acceptance Criteria
 

@@ -7,9 +7,9 @@ import { GraphStats } from "../components/graph/GraphStats.tsx";
 import { GraphSearch } from "../components/graph/GraphSearch.tsx";
 import { GraphLegend } from "../components/graph/GraphLegend.tsx";
 import { useGraphLayout } from "../components/graph/useGraphLayout.ts";
+import { findMatchedNodeIds, filterGraphByStatus } from "../components/graph/graph-utils.ts";
 import { LoadingState } from "../components/shared/LoadingState.tsx";
 import { ErrorState } from "../components/shared/ErrorState.tsx";
-import type { GraphData } from "../api/types.ts";
 import type { Viewport } from "@xyflow/react";
 
 // Persist graph state across navigations (module-level, survives unmount)
@@ -23,26 +23,15 @@ export function GraphPage() {
   const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(savedState.statuses);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const matchedNodeIds = useMemo(() => {
-    if (!data || searchQuery === "") return new Set<string>();
-    const q = searchQuery.toLowerCase();
-    return new Set(
-      data.nodes
-        .filter((n) => n.id.toLowerCase().includes(q) || n.title.toLowerCase().includes(q))
-        .map((n) => n.id),
-    );
-  }, [data, searchQuery]);
+  const matchedNodeIds = useMemo(
+    () => (!data ? new Set<string>() : findMatchedNodeIds(data, searchQuery)),
+    [data, searchQuery],
+  );
 
-  const filteredData = useMemo((): GraphData | undefined => {
-    if (!data) return undefined;
-    if (selectedStatuses.size === 0) return data;
-
-    const visibleNodes = data.nodes.filter((n) => selectedStatuses.has(n.status));
-    const visibleIds = new Set(visibleNodes.map((n) => n.id));
-    const visibleEdges = data.edges.filter((e) => visibleIds.has(e.from) && visibleIds.has(e.to));
-
-    return { nodes: visibleNodes, edges: visibleEdges, cycles: data.cycles };
-  }, [data, selectedStatuses]);
+  const filteredData = useMemo(
+    () => (!data ? undefined : filterGraphByStatus(data, selectedStatuses)),
+    [data, selectedStatuses],
+  );
 
   const { nodes, edges } = useGraphLayout(filteredData);
 
