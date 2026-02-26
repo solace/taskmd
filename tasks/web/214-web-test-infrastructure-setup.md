@@ -1,7 +1,7 @@
 ---
 id: "214"
 title: "Set up Vitest test infrastructure for web app"
-status: pending
+status: completed
 priority: medium
 type: chore
 effort: small
@@ -18,11 +18,11 @@ Configure Vitest as the test runner for the `apps/web` React/TypeScript app and 
 
 ## Tasks
 
-- [ ] Install Vitest and required dependencies (`vitest`, `@testing-library/react`, `jsdom`, etc.)
-- [ ] Add Vitest configuration (vitest.config.ts or within vite.config.ts)
-- [ ] Add `test` script to `apps/web/package.json`
-- [ ] Write at least one test each for: a component, a utility, and a page
-- [ ] Verify `pnpm test` runs successfully from `apps/web`
+- [x] Install Vitest and required dependencies (`vitest`, `@testing-library/react`, `jsdom`, etc.)
+- [x] Add Vitest configuration (vitest.config.ts or within vite.config.ts)
+- [x] Add `test` script to `apps/web/package.json`
+- [x] Write at least one test each for: a component, a utility, and a page
+- [x] Verify `pnpm test` runs successfully from `apps/web`
 
 ## Acceptance Criteria
 
