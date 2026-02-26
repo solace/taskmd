@@ -258,15 +258,20 @@ All new CLI features must include comprehensive tests. See [CLAUDE.md](CLAUDE.md
 
 ### Code Coverage
 
-Code coverage is tracked automatically via [Codecov](https://codecov.io/gh/driangle/taskmd). On every push and pull request, the CI generates a Go coverage report and uploads it to Codecov. The coverage badge at the top of this README reflects the latest coverage on `main`.
+Code coverage is tracked automatically via [Codecov](https://codecov.io/gh/driangle/taskmd). On every push and pull request, the CI generates coverage reports for both the CLI and web app and uploads them to Codecov. The coverage badge at the top of this README reflects the latest coverage on `main`.
 
-To generate a coverage report locally:
+To generate coverage reports locally:
 
 ```bash
+# CLI (Go)
 cd apps/cli
 go test -coverprofile=coverage.out ./...
 go tool cover -html=coverage.out    # Open in browser
-go tool cover -func=coverage.out    # Print per-function coverage
+
+# Web (TypeScript/React)
+cd apps/web
+pnpm test:coverage                  # Generates coverage/index.html
+open coverage/index.html            # Open in browser
 ```
 
 ## License
