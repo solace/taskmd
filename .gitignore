@@ -38,6 +38,7 @@ apps/cli/taskmd
 
 # test artifacts
 *.out
+coverage/
 
 # vitepress build artifacts
 apps/docs/.vitepress/cache/
