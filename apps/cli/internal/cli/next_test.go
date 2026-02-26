@@ -588,6 +588,9 @@ func TestNext_TableFormat(t *testing.T) {
 	if !strings.Contains(output, "#") && !strings.Contains(output, "ID") {
 		t.Error("Expected table column headers")
 	}
+	if !strings.Contains(output, "Effort") {
+		t.Error("Expected 'Effort' column header in table output")
+	}
 }
 
 func TestNext_NoActionableTasks(t *testing.T) {

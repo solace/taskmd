@@ -129,18 +129,19 @@ func outputNextTable(recs []Recommendation) error {
 	fmt.Println()
 
 	tw := NewTableWriter()
-	tw.AddHeader([]string{"#", "ID", "Title", "Priority", "File", "Reason"})
+	tw.AddHeader([]string{"#", "ID", "Title", "Priority", "Effort", "File", "Reason"})
 	tw.AddSeparator()
 
 	for _, rec := range recs {
 		rank := fmt.Sprintf("%d", rec.Rank)
 		reason := strings.Join(rec.Reasons, ", ")
-		plain := []string{rank, rec.ID, rec.Title, rec.Priority, rec.FilePath, reason}
+		plain := []string{rank, rec.ID, rec.Title, rec.Priority, rec.Effort, rec.FilePath, reason}
 		colored := []string{
 			rank,
 			formatTaskID(rec.ID, r),
 			rec.Title,
 			formatPriority(rec.Priority, r),
+			formatEffort(rec.Effort, r),
 			formatDim(rec.FilePath, r),
 			reason,
 		}
