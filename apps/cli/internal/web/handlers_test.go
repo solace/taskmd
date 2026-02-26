@@ -898,6 +898,7 @@ func TestHandleTracks_EffortAndTouches(t *testing.T) {
 	task := findTrackTask(result, "010")
 	if task == nil {
 		t.Fatal("expected task 010 in tracks")
+		return
 	}
 	if task.Effort != "medium" {
 		t.Errorf("expected effort 'medium', got %q", task.Effort)

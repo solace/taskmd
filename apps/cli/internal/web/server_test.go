@@ -84,6 +84,7 @@ func TestNewServer_CreatesInstance(t *testing.T) {
 
 	if s == nil {
 		t.Fatal("expected non-nil server")
+		return
 	}
 	if s.dp == nil {
 		t.Error("expected non-nil data provider")
@@ -111,6 +112,7 @@ func TestNewServer_DevMode(t *testing.T) {
 
 	if s == nil {
 		t.Fatal("expected non-nil server")
+		return
 	}
 	if !s.config.Dev {
 		t.Error("expected dev mode to be enabled")
