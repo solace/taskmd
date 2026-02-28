@@ -448,6 +448,148 @@ func TestAssign_SingletonNoScopesNoDepsRemainsFlexible(t *testing.T) {
 	}
 }
 
+func TestAssign_Scope_MatchesTouchingTasks(t *testing.T) {
+	tasks := []*model.Task{
+		makeTask("001", model.StatusPending, model.PriorityHigh, nil, []string{"scope-a"}),
+		makeTask("002", model.StatusPending, model.PriorityMedium, nil, []string{"scope-a", "scope-b"}),
+		makeTask("003", model.StatusPending, model.PriorityLow, nil, []string{"scope-c"}),
+	}
+
+	result, err := Assign(tasks, Options{Scope: "scope-a"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Tracks) != 1 {
+		t.Fatalf("expected 1 track, got %d", len(result.Tracks))
+	}
+	if len(result.Tracks[0].Tasks) != 2 {
+		t.Errorf("expected 2 tasks (001, 002), got %d", len(result.Tracks[0].Tasks))
+	}
+	ids := map[string]bool{}
+	for _, tt := range result.Tracks[0].Tasks {
+		ids[tt.ID] = true
+	}
+	if !ids["001"] || !ids["002"] {
+		t.Errorf("expected tasks 001 and 002, got %v", ids)
+	}
+	if len(result.Flexible) != 0 {
+		t.Errorf("expected no flexible tasks in scope mode, got %d", len(result.Flexible))
+	}
+}
+
+func TestAssign_Scope_IncludesDependencyConnected(t *testing.T) {
+	// Task 001 touches scope-a. Task 002 shares a dep component with 001 but doesn't touch scope-a.
+	tasks := []*model.Task{
+		makeTask("root", model.StatusCompleted, model.PriorityHigh, nil, nil),
+		makeTask("001", model.StatusPending, model.PriorityHigh, []string{"root"}, []string{"scope-a"}),
+		makeTask("002", model.StatusPending, model.PriorityMedium, []string{"root"}, nil),
+		makeTask("003", model.StatusPending, model.PriorityLow, nil, []string{"scope-b"}),
+	}
+
+	result, err := Assign(tasks, Options{Scope: "scope-a"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Tracks) != 1 {
+		t.Fatalf("expected 1 track, got %d", len(result.Tracks))
+	}
+	ids := map[string]bool{}
+	for _, tt := range result.Tracks[0].Tasks {
+		ids[tt.ID] = true
+	}
+	if !ids["001"] || !ids["002"] {
+		t.Errorf("expected tasks 001 and 002 (dep-connected), got %v", ids)
+	}
+	if ids["003"] {
+		t.Error("task 003 should be excluded (unrelated scope, no dep connection)")
+	}
+}
+
+func TestAssign_Scope_ExcludesUnrelated(t *testing.T) {
+	tasks := []*model.Task{
+		makeTask("001", model.StatusPending, model.PriorityHigh, nil, []string{"scope-a"}),
+		makeTask("002", model.StatusPending, model.PriorityMedium, nil, []string{"scope-b"}),
+		makeTask("003", model.StatusPending, model.PriorityLow, nil, nil),
+	}
+
+	result, err := Assign(tasks, Options{Scope: "scope-a"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Tracks) != 1 {
+		t.Fatalf("expected 1 track, got %d", len(result.Tracks))
+	}
+	if len(result.Tracks[0].Tasks) != 1 || result.Tracks[0].Tasks[0].ID != "001" {
+		t.Errorf("expected only task 001, got %v", result.Tracks[0].Tasks)
+	}
+}
+
+func TestAssign_Scope_NoMatch(t *testing.T) {
+	tasks := []*model.Task{
+		makeTask("001", model.StatusPending, model.PriorityHigh, nil, []string{"scope-a"}),
+		makeTask("002", model.StatusPending, model.PriorityMedium, nil, []string{"scope-b"}),
+	}
+
+	result, err := Assign(tasks, Options{Scope: "nonexistent"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Tracks) != 0 {
+		t.Errorf("expected 0 tracks for non-matching scope, got %d", len(result.Tracks))
+	}
+	if len(result.Flexible) != 0 {
+		t.Errorf("expected 0 flexible for non-matching scope, got %d", len(result.Flexible))
+	}
+}
+
+func TestAssign_Scope_OrderedByScore(t *testing.T) {
+	tasks := []*model.Task{
+		makeTask("001", model.StatusPending, model.PriorityLow, nil, []string{"scope-a"}),
+		makeTask("002", model.StatusPending, model.PriorityCritical, nil, []string{"scope-a"}),
+		makeTask("003", model.StatusPending, model.PriorityMedium, nil, []string{"scope-a"}),
+	}
+
+	result, err := Assign(tasks, Options{Scope: "scope-a"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Tracks) != 1 {
+		t.Fatalf("expected 1 track, got %d", len(result.Tracks))
+	}
+	if len(result.Tracks[0].Tasks) != 3 {
+		t.Fatalf("expected 3 tasks, got %d", len(result.Tracks[0].Tasks))
+	}
+	// Critical should come first
+	if result.Tracks[0].Tasks[0].ID != "002" {
+		t.Errorf("expected task 002 (critical) first, got %s", result.Tracks[0].Tasks[0].ID)
+	}
+}
+
+func TestAssign_Scope_EmptyStringNormalBehavior(t *testing.T) {
+	tasks := []*model.Task{
+		makeTask("001", model.StatusPending, model.PriorityHigh, nil, []string{"scope-a"}),
+		makeTask("002", model.StatusPending, model.PriorityMedium, nil, nil),
+	}
+
+	result, err := Assign(tasks, Options{Scope: ""})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Normal behavior: 1 track + 1 flexible
+	if len(result.Tracks) != 1 {
+		t.Errorf("expected 1 track, got %d", len(result.Tracks))
+	}
+	if len(result.Flexible) != 1 {
+		t.Errorf("expected 1 flexible task, got %d", len(result.Flexible))
+	}
+}
+
 func TestAssign_IndependentGroups(t *testing.T) {
 	// Two disjoint clusters: {001, 002} share scope-a, {003, 004} share scope-b
 	tasks := []*model.Task{

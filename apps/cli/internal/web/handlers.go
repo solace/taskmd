@@ -247,10 +247,12 @@ func handleTracks(dp *DataProvider) http.HandlerFunc {
 		}
 
 		filters := r.URL.Query()["filter"]
+		scope := r.URL.Query().Get("scope")
 
 		result, err := tracks.Assign(tasks, tracks.Options{
 			Filters:       filters,
 			ArchivedTasks: archivedTasks,
+			Scope:         scope,
 		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)

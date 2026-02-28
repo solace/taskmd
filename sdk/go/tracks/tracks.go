@@ -41,6 +41,7 @@ type Options struct {
 	Filters       []string
 	KnownScopes   map[string]bool
 	ArchivedTasks []*model.Task
+	Scope         string
 }
 
 type scored struct {
@@ -56,6 +57,11 @@ func Assign(tasks []*model.Task, opts Options) (*Result, error) {
 	}
 
 	warnings := validateScopes(items, opts.KnownScopes)
+
+	if opts.Scope != "" {
+		return assignScope(items, tasks, opts.Scope, warnings), nil
+	}
+
 	depComponents := buildDependencyComponents(tasks)
 	assignedTracks, flexible := assignTracks(items, depComponents)
 	if assignedTracks == nil {
@@ -67,6 +73,57 @@ func Assign(tasks []*model.Task, opts Options) (*Result, error) {
 		Flexible: toTrackTasks(flexible),
 		Warnings: warnings,
 	}, nil
+}
+
+// assignScope returns a single track containing tasks related to the given scope.
+// It finds seed tasks whose touches list contains the scope, then expands via
+// dependency components to include any actionable task sharing a component with a seed.
+func assignScope(items []scored, allTasks []*model.Task, scope string, warnings []string) *Result {
+	depComponents := buildDependencyComponents(allTasks)
+
+	// Find seed tasks that directly touch the scope.
+	seedComponents := make(map[string]bool)
+	seedIDs := make(map[string]bool)
+	for _, it := range items {
+		for _, s := range it.task.Touches {
+			if s == scope {
+				seedIDs[it.task.ID] = true
+				if comp, ok := depComponents[it.task.ID]; ok {
+					seedComponents[comp] = true
+				}
+				break
+			}
+		}
+	}
+
+	// Expand: include any actionable task sharing a dependency component with a seed.
+	var matched []scored
+	for _, it := range items {
+		if seedIDs[it.task.ID] {
+			matched = append(matched, it)
+			continue
+		}
+		if comp, ok := depComponents[it.task.ID]; ok && seedComponents[comp] {
+			matched = append(matched, it)
+		}
+	}
+
+	result := &Result{
+		Tracks:   []Track{},
+		Flexible: []TrackTask{},
+		Warnings: warnings,
+	}
+
+	if len(matched) == 0 {
+		return result
+	}
+
+	track := newTrack(1)
+	for _, it := range matched {
+		addToTrack(&track, it)
+	}
+	result.Tracks = []Track{track}
+	return result
 }
 
 func scoreActionable(tasks []*model.Task, filters []string, archivedTasks []*model.Task) ([]scored, error) {

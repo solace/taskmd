@@ -12,6 +12,7 @@ Complete reference for using taskmd from the command line.
 | [`get`](#get-view-task-details) | Get detailed information about a specific task |
 | [`set`](#set-update-task-fields) | Set a task's frontmatter fields |
 | [`next`](#next-find-what-to-work-on) | Recommend what task to work on next |
+| [`current`](#current-show-current-task) | Show the current in-progress task (for statuslines) |
 | [`validate`](#validate-check-task-files) | Lint and validate tasks |
 | [`graph`](#graph-visualize-dependencies) | Export task dependency graph |
 | [`board`](#board-kanban-view) | Display tasks grouped in a kanban-like board view |
@@ -216,6 +217,56 @@ taskmd next --format json
 | `--filter` | | Filter tasks (repeatable, e.g. `--filter tag=cli`) |
 | `--quick-wins` | `false` | Show only quick wins (effort: small) |
 | `--critical` | `false` | Show only critical path tasks |
+
+### current - Show Current Task
+
+Display the current in-progress task in a compact, single-line format. Designed for embedding in statuslines (Claude Code, tmux, starship, shell prompts).
+
+```bash
+# Show the current task
+taskmd current
+# Output: #135 Windows installation support
+
+# Nothing printed if no task is in-progress (exit code 0)
+taskmd current
+```
+
+Titles longer than 30 characters are automatically truncated with `...`.
+
+**Statusline examples:**
+
+Use `$(taskmd current)` anywhere you want to display the active task:
+
+::: code-group
+
+```bash [Claude Code statusline]
+# In your ~/.claude/statusline-command.sh:
+current_task=$(taskmd current 2>/dev/null)
+if [ -n "$current_task" ]; then
+  line="${line} | ${current_task}"
+fi
+```
+
+```bash [tmux status-right]
+# In your ~/.tmux.conf:
+set -g status-right '#(taskmd current 2>/dev/null)'
+```
+
+```bash [Shell prompt (zsh)]
+# In your ~/.zshrc:
+RPROMPT='$(taskmd current 2>/dev/null)'
+```
+
+```bash [Starship custom module]
+# In your ~/.config/starship.toml:
+[custom.task]
+command = "taskmd current"
+when = "taskmd current"
+format = "[$output]($style) "
+style = "dimmed yellow"
+```
+
+:::
 
 ### graph - Visualize Dependencies
 

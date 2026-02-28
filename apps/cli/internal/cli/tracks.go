@@ -16,6 +16,7 @@ var (
 	tracksFormat  string
 	tracksFilters []string
 	tracksLimit   int
+	tracksScope   string
 )
 
 var tracksCmd = &cobra.Command{
@@ -28,6 +29,9 @@ can be worked on without merge conflicts.
 Tasks without a "touches" field are shown as "flexible" and can be assigned
 to any track.
 
+Use --scope to focus on a single scope: only tasks touching that scope (and
+their dependency-connected tasks) are shown as a single ordered track.
+
 Scope definitions can be configured in .taskmd.yaml under the "scopes" key.
 Unknown scopes produce warnings when scopes are configured.
 
@@ -38,7 +42,8 @@ Examples:
   taskmd tracks ./tasks
   taskmd tracks --format json
   taskmd tracks --filter tag=cli
-  taskmd tracks --limit 3`,
+  taskmd tracks --limit 3
+  taskmd tracks --scope web/graph`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runTracks,
 }
@@ -49,6 +54,7 @@ func init() {
 	tracksCmd.Flags().StringVar(&tracksFormat, "format", "table", "output format (table, json, yaml)")
 	tracksCmd.Flags().StringArrayVar(&tracksFilters, "filter", []string{}, "filter tasks (e.g., --filter tag=cli)")
 	tracksCmd.Flags().IntVar(&tracksLimit, "limit", 0, "maximum number of tracks to show (0 = unlimited)")
+	tracksCmd.Flags().StringVar(&tracksScope, "scope", "", "focus on a single scope (show one ordered track)")
 }
 
 func runTracks(cmd *cobra.Command, args []string) error {
@@ -77,6 +83,7 @@ func runTracks(cmd *cobra.Command, args []string) error {
 		Filters:       tracksFilters,
 		KnownScopes:   knownScopes,
 		ArchivedTasks: archivedTasks,
+		Scope:         tracksScope,
 	})
 	if err != nil {
 		return err

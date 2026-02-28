@@ -127,6 +127,7 @@ func resetTracksFlags() {
 	tracksFormat = "table"
 	tracksFilters = []string{}
 	tracksLimit = 0
+	tracksScope = ""
 }
 
 func TestTracks_JSONFormat(t *testing.T) {
@@ -451,6 +452,76 @@ func TestTracks_TableHeaderWithScopes(t *testing.T) {
 	}
 	if strings.Contains(output, "Track 2 ()") {
 		t.Error("Track with no scopes should not have empty parentheses")
+	}
+}
+
+func TestTracks_ScopeFlag_JSON(t *testing.T) {
+	tmpDir := createTracksTestTaskFiles(t)
+	resetTracksFlags()
+	tracksFormat = "json"
+	tracksScope = "scope-a"
+
+	output, err := captureTracksOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runTracks failed: %v", err)
+	}
+
+	var result tracks.Result
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		t.Fatalf("Failed to parse JSON: %v\nOutput: %s", err, output)
+	}
+
+	if len(result.Tracks) != 1 {
+		t.Fatalf("expected 1 track with --scope, got %d", len(result.Tracks))
+	}
+
+	// Tasks 002 and 003 both touch scope-a
+	ids := map[string]bool{}
+	for _, task := range result.Tracks[0].Tasks {
+		ids[task.ID] = true
+	}
+	if !ids["002"] || !ids["003"] {
+		t.Errorf("expected tasks 002 and 003 in scoped track, got %v", ids)
+	}
+
+	if len(result.Flexible) != 0 {
+		t.Errorf("expected no flexible tasks in scope mode, got %d", len(result.Flexible))
+	}
+}
+
+func TestTracks_ScopeFlag_Table(t *testing.T) {
+	tmpDir := createTracksTestTaskFiles(t)
+	resetTracksFlags()
+	tracksFormat = "table"
+	tracksScope = "scope-a"
+
+	output, err := captureTracksOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runTracks failed: %v", err)
+	}
+
+	if !strings.Contains(output, "Track") {
+		t.Error("Expected table output to contain 'Track'")
+	}
+	// Should NOT contain flexible section
+	if strings.Contains(output, "Flexible") {
+		t.Error("Scope mode should not show Flexible section")
+	}
+}
+
+func TestTracks_ScopeFlag_NoMatch(t *testing.T) {
+	tmpDir := createTracksTestTaskFiles(t)
+	resetTracksFlags()
+	tracksFormat = "table"
+	tracksScope = "nonexistent-scope"
+
+	output, err := captureTracksOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runTracks failed: %v", err)
+	}
+
+	if !strings.Contains(output, "No actionable tasks found") {
+		t.Errorf("Expected 'No actionable tasks found' for non-matching scope, got: %s", output)
 	}
 }
 
