@@ -16,7 +16,7 @@ import { TaskNode } from "./TaskNode.tsx";
 import { useTheme } from "../../hooks/use-theme.ts";
 
 const nodeTypes: NodeTypes = { task: TaskNode };
-const fitViewOptions = { maxZoom: 0.85, padding: 0.15 };
+const fitViewOptions = { minZoom: 0.5, maxZoom: 1, padding: 0.15 };
 
 interface GraphViewProps {
   nodes: Node[];

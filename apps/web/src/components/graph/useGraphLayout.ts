@@ -13,7 +13,7 @@ export function computeGraphLayout(data: GraphData): { nodes: Node[]; edges: Edg
 
   const g = new dagre.graphlib.Graph();
   g.setDefaultEdgeLabel(() => ({}));
-  g.setGraph({ rankdir: "TB", ranksep: 80, nodesep: 40 });
+  g.setGraph({ rankdir: "TB", ranksep: 100, nodesep: 50 });
 
   for (const node of data.nodes) {
     g.setNode(node.id, { width: NODE_WIDTH, height: NODE_HEIGHT });

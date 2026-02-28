@@ -16,6 +16,7 @@ export function Shell({ children }: ShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const location = useLocation();
+  const isGraphPage = location.pathname === "/graph";
 
   // Close mobile menu on route change
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -53,7 +54,7 @@ export function Shell({ children }: ShellProps) {
   const closeSearch = useCallback(() => setSearchOpen(false), []);
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100">
+    <div className={`overflow-x-hidden bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 ${isGraphPage ? "h-screen flex flex-col overflow-hidden" : "min-h-screen"}`}>
       <header className="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
@@ -114,7 +115,7 @@ export function Shell({ children }: ShellProps) {
         </div>
         {menuOpen && <MobileMenu />}
       </header>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-6">{children}</main>
+      <main className={isGraphPage ? "px-2 py-2 flex-1 min-h-0" : "max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-6"}>{children}</main>
       <SearchDialog open={searchOpen} onClose={closeSearch} />
     </div>
   );

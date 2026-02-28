@@ -71,8 +71,8 @@ export function GraphPage() {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div className="flex flex-col h-full">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-2 pb-3">
         <div className="flex items-center gap-4 flex-wrap">
           <GraphFilters
             selectedStatuses={selectedStatuses}
@@ -83,7 +83,7 @@ export function GraphPage() {
         </div>
       </div>
       <ReactFlowProvider>
-        <div className="relative bg-white rounded-lg border border-gray-200 h-[calc(100vh-160px)] md:h-[calc(100vh-200px)] min-h-[400px] md:min-h-[500px] dark:bg-gray-800 dark:border-gray-700">
+        <div className="relative flex-1 min-h-0 bg-white rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700">
           <div className="absolute top-2 left-2 right-2 sm:right-auto sm:left-3 sm:top-3 z-10">
             <GraphSearch
               query={searchQuery}
