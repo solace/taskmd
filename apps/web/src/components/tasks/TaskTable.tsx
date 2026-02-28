@@ -126,6 +126,10 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
             return next;
           })
         }
+        onSelectAllStatuses={() => {
+          setSelectedStatuses(new Set(STATUSES));
+          syncFiltersToUrl({ status: new Set() });
+        }}
         selectedPriorities={selectedPriorities}
         onTogglePriority={(p) =>
           setSelectedPriorities((prev) => {
@@ -134,6 +138,10 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
             return next;
           })
         }
+        onSelectAllPriorities={() => {
+          setSelectedPriorities(new Set(PRIORITIES));
+          syncFiltersToUrl({ priority: new Set() });
+        }}
         selectedEffort={selectedEffort}
         onToggleEffort={(e) =>
           setSelectedEffort((prev) => {
@@ -142,6 +150,10 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
             return next;
           })
         }
+        onSelectAllEffort={() => {
+          setSelectedEffort(new Set(EFFORTS));
+          syncFiltersToUrl({ effort: new Set() });
+        }}
         selectedTypes={selectedTypes}
         onToggleType={(ty) =>
           setSelectedTypes((prev) => {
@@ -150,6 +162,10 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
             return next;
           })
         }
+        onSelectAllTypes={() => {
+          setSelectedTypes(new Set(TYPES));
+          syncFiltersToUrl({ type: new Set() });
+        }}
         selectedTags={selectedTags}
         onRemoveTag={toggleTag}
         onClearFilters={clearFilters}

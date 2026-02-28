@@ -1,16 +1,62 @@
 import { STATUSES, PRIORITIES, EFFORTS, TYPES, STATUS_COLORS, PRIORITY_COLORS, EFFORT_COLORS, TYPE_COLORS } from "./constants.ts";
 
+const INACTIVE_STYLE = "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400";
+
+function FilterRow({ label, items, selected, colors, onToggle, onSelectAll }: {
+  label: string;
+  items: readonly string[];
+  selected: Set<string>;
+  colors: Record<string, string>;
+  onToggle: (item: string) => void;
+  onSelectAll: () => void;
+}) {
+  const allSelected = selected.size === items.length;
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{label}:</span>
+      <button
+        onClick={onSelectAll}
+        className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
+          allSelected
+            ? "bg-gray-200 text-gray-700 font-medium ring-1 ring-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:ring-gray-500"
+            : INACTIVE_STYLE
+        }`}
+      >
+        all
+      </button>
+      {items.map((item) => {
+        const active = selected.has(item);
+        return (
+          <button
+            key={item}
+            onClick={() => onToggle(item)}
+            className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
+              active ? colors[item] : INACTIVE_STYLE
+            }`}
+          >
+            {item}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export interface FilterBarProps {
   globalFilter: string;
   onGlobalFilterChange: (value: string) => void;
   selectedStatuses: Set<string>;
   onToggleStatus: (status: string) => void;
+  onSelectAllStatuses: () => void;
   selectedPriorities: Set<string>;
   onTogglePriority: (priority: string) => void;
+  onSelectAllPriorities: () => void;
   selectedEffort: Set<string>;
   onToggleEffort: (effort: string) => void;
+  onSelectAllEffort: () => void;
   selectedTypes: Set<string>;
   onToggleType: (type: string) => void;
+  onSelectAllTypes: () => void;
   selectedTags: Set<string>;
   onRemoveTag: (tag: string) => void;
   onClearFilters: () => void;
@@ -22,12 +68,16 @@ export function FilterBar({
   onGlobalFilterChange,
   selectedStatuses,
   onToggleStatus,
+  onSelectAllStatuses,
   selectedPriorities,
   onTogglePriority,
+  onSelectAllPriorities,
   selectedEffort,
   onToggleEffort,
+  onSelectAllEffort,
   selectedTypes,
   onToggleType,
+  onSelectAllTypes,
   selectedTags,
   onRemoveTag,
   onClearFilters,
@@ -53,85 +103,41 @@ export function FilterBar({
         )}
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Status:</span>
-        {STATUSES.map((s) => {
-          const active = selectedStatuses.has(s);
-          return (
-            <button
-              key={s}
-              onClick={() => onToggleStatus(s)}
-              className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
-                active
-                  ? STATUS_COLORS[s]
-                  : "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400"
-              }`}
-            >
-              {s}
-            </button>
-          );
-        })}
-      </div>
+      <FilterRow
+        label="Status"
+        items={STATUSES}
+        selected={selectedStatuses}
+        colors={STATUS_COLORS}
+        onToggle={onToggleStatus}
+        onSelectAll={onSelectAllStatuses}
+      />
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Priority:</span>
-        {PRIORITIES.map((p) => {
-          const active = selectedPriorities.has(p);
-          return (
-            <button
-              key={p}
-              onClick={() => onTogglePriority(p)}
-              className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
-                active
-                  ? PRIORITY_COLORS[p]
-                  : "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400"
-              }`}
-            >
-              {p}
-            </button>
-          );
-        })}
-      </div>
+      <FilterRow
+        label="Priority"
+        items={PRIORITIES}
+        selected={selectedPriorities}
+        colors={PRIORITY_COLORS}
+        onToggle={onTogglePriority}
+        onSelectAll={onSelectAllPriorities}
+      />
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Effort:</span>
-        {EFFORTS.map((e) => {
-          const active = selectedEffort.has(e);
-          return (
-            <button
-              key={e}
-              onClick={() => onToggleEffort(e)}
-              className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
-                active
-                  ? EFFORT_COLORS[e]
-                  : "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400"
-              }`}
-            >
-              {e}
-            </button>
-          );
-        })}
-      </div>
+      <FilterRow
+        label="Effort"
+        items={EFFORTS}
+        selected={selectedEffort}
+        colors={EFFORT_COLORS}
+        onToggle={onToggleEffort}
+        onSelectAll={onSelectAllEffort}
+      />
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Type:</span>
-        {TYPES.map((ty) => {
-          const active = selectedTypes.has(ty);
-          return (
-            <button
-              key={ty}
-              onClick={() => onToggleType(ty)}
-              className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
-                active
-                  ? TYPE_COLORS[ty]
-                  : "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400"
-              }`}
-            >
-              {ty}
-            </button>
-          );
-        })}
-      </div>
+      <FilterRow
+        label="Type"
+        items={TYPES}
+        selected={selectedTypes}
+        colors={TYPE_COLORS}
+        onToggle={onToggleType}
+        onSelectAll={onSelectAllTypes}
+      />
 
       {selectedTags.size > 0 && (
         <div className="flex items-center gap-2 flex-wrap">

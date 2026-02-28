@@ -21,14 +21,26 @@ interface PillRowProps {
   selected: Set<string>;
   colors: Record<string, string>;
   onToggle: (value: string) => void;
+  onSelectAll: () => void;
 }
 
-function PillRow({ label, items, selected, colors, onToggle }: PillRowProps) {
+function PillRow({ label, items, selected, colors, onToggle, onSelectAll }: PillRowProps) {
+  const allSelected = selected.size === items.length;
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
         {label}:
       </span>
+      <button
+        onClick={onSelectAll}
+        className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
+          allSelected
+            ? "bg-gray-200 text-gray-700 font-medium ring-1 ring-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:ring-gray-500"
+            : INACTIVE_PILL
+        }`}
+      >
+        all
+      </button>
       {items.map((item) => {
         const active = selected.has(item);
         return (
@@ -85,6 +97,7 @@ export function BoardFilterBar({
           selected={selectedStatuses}
           colors={STATUS_COLORS}
           onToggle={(s) => onStatusesChange(toggleInSet(selectedStatuses, s))}
+          onSelectAll={() => onStatusesChange(new Set(STATUSES))}
         />
       )}
       {groupBy !== "priority" && (
@@ -94,6 +107,7 @@ export function BoardFilterBar({
           selected={selectedPriorities}
           colors={PRIORITY_COLORS}
           onToggle={(p) => onPrioritiesChange(toggleInSet(selectedPriorities, p))}
+          onSelectAll={() => onPrioritiesChange(new Set(PRIORITIES))}
         />
       )}
       {groupBy !== "effort" && (
@@ -103,6 +117,7 @@ export function BoardFilterBar({
           selected={selectedEfforts}
           colors={EFFORT_COLORS}
           onToggle={(e) => onEffortsChange(toggleInSet(selectedEfforts, e))}
+          onSelectAll={() => onEffortsChange(new Set(EFFORTS))}
         />
       )}
       {groupBy !== "type" && (
@@ -112,6 +127,7 @@ export function BoardFilterBar({
           selected={selectedTypes}
           colors={TYPE_COLORS}
           onToggle={(ty) => onTypesChange(toggleInSet(selectedTypes, ty))}
+          onSelectAll={() => onTypesChange(new Set(TYPES))}
         />
       )}
       {groupBy !== "tag" && availableTags.length > 0 && (
