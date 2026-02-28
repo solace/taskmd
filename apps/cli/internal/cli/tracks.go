@@ -64,6 +64,8 @@ func runTracks(cmd *cobra.Command, args []string) error {
 	allTasks := scanResult.Tasks
 	makeFilePathsRelative(allTasks, scanDir)
 
+	warnDuplicateIDs(allTasks)
+
 	archivedTasks, err := taskScanner.ScanArchive()
 	if err != nil {
 		return fmt.Errorf("archive scan failed: %w", err)

@@ -140,6 +140,11 @@ func runSet(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("task not found: %s", taskID)
 	}
 
+	if dupes := findDuplicatesByID(taskID, result.Tasks); len(dupes) > 1 {
+		return fmt.Errorf("refusing to modify task %s: found %d files with this ID\n%s\nRun 'taskmd deduplicate' to fix",
+			taskID, len(dupes), formatDuplicatePaths(dupes))
+	}
+
 	if req.Dependencies != nil {
 		if err := validateDependencies(task, *req.Dependencies, result.Tasks); err != nil {
 			return err

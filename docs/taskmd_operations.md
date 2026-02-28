@@ -267,6 +267,14 @@ When scopes are defined in config, each task's `touches` entries are checked aga
 | 1 | Errors found |
 | 2 | Strict mode only — no errors but warnings present |
 
+### 3.15 Duplicate ID Behavior in Commands
+
+All commands that scan tasks check for duplicate IDs after scanning. If duplicates exist, a warning is printed to stderr listing the affected IDs and file paths.
+
+Additionally, mutating commands (`set`, `rm`) that target a specific task by ID will **refuse to proceed** if that ID has duplicates, exiting with an error. The user must resolve duplicates (via `taskmd deduplicate` or manual edit) before the command will run.
+
+Read commands (`get`, `status`) that resolve a task by ID will warn on stderr when the matched ID has duplicates, but still return results for the first match found.
+
 ---
 
 ## 4. Next-Task Ranking

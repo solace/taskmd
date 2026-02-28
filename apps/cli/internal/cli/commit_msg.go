@@ -78,6 +78,8 @@ func runCommitMsg(_ *cobra.Command, _ []string) error {
 
 	tasks := result.Tasks
 
+	warnDuplicateIDs(tasks)
+
 	if commitMsgTaskID != "" {
 		task := findExactMatch(commitMsgTaskID, tasks)
 		if task == nil {

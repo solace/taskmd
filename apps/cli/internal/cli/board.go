@@ -73,6 +73,8 @@ func runBoard(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr)
 	}
 
+	warnDuplicateIDs(result.Tasks)
+
 	grouped, err := board.GroupTasks(result.Tasks, boardGroupBy)
 	if err != nil {
 		return err

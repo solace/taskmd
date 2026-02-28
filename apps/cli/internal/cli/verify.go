@@ -101,6 +101,8 @@ func runVerify(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("scan failed: %w", err)
 	}
 
+	warnDuplicateIDs(result.Tasks)
+
 	task := findExactMatch(taskID, result.Tasks)
 	if task == nil {
 		return fmt.Errorf("task not found: %s", taskID)

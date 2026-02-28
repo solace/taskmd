@@ -74,6 +74,8 @@ func runContext(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("scan failed: %w", err)
 	}
 
+	warnDuplicateIDs(result.Tasks)
+
 	task := findExactMatch(ctxTaskID, result.Tasks)
 	if task == nil {
 		return fmt.Errorf("task not found: %s", ctxTaskID)

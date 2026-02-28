@@ -70,6 +70,8 @@ func runStats(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr)
 	}
 
+	warnDuplicateIDs(tasks)
+
 	// Calculate metrics
 	m := metrics.Calculate(tasks)
 

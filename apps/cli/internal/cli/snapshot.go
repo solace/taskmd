@@ -103,6 +103,8 @@ func runSnapshot(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr)
 	}
 
+	warnDuplicateIDs(tasks)
+
 	// Build task map for derived fields
 	taskMap := buildTaskMap(tasks)
 

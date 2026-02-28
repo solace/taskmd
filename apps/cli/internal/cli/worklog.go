@@ -49,6 +49,8 @@ func runWorklog(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("scan failed: %w", err)
 	}
 
+	warnDuplicateIDs(result.Tasks)
+
 	// Find the task by ID
 	var taskFilePath string
 	for _, t := range result.Tasks {

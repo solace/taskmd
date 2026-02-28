@@ -65,6 +65,11 @@ func runRm(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("task not found: %s", taskID)
 	}
 
+	if dupes := findDuplicatesByID(taskID, result.Tasks); len(dupes) > 1 {
+		return fmt.Errorf("refusing to delete task %s: found %d files with this ID\n%s\nRun 'taskmd deduplicate' to fix",
+			taskID, len(dupes), formatDuplicatePaths(dupes))
+	}
+
 	if !rmForce {
 		if err := checkTaskReferences(taskID, result.Tasks); err != nil {
 			return err

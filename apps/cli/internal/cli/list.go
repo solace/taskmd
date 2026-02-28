@@ -75,17 +75,9 @@ func runList(cmd *cobra.Command, args []string) error {
 	tasks := result.Tasks
 	debugLog("found %d task(s)", len(tasks))
 
-	// Make file paths relative to scan directory
 	makeFilePathsRelative(tasks, scanDir)
-
-	// Report any scan errors if verbose
-	if flags.Verbose && len(result.Errors) > 0 {
-		fmt.Fprintf(os.Stderr, "\nWarning: encountered %d errors during scan:\n", len(result.Errors))
-		for _, scanErr := range result.Errors {
-			fmt.Fprintf(os.Stderr, "  %s: %v\n", scanErr.FilePath, scanErr.Error)
-		}
-		fmt.Fprintln(os.Stderr)
-	}
+	reportScanWarnings(result, flags)
+	warnDuplicateIDs(tasks)
 
 	debugLog("format: %s, sort: %q, filters: %v", listFormat, listSort, listFilters)
 
@@ -222,6 +214,17 @@ func colorizeColumn(task *model.Task, column string, r *lipgloss.Renderer) strin
 		return formatEffort(value, r)
 	default:
 		return value
+	}
+}
+
+// reportScanWarnings prints scan errors to stderr when verbose mode is enabled.
+func reportScanWarnings(result *scanner.ScanResult, flags GlobalFlags) {
+	if flags.Verbose && len(result.Errors) > 0 {
+		fmt.Fprintf(os.Stderr, "\nWarning: encountered %d errors during scan:\n", len(result.Errors))
+		for _, scanErr := range result.Errors {
+			fmt.Fprintf(os.Stderr, "  %s: %v\n", scanErr.FilePath, scanErr.Error)
+		}
+		fmt.Fprintln(os.Stderr)
 	}
 }
 

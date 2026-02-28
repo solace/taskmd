@@ -103,6 +103,8 @@ func runGraph(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr)
 	}
 
+	warnDuplicateIDs(tasks)
+
 	filtered := false
 
 	// Apply --filter flags

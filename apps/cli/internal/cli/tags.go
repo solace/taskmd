@@ -74,6 +74,8 @@ func runTags(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr)
 	}
 
+	warnDuplicateIDs(tasks)
+
 	if len(tagsFilters) > 0 {
 		tasks, err = applyFilters(tasks, tagsFilters)
 		if err != nil {

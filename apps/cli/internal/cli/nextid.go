@@ -57,6 +57,8 @@ func runNextID(_ *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr)
 	}
 
+	warnDuplicateIDs(result.Tasks)
+
 	ids := make([]string, len(result.Tasks))
 	for i, task := range result.Tasks {
 		ids[i] = task.ID

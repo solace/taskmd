@@ -65,6 +65,8 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	tasks := result.Tasks
 	makeFilePathsRelative(tasks, scanDir)
 
+	warnDuplicateIDs(tasks)
+
 	// Apply filters before search (narrows which tasks are searched)
 	if len(searchFilters) > 0 {
 		tasks, err = applyFilters(tasks, searchFilters)

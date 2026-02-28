@@ -175,6 +175,9 @@ type depEntry struct {
 // resolveTask finds a task by exact match, file path, or fuzzy match.
 func resolveTask(query string, tasks []*model.Task, exactOnly bool, threshold float64) (*model.Task, error) {
 	if task := findExactMatch(query, tasks); task != nil {
+		if dupes := findDuplicatesByID(query, tasks); len(dupes) > 1 {
+			fmt.Fprintf(os.Stderr, "Warning: task ID %q has %d files:\n%s\n", query, len(dupes), formatDuplicatePaths(dupes))
+		}
 		return task, nil
 	}
 

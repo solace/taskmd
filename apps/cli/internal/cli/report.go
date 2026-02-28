@@ -77,6 +77,8 @@ func runReport(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr)
 	}
 
+	warnDuplicateIDs(result.Tasks)
+
 	data, err := collectReportData(result.Tasks, reportGroupBy, reportIncludeGraph)
 	if err != nil {
 		return err
