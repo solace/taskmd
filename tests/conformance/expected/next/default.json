@@ -1,0 +1,58 @@
+{
+  "description": "Next-task ranking for the standard fixture set (limit 10)",
+  "results": [
+    {
+      "rank": 1,
+      "id": "002",
+      "title": "Add user authentication",
+      "status": "pending",
+      "priority": "critical",
+      "effort": "large",
+      "score": 70,
+      "reasons": ["critical priority", "on critical path", "unblocks 5 tasks"],
+      "downstream_count": 5,
+      "on_critical_path": true
+    },
+    {
+      "rank": 2,
+      "id": "004",
+      "title": "Design database schema",
+      "status": "in-progress",
+      "priority": "high",
+      "effort": "medium",
+      "score": 33,
+      "reasons": ["high priority", "unblocks 1 task"],
+      "downstream_count": 1,
+      "on_critical_path": false
+    },
+    {
+      "rank": 3,
+      "id": "012",
+      "title": "Configure monitoring stack",
+      "status": "pending",
+      "priority": "medium",
+      "effort": "medium",
+      "score": 22,
+      "reasons": [],
+      "downstream_count": 0,
+      "on_critical_path": false
+    },
+    {
+      "rank": 4,
+      "id": "006",
+      "title": "Setup CI/CD pipeline",
+      "status": "pending",
+      "priority": "low",
+      "effort": "small",
+      "score": 15,
+      "reasons": ["quick win"],
+      "downstream_count": 0,
+      "on_critical_path": false
+    }
+  ],
+  "notes": {
+    "task_002": "Score breakdown: priority(40) + criticalPath(15*1.0=15) + downstream(min(5*3,15)*1.0=15) + effort(0) = 70",
+    "task_004": "Score breakdown: priority(30) + criticalPath(0) + downstream(min(1*3,15)*0.5=1) + effort(2) = 33. Downstream max priority is medium (task 005), so multiplier=0.5",
+    "task_011_excluded": "Task 011 (Epic) has an incomplete child (012), so it is not actionable"
+  }
+}

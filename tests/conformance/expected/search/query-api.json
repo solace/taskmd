@@ -1,0 +1,23 @@
+{
+  "description": "Search for 'API' (case-insensitive)",
+  "query": "API",
+  "expected_ids": ["003", "009", "010"],
+  "expected_count": 3,
+  "results": [
+    {
+      "id": "003",
+      "title": "Create REST API endpoints",
+      "match_location": "title,body"
+    },
+    {
+      "id": "009",
+      "title": "Implement API rate limiting",
+      "match_location": "title,body"
+    },
+    {
+      "id": "010",
+      "title": "Write API documentation",
+      "match_location": "title,body"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+# Config with additional ignore directories
+task-dir: tasks
+ignore:
+  - "generated"
+  - "tmp"

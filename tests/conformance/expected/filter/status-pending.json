@@ -1,0 +1,6 @@
+{
+  "description": "Filter: status=pending",
+  "filter": "status=pending",
+  "expected_ids": ["002", "003", "005", "006", "008", "009", "010", "011", "012"],
+  "expected_count": 9
+}

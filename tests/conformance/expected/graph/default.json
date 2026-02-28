@@ -1,0 +1,25 @@
+{
+  "description": "Graph output (default: excludes completed tasks)",
+  "nodes": [
+    {"id": "002", "title": "Add user authentication", "status": "pending", "priority": "critical", "group": "core"},
+    {"id": "003", "title": "Create REST API endpoints", "status": "pending", "priority": "high", "group": "api"},
+    {"id": "004", "title": "Design database schema", "status": "in-progress", "priority": "high", "group": "core"},
+    {"id": "005", "title": "Write unit tests for core modules", "status": "pending", "priority": "medium", "group": "testing"},
+    {"id": "006", "title": "Setup CI/CD pipeline", "status": "pending", "priority": "low", "group": "infra"},
+    {"id": "007", "title": "Add structured logging", "status": "cancelled", "priority": "medium", "group": "infra"},
+    {"id": "008", "title": "Build frontend dashboard", "status": "pending", "priority": "medium", "group": "web"},
+    {"id": "009", "title": "Implement API rate limiting", "status": "pending", "priority": "medium", "group": "api"},
+    {"id": "010", "title": "Write API documentation", "status": "pending", "priority": "low", "group": "docs"},
+    {"id": "011", "title": "Epic: Infrastructure setup", "status": "pending", "priority": "high", "group": "core"},
+    {"id": "012", "title": "Configure monitoring stack", "status": "pending", "priority": "medium", "group": "infra"}
+  ],
+  "edges": [
+    {"from": "002", "to": "003"},
+    {"from": "002", "to": "005"},
+    {"from": "003", "to": "008"},
+    {"from": "003", "to": "009"},
+    {"from": "003", "to": "010"},
+    {"from": "004", "to": "005"}
+  ],
+  "notes": "Task 001 (completed) is excluded by default. Dependencies on 001 are not shown as edges since 001 is not in the graph."
+}

@@ -1,7 +1,7 @@
 ---
 title: "Draft taskmd operations specification"
 id: "230"
-status: pending
+status: completed
 priority: high
 effort: medium
 type: feature
@@ -17,16 +17,16 @@ Document the behavioral contracts for all core taskmd operations so that library
 
 ## Tasks
 
-- [ ] Define scanning behavior — which files are task files, directory traversal rules, group inference from directory names, handling of nested directories and dotfiles
-- [ ] Define filtering semantics — how multiple filters combine (AND/OR), tag matching (exact vs partial), status/priority/effort matching, negation
-- [ ] Define validation rules — required fields, enum validation, duplicate ID detection, circular dependency detection, dangling dependency references, file naming conventions
-- [ ] Define next-task ranking algorithm — how priority, effort, dependencies, blocked status, and age factor into the ranking order
-- [ ] Define dependency resolution — when a dependency is "met" (which statuses count), transitive dependency handling, blocked status inference
-- [ ] Define graph construction — node/edge semantics, cycle detection, subgraph extraction
-- [ ] Define search behavior — which fields are searchable, matching rules (case sensitivity, partial match)
-- [ ] Create a conformance test fixtures directory with sample task files and expected outputs for each operation
-- [ ] Write the spec document (`docs/taskmd_operations.md`)
-- [ ] Review against current Go implementation to ensure the spec matches actual behavior
+- [x] Define scanning behavior — which files are task files, directory traversal rules, group inference from directory names, handling of nested directories and dotfiles
+- [x] Define filtering semantics — how multiple filters combine (AND/OR), tag matching (exact vs partial), status/priority/effort matching, negation
+- [x] Define validation rules — required fields, enum validation, duplicate ID detection, circular dependency detection, dangling dependency references, file naming conventions
+- [x] Define next-task ranking algorithm — how priority, effort, dependencies, blocked status, and age factor into the ranking order
+- [x] Define dependency resolution — when a dependency is "met" (which statuses count), transitive dependency handling, blocked status inference
+- [x] Define graph construction — node/edge semantics, cycle detection, subgraph extraction
+- [x] Define search behavior — which fields are searchable, matching rules (case sensitivity, partial match)
+- [x] Create a conformance test fixtures directory with sample task files and expected outputs for each operation
+- [x] Write the spec document (`docs/taskmd_operations.md`)
+- [x] Review against current Go implementation to ensure the spec matches actual behavior
 
 ## Acceptance Criteria
 
