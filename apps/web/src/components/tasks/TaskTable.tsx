@@ -22,9 +22,10 @@ interface TaskTableProps {
   initialStatuses?: string[];
   initialPriorities?: string[];
   initialEffort?: string[];
+  initialTypes?: string[];
 }
 
-export function TaskTable({ tasks, initialTags, initialStatuses, initialPriorities, initialEffort }: TaskTableProps) {
+export function TaskTable({ tasks, initialTags, initialStatuses, initialPriorities, initialEffort, initialTypes }: TaskTableProps) {
   const [, setSearchParams] = useSearchParams();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -35,7 +36,7 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
     () => initialPriorities && initialPriorities.length > 0 ? new Set(initialPriorities) : new Set(PRIORITIES),
   );
   const [selectedTypes, setSelectedTypes] = useState<Set<string>>(
-    new Set(TYPES),
+    () => initialTypes && initialTypes.length > 0 ? new Set(initialTypes) : new Set(TYPES),
   );
   const [selectedTags, setSelectedTags] = useState<Set<string>>(
     () => new Set(initialTags),
@@ -48,7 +49,7 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
   const hasActiveFilters = checkActiveFilters(filterState);
 
   const syncFiltersToUrl = useCallback(
-    (updates: { tag?: Set<string>; status?: Set<string>; priority?: Set<string>; effort?: Set<string> }) => {
+    (updates: { tag?: Set<string>; status?: Set<string>; priority?: Set<string>; effort?: Set<string>; type?: Set<string> }) => {
       setSearchParams(
         (prev) => {
           for (const [param, values] of Object.entries(updates)) {
@@ -71,7 +72,7 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
     setSelectedTypes(new Set(TYPES));
     setSelectedTags(new Set());
     setSelectedEffort(new Set(EFFORTS));
-    syncFiltersToUrl({ tag: new Set(), status: new Set(), priority: new Set(), effort: new Set() });
+    syncFiltersToUrl({ tag: new Set(), status: new Set(), priority: new Set(), effort: new Set(), type: new Set() });
     setGlobalFilter("");
   }
 
@@ -138,7 +139,11 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
         }
         selectedTypes={selectedTypes}
         onToggleType={(ty) =>
-          setSelectedTypes((prev) => toggleInSet(prev, ty))
+          setSelectedTypes((prev) => {
+            const next = toggleInSet(prev, ty);
+            syncFiltersToUrl({ type: next.size === TYPES.length ? new Set() : next });
+            return next;
+          })
         }
         selectedTags={selectedTags}
         onRemoveTag={toggleTag}

@@ -24,6 +24,7 @@ export function TasksPage() {
   const initialStatuses = searchParams.getAll("status");
   const initialPriorities = searchParams.getAll("priority");
   const initialEffort = searchParams.getAll("effort");
+  const initialTypes = searchParams.getAll("type");
 
   return (
     <TaskTable
@@ -32,6 +33,7 @@ export function TasksPage() {
       initialStatuses={initialStatuses}
       initialPriorities={initialPriorities}
       initialEffort={initialEffort}
+      initialTypes={initialTypes}
     />
   );
 }

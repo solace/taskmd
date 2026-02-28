@@ -72,6 +72,14 @@ describe("TaskTable URL sync", () => {
     expect(screen.getByText("Showing 1 of 2 tasks")).toBeInTheDocument();
   });
 
+  it("initializes type filters from props", () => {
+    renderWithRouter(
+      <TaskTable tasks={tasks} initialTypes={["bug"]} />,
+    );
+    // Only task 002 has type "bug"
+    expect(screen.getByText("Showing 1 of 3 tasks")).toBeInTheDocument();
+  });
+
   it("shows all tasks with no initial filters", () => {
     renderWithRouter(<TaskTable tasks={tasks} />);
     expect(screen.getByText("Showing 3 of 3 tasks")).toBeInTheDocument();

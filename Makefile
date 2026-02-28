@@ -1,8 +1,17 @@
-.PHONY: check test lint sync-spec docker-build docker-run
+.PHONY: install-dev install-dev-full check test lint sync-spec docker-build docker-run
 
-# Run all checks (tests, lint, vet)
+# Install development binary (delegates to apps/cli)
+install-dev:
+	$(MAKE) -C apps/cli install-dev
+
+# Install development binary with embedded web assets
+install-dev-full:
+	$(MAKE) -C apps/cli install-dev-full
+
+# Run all checks (CLI tests, lint, vet + web tests)
 check:
 	$(MAKE) -C apps/cli check
+	cd apps/web && npx vitest run
 
 # Run tests only
 test:
