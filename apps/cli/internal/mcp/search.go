@@ -7,8 +7,8 @@ import (
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
-	"github.com/driangle/taskmd/apps/cli/internal/search"
+	"github.com/driangle/taskmd/sdk/go/scanner"
+	"github.com/driangle/taskmd/sdk/go/search"
 )
 
 // SearchInput defines the input schema for the search tool.

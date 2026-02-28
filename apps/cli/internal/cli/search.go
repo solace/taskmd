@@ -8,8 +8,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
-	"github.com/driangle/taskmd/apps/cli/internal/search"
+	"github.com/driangle/taskmd/sdk/go/scanner"
+	"github.com/driangle/taskmd/sdk/go/search"
 )
 
 var (

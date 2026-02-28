@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/driangle/taskmd/apps/cli/internal/board"
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
+	"github.com/driangle/taskmd/sdk/go/board"
+	"github.com/driangle/taskmd/sdk/go/scanner"
 )
 
 var (

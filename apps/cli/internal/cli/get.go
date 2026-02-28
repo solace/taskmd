@@ -12,12 +12,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 
-	"github.com/driangle/taskmd/apps/cli/internal/graph"
 	"github.com/driangle/taskmd/apps/cli/internal/markdown"
-	"github.com/driangle/taskmd/apps/cli/internal/model"
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
 	"github.com/driangle/taskmd/apps/cli/internal/taskcontext"
-	"github.com/driangle/taskmd/apps/cli/internal/worklog"
+	"github.com/driangle/taskmd/sdk/go/graph"
+	"github.com/driangle/taskmd/sdk/go/model"
+	"github.com/driangle/taskmd/sdk/go/scanner"
+	"github.com/driangle/taskmd/sdk/go/worklog"
 )
 
 var (

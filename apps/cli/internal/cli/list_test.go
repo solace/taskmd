@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/driangle/taskmd/apps/cli/internal/model"
+	"github.com/driangle/taskmd/sdk/go/model"
 )
 
 func TestSortTasks(t *testing.T) {

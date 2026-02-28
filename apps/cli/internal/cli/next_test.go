@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/driangle/taskmd/apps/cli/internal/model"
-	"github.com/driangle/taskmd/apps/cli/internal/next"
+	"github.com/driangle/taskmd/sdk/go/model"
+	"github.com/driangle/taskmd/sdk/go/next"
 )
 
 // createNextTestTaskFiles creates a set of 10 task files designed to exercise

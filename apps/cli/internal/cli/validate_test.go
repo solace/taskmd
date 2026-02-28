@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/driangle/taskmd/apps/cli/internal/model"
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
-	"github.com/driangle/taskmd/apps/cli/internal/validator"
+	"github.com/driangle/taskmd/sdk/go/model"
+	"github.com/driangle/taskmd/sdk/go/scanner"
+	"github.com/driangle/taskmd/sdk/go/validator"
 )
 
 func TestParseScopeEntries_WithDescription(t *testing.T) {

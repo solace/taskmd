@@ -1,7 +1,7 @@
 ---
 title: "Extract Go library from internal packages"
 id: "227"
-status: pending
+status: completed
 priority: high
 effort: large
 type: feature

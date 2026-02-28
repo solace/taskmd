@@ -7,8 +7,8 @@ import (
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
 	"github.com/driangle/taskmd/apps/cli/internal/taskcontext"
+	"github.com/driangle/taskmd/sdk/go/scanner"
 )
 
 // ContextInput defines the input schema for the context tool.

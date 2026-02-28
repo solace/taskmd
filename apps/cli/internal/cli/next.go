@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/driangle/taskmd/apps/cli/internal/next"
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
+	"github.com/driangle/taskmd/sdk/go/next"
+	"github.com/driangle/taskmd/sdk/go/scanner"
 )
 
 // Recommendation is re-exported from the shared package.

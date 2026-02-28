@@ -8,8 +8,8 @@ import (
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
-	"github.com/driangle/taskmd/apps/cli/internal/taskfile"
+	"github.com/driangle/taskmd/sdk/go/scanner"
+	"github.com/driangle/taskmd/sdk/go/taskfile"
 )
 
 // SetInput defines the input schema for the set tool.

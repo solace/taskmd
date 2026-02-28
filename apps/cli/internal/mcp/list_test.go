@@ -9,7 +9,7 @@ import (
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/driangle/taskmd/apps/cli/internal/model"
+	"github.com/driangle/taskmd/sdk/go/model"
 )
 
 func createTestTaskFiles(t *testing.T) string {

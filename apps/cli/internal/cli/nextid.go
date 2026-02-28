@@ -6,9 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/driangle/taskmd/apps/cli/internal/nextid"
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
-	"github.com/driangle/taskmd/apps/cli/internal/validator"
+	"github.com/driangle/taskmd/sdk/go/nextid"
+	"github.com/driangle/taskmd/sdk/go/scanner"
+	"github.com/driangle/taskmd/sdk/go/validator"
 )
 
 var nextIDFormat string

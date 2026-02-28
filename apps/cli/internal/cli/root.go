@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/driangle/taskmd/apps/cli/internal/validator"
+	"github.com/driangle/taskmd/sdk/go/validator"
 )
 
 var (

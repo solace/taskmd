@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/driangle/taskmd/apps/cli/internal/worklog"
+	"github.com/driangle/taskmd/sdk/go/worklog"
 )
 
 func createWorklogTestFiles(t *testing.T) string {

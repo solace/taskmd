@@ -3,8 +3,8 @@ package web
 import (
 	"sync"
 
-	"github.com/driangle/taskmd/apps/cli/internal/model"
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
+	"github.com/driangle/taskmd/sdk/go/model"
+	"github.com/driangle/taskmd/sdk/go/scanner"
 )
 
 // DataProvider caches scan results and invalidates on file changes.

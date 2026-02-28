@@ -7,8 +7,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/driangle/taskmd/apps/cli/internal/metrics"
-	"github.com/driangle/taskmd/apps/cli/internal/model"
+	"github.com/driangle/taskmd/sdk/go/metrics"
+	"github.com/driangle/taskmd/sdk/go/model"
 )
 
 func outputReportMarkdown(data *reportData, w io.Writer) error {

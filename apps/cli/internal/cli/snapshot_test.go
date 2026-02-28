@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/driangle/taskmd/apps/cli/internal/model"
+	"github.com/driangle/taskmd/sdk/go/model"
 )
 
 // resetSnapshotFlags resets all snapshot command flags to defaults.

@@ -7,7 +7,7 @@ import (
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/driangle/taskmd/apps/cli/internal/search"
+	"github.com/driangle/taskmd/sdk/go/search"
 )
 
 func callSearch(t *testing.T, session *gomcp.ClientSession, args map[string]any) []search.Result {

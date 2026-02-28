@@ -7,10 +7,10 @@ import (
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/driangle/taskmd/apps/cli/internal/filter"
-	"github.com/driangle/taskmd/apps/cli/internal/graph"
-	"github.com/driangle/taskmd/apps/cli/internal/model"
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
+	"github.com/driangle/taskmd/sdk/go/filter"
+	"github.com/driangle/taskmd/sdk/go/graph"
+	"github.com/driangle/taskmd/sdk/go/model"
+	"github.com/driangle/taskmd/sdk/go/scanner"
 )
 
 // GraphInput defines the input schema for the graph tool.

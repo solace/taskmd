@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/driangle/taskmd/apps/cli/internal/nextid"
+	"github.com/driangle/taskmd/sdk/go/nextid"
 )
 
 func createNextIDTestFiles(t *testing.T, files map[string]string) string {

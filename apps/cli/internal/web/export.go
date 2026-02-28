@@ -9,14 +9,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/driangle/taskmd/apps/cli/internal/board"
-	"github.com/driangle/taskmd/apps/cli/internal/graph"
-	"github.com/driangle/taskmd/apps/cli/internal/metrics"
-	"github.com/driangle/taskmd/apps/cli/internal/model"
-	"github.com/driangle/taskmd/apps/cli/internal/next"
-	"github.com/driangle/taskmd/apps/cli/internal/tracks"
-	"github.com/driangle/taskmd/apps/cli/internal/validator"
-	"github.com/driangle/taskmd/apps/cli/internal/worklog"
+	"github.com/driangle/taskmd/sdk/go/board"
+	"github.com/driangle/taskmd/sdk/go/graph"
+	"github.com/driangle/taskmd/sdk/go/metrics"
+	"github.com/driangle/taskmd/sdk/go/model"
+	"github.com/driangle/taskmd/sdk/go/next"
+	"github.com/driangle/taskmd/sdk/go/tracks"
+	"github.com/driangle/taskmd/sdk/go/validator"
+	"github.com/driangle/taskmd/sdk/go/worklog"
 )
 
 // ExportConfig holds configuration for the static site export.

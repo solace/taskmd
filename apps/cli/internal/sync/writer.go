@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/driangle/taskmd/apps/cli/internal/slug"
-	"github.com/driangle/taskmd/apps/cli/internal/taskfile"
+	"github.com/driangle/taskmd/sdk/go/slug"
+	"github.com/driangle/taskmd/sdk/go/taskfile"
 )
 
 // WriteTaskFile creates a new task markdown file and returns the file path.

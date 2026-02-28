@@ -7,7 +7,7 @@ import (
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/driangle/taskmd/apps/cli/internal/next"
+	"github.com/driangle/taskmd/sdk/go/next"
 )
 
 func callNext(t *testing.T, session *gomcp.ClientSession, args map[string]any) []next.Recommendation {

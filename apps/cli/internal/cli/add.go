@@ -10,12 +10,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/driangle/taskmd/apps/cli/internal/nextid"
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
-	"github.com/driangle/taskmd/apps/cli/internal/slug"
-	"github.com/driangle/taskmd/apps/cli/internal/taskfile"
 	"github.com/driangle/taskmd/apps/cli/internal/template"
-	"github.com/driangle/taskmd/apps/cli/internal/validator"
+	"github.com/driangle/taskmd/sdk/go/nextid"
+	"github.com/driangle/taskmd/sdk/go/scanner"
+	"github.com/driangle/taskmd/sdk/go/slug"
+	"github.com/driangle/taskmd/sdk/go/taskfile"
+	"github.com/driangle/taskmd/sdk/go/validator"
 )
 
 var (

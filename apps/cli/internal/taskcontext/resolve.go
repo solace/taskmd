@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/driangle/taskmd/apps/cli/internal/model"
+	"github.com/driangle/taskmd/sdk/go/model"
 )
 
 // skipDirs are directories always skipped during directory expansion.

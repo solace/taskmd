@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/driangle/taskmd/apps/cli/internal/taskfile"
+	"github.com/driangle/taskmd/sdk/go/taskfile"
 )
 
 // validStatusValues lists all valid task status values.

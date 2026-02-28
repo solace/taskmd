@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/driangle/taskmd/apps/cli/internal/nextid"
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
+	"github.com/driangle/taskmd/sdk/go/nextid"
+	"github.com/driangle/taskmd/sdk/go/scanner"
 )
 
 // ConflictStrategy controls how conflicts are resolved during sync.

@@ -10,12 +10,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/driangle/taskmd/apps/cli/internal/board"
-	"github.com/driangle/taskmd/apps/cli/internal/metrics"
-	"github.com/driangle/taskmd/apps/cli/internal/next"
-	"github.com/driangle/taskmd/apps/cli/internal/search"
-	"github.com/driangle/taskmd/apps/cli/internal/tracks"
-	"github.com/driangle/taskmd/apps/cli/internal/validator"
+	"github.com/driangle/taskmd/sdk/go/board"
+	"github.com/driangle/taskmd/sdk/go/metrics"
+	"github.com/driangle/taskmd/sdk/go/next"
+	"github.com/driangle/taskmd/sdk/go/search"
+	"github.com/driangle/taskmd/sdk/go/tracks"
+	"github.com/driangle/taskmd/sdk/go/validator"
 )
 
 func createTestTaskDir(t *testing.T) string {

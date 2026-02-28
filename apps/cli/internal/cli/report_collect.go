@@ -3,10 +3,10 @@ package cli
 import (
 	"sort"
 
-	"github.com/driangle/taskmd/apps/cli/internal/board"
-	"github.com/driangle/taskmd/apps/cli/internal/graph"
-	"github.com/driangle/taskmd/apps/cli/internal/metrics"
-	"github.com/driangle/taskmd/apps/cli/internal/model"
+	"github.com/driangle/taskmd/sdk/go/board"
+	"github.com/driangle/taskmd/sdk/go/graph"
+	"github.com/driangle/taskmd/sdk/go/metrics"
+	"github.com/driangle/taskmd/sdk/go/model"
 )
 
 // reportTask holds flattened task data used across report sections.

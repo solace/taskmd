@@ -1,8 +1,8 @@
 package cli
 
 import (
-	"github.com/driangle/taskmd/apps/cli/internal/filter"
-	"github.com/driangle/taskmd/apps/cli/internal/model"
+	"github.com/driangle/taskmd/sdk/go/filter"
+	"github.com/driangle/taskmd/sdk/go/model"
 )
 
 // filterCriteria represents a single filter condition (kept for test compat).

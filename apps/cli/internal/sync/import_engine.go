@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/driangle/taskmd/apps/cli/internal/nextid"
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
+	"github.com/driangle/taskmd/sdk/go/nextid"
+	"github.com/driangle/taskmd/sdk/go/scanner"
 )
 
 // ImportConfig holds configuration for a one-shot import run.

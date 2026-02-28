@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/driangle/taskmd/apps/cli/internal/model"
+	"github.com/driangle/taskmd/sdk/go/model"
 )
 
 func createCommitMsgTestFiles(t *testing.T) string {

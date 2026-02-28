@@ -7,16 +7,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/driangle/taskmd/apps/cli/internal/board"
-	"github.com/driangle/taskmd/apps/cli/internal/graph"
-	"github.com/driangle/taskmd/apps/cli/internal/metrics"
-	"github.com/driangle/taskmd/apps/cli/internal/model"
-	"github.com/driangle/taskmd/apps/cli/internal/next"
-	"github.com/driangle/taskmd/apps/cli/internal/search"
-	"github.com/driangle/taskmd/apps/cli/internal/taskfile"
-	"github.com/driangle/taskmd/apps/cli/internal/tracks"
-	"github.com/driangle/taskmd/apps/cli/internal/validator"
-	"github.com/driangle/taskmd/apps/cli/internal/worklog"
+	"github.com/driangle/taskmd/sdk/go/board"
+	"github.com/driangle/taskmd/sdk/go/graph"
+	"github.com/driangle/taskmd/sdk/go/metrics"
+	"github.com/driangle/taskmd/sdk/go/model"
+	"github.com/driangle/taskmd/sdk/go/next"
+	"github.com/driangle/taskmd/sdk/go/search"
+	"github.com/driangle/taskmd/sdk/go/taskfile"
+	"github.com/driangle/taskmd/sdk/go/tracks"
+	"github.com/driangle/taskmd/sdk/go/validator"
+	"github.com/driangle/taskmd/sdk/go/worklog"
 )
 
 // ConfigResponse is the JSON response for GET /api/config.

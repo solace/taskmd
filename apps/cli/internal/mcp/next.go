@@ -7,8 +7,8 @@ import (
 
 	gomcp "github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/driangle/taskmd/apps/cli/internal/next"
-	"github.com/driangle/taskmd/apps/cli/internal/scanner"
+	"github.com/driangle/taskmd/sdk/go/next"
+	"github.com/driangle/taskmd/sdk/go/scanner"
 )
 
 // NextInput defines the input schema for the next tool.

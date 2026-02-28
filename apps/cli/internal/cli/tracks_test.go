@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/driangle/taskmd/apps/cli/internal/tracks"
+	"github.com/driangle/taskmd/sdk/go/tracks"
 )
 
 // createTracksTestTaskFiles creates task files with touches fields for testing.

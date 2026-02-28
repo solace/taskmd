@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/driangle/taskmd/apps/cli/internal/verify"
+	"github.com/driangle/taskmd/sdk/go/verify"
 )
 
 func createVerifyTestFiles(t *testing.T) string {

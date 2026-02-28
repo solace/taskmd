@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/driangle/taskmd/apps/cli/internal/taskfile"
+	"github.com/driangle/taskmd/sdk/go/taskfile"
 )
 
 func createSetTestFiles(t *testing.T) string {
