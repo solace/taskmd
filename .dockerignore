@@ -20,3 +20,6 @@ coverage.*
 *.prof
 apps/cli/taskmd
 apps/cli/internal/web/static/dist
+apps/web/src/**/*.test.ts
+apps/web/src/**/*.test.tsx
+apps/web/src/test-setup.ts
