@@ -8,10 +8,12 @@ install-dev:
 install-dev-full:
 	$(MAKE) -C apps/cli install-dev-full
 
-# Run all checks (CLI tests, lint, vet + web tests)
+# Run all checks (CLI tests, lint, vet + web tests + docs build + Docker build)
 check:
 	$(MAKE) -C apps/cli check
 	cd apps/web && npx vitest run
+	cd apps/docs && pnpm build
+	docker build -t taskmd:ci-check .
 
 # Run tests only
 test:

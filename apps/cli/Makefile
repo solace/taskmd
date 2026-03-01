@@ -84,7 +84,7 @@ build-full: web-embed
 sync-spec:
 	cp ../../docs/taskmd_specification.md internal/cli/templates/TASKMD_SPEC.md
 	cp ../../docs/taskmd_specification.md ../../apps/docs/reference/specification.md
-	cp ../../docs/taskmd_operations.md ../../apps/docs/reference/taskmd_operations.md
+	sed 's|\./taskmd_specification\.md|./specification.md|g' ../../docs/taskmd_operations.md > ../../apps/docs/reference/taskmd_operations.md
 	@echo "Synced spec to embedded template and docs site"
 
 # Build MCPB bundle for current platform

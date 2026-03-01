@@ -3,7 +3,7 @@
 **Version:** 1.0
 **Last Updated:** 2026-02-28
 
-This document defines the behavioral contracts for core taskmd operations. It complements the [taskmd Specification](./taskmd_specification.md), which defines file format and schema. This document defines what operations **do** — their inputs, outputs, algorithms, and edge cases.
+This document defines the behavioral contracts for core taskmd operations. It complements the [taskmd Specification](./specification.md), which defines file format and schema. This document defines what operations **do** — their inputs, outputs, algorithms, and edge cases.
 
 Any conformant taskmd library implementation must produce results consistent with this specification.
 

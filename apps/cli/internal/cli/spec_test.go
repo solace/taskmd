@@ -201,18 +201,21 @@ func TestSpecTemplate_MatchesCanonicalSpec(t *testing.T) {
 			"Run `make sync-spec` from apps/cli/ to fix.")
 	}
 
-	// Also verify the operations spec is synced (linked from specification.md)
+	// Also verify the operations spec is synced (linked from specification.md).
+	// The sync rewrites ./taskmd_specification.md → ./specification.md for VitePress.
 	canonicalOps := filepath.Join(repoRoot, "docs", "taskmd_operations.md")
 	docsOps := filepath.Join(repoRoot, "apps", "docs", "reference", "taskmd_operations.md")
 	canonicalOpsContent, err := os.ReadFile(canonicalOps)
 	if err != nil {
 		t.Skipf("skipping: canonical operations spec not found at %s", canonicalOps)
 	}
+	expectedOps := bytes.ReplaceAll(canonicalOpsContent,
+		[]byte("./taskmd_specification.md"), []byte("./specification.md"))
 	docsOpsContent, err := os.ReadFile(docsOps)
 	if err != nil {
 		t.Errorf("apps/docs/reference/taskmd_operations.md is missing.\n"+
 			"Run `make sync-spec` from apps/cli/ to fix. (source: %s)", canonicalOps)
-	} else if !bytes.Equal(docsOpsContent, canonicalOpsContent) {
+	} else if !bytes.Equal(docsOpsContent, expectedOps) {
 		t.Error("apps/docs/reference/taskmd_operations.md has drifted from docs/taskmd_operations.md.\n" +
 			"Run `make sync-spec` from apps/cli/ to fix.")
 	}
