@@ -63,3 +63,12 @@ func formatDuplicatePaths(tasks []*model.Task) string {
 	}
 	return strings.Join(lines, "\n")
 }
+
+// formatDuplicatePathsWithTitles formats task file paths and titles as a bulleted list.
+func formatDuplicatePathsWithTitles(tasks []*model.Task) string {
+	lines := make([]string, len(tasks))
+	for i, t := range tasks {
+		lines[i] = fmt.Sprintf("  - %s (%s)", t.FilePath, t.Title)
+	}
+	return strings.Join(lines, "\n")
+}

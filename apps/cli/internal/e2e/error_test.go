@@ -99,6 +99,65 @@ func TestError_GetNonExistentTask(t *testing.T) {
 	assertNoStackTrace(t, result.Stderr)
 }
 
+// --- Duplicate ID tests ---
+
+func TestError_GetDuplicateID(t *testing.T) {
+	dir := setupTaskDir(t)
+	writeTask(t, dir, "001-first.md", "001", "First Task", "pending", nil)
+	writeTask(t, dir, "001-second.md", "001", "Second Task", "pending", nil)
+
+	result := run(t, dir, "get", "001")
+
+	if result.ExitCode == 0 {
+		t.Error("expected non-zero exit code when getting task with duplicate ID")
+	}
+	if !strings.Contains(result.Stderr, "duplicate task ID") {
+		t.Errorf("expected stderr to mention 'duplicate task ID', got:\n%s", result.Stderr)
+	}
+	if !strings.Contains(result.Stderr, "First Task") {
+		t.Errorf("expected stderr to mention task title 'First Task', got:\n%s", result.Stderr)
+	}
+	if !strings.Contains(result.Stderr, "Second Task") {
+		t.Errorf("expected stderr to mention task title 'Second Task', got:\n%s", result.Stderr)
+	}
+	if !strings.Contains(result.Stderr, "taskmd deduplicate") {
+		t.Errorf("expected stderr to mention 'taskmd deduplicate', got:\n%s", result.Stderr)
+	}
+	assertNoStackTrace(t, result.Stderr)
+}
+
+func TestError_StatusDuplicateID(t *testing.T) {
+	dir := setupTaskDir(t)
+	writeTask(t, dir, "001-first.md", "001", "First Task", "pending", nil)
+	writeTask(t, dir, "001-second.md", "001", "Second Task", "pending", nil)
+
+	result := run(t, dir, "status", "001")
+
+	if result.ExitCode == 0 {
+		t.Error("expected non-zero exit code when getting status of task with duplicate ID")
+	}
+	if !strings.Contains(result.Stderr, "duplicate task ID") {
+		t.Errorf("expected stderr to mention 'duplicate task ID', got:\n%s", result.Stderr)
+	}
+	assertNoStackTrace(t, result.Stderr)
+}
+
+func TestError_SetDuplicateID(t *testing.T) {
+	dir := setupTaskDir(t)
+	writeTask(t, dir, "001-first.md", "001", "First Task", "pending", nil)
+	writeTask(t, dir, "001-second.md", "001", "Second Task", "pending", nil)
+
+	result := run(t, dir, "set", "001", "--status", "completed")
+
+	if result.ExitCode == 0 {
+		t.Error("expected non-zero exit code when setting task with duplicate ID")
+	}
+	if !strings.Contains(result.Stderr, "refusing to modify") {
+		t.Errorf("expected stderr to mention 'refusing to modify', got:\n%s", result.Stderr)
+	}
+	assertNoStackTrace(t, result.Stderr)
+}
+
 // --- Invalid flag value tests ---
 
 func TestError_SetInvalidStatus(t *testing.T) {

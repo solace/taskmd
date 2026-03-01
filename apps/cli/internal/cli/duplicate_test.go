@@ -157,6 +157,21 @@ func TestFormatDuplicatePaths(t *testing.T) {
 	}
 }
 
+func TestFormatDuplicatePathsWithTitles(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task A", FilePath: "a/001.md"},
+		{ID: "001", Title: "Task B", FilePath: "b/001.md"},
+	}
+
+	result := formatDuplicatePathsWithTitles(tasks)
+	if !strings.Contains(result, "  - a/001.md (Task A)") {
+		t.Errorf("expected bulleted path with title, got: %s", result)
+	}
+	if !strings.Contains(result, "  - b/001.md (Task B)") {
+		t.Errorf("expected bulleted path with title, got: %s", result)
+	}
+}
+
 // Helper to create task files with duplicate IDs for integration tests.
 func createDuplicateTestFiles(t *testing.T) string {
 	t.Helper()
@@ -224,37 +239,129 @@ created: 2026-02-08
 	return tmpDir
 }
 
-func TestResolveTask_DuplicateIDWarning(t *testing.T) {
+func TestResolveTask_DuplicateIDError(t *testing.T) {
 	tasks := []*model.Task{
 		{ID: "042", Title: "Task A", FilePath: "groupA/042-task-a.md"},
 		{ID: "042", Title: "Task B", FilePath: "groupB/042-task-b.md"},
 		{ID: "001", Title: "Unique Task", FilePath: "001-unique.md"},
 	}
 
-	oldStderr := os.Stderr
-	r, w, _ := os.Pipe()
-	os.Stderr = w
+	_, err := resolveTask("042", tasks, true, 0.6)
+	if err == nil {
+		t.Fatal("expected error for duplicate ID, got nil")
+	}
+	if !strings.Contains(err.Error(), "duplicate task ID") {
+		t.Errorf("expected 'duplicate task ID' error, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "042") {
+		t.Errorf("expected error to mention ID 042, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "Task A") {
+		t.Errorf("expected error to mention title 'Task A', got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "Task B") {
+		t.Errorf("expected error to mention title 'Task B', got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "groupA/042-task-a.md") {
+		t.Errorf("expected error to mention file path, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "groupB/042-task-b.md") {
+		t.Errorf("expected error to mention file path, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "taskmd deduplicate") {
+		t.Errorf("expected error to mention deduplicate command, got: %v", err)
+	}
+}
 
-	task, err := resolveTask("042", tasks, true, 0.6)
+func TestResolveTask_DuplicateIDError_ByTitle(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "042", Title: "Task A", FilePath: "groupA/042-task-a.md"},
+		{ID: "042", Title: "Task B", FilePath: "groupB/042-task-b.md"},
+		{ID: "001", Title: "Unique Task", FilePath: "001-unique.md"},
+	}
 
-	w.Close()
-	os.Stderr = oldStderr
+	// Matching by title should still detect duplicates on the resolved task's ID
+	_, err := resolveTask("Task A", tasks, true, 0.6)
+	if err == nil {
+		t.Fatal("expected error for duplicate ID when matched by title, got nil")
+	}
+	if !strings.Contains(err.Error(), "duplicate task ID") {
+		t.Errorf("expected 'duplicate task ID' error, got: %v", err)
+	}
+}
 
-	var buf bytes.Buffer
-	buf.ReadFrom(r)
-	output := buf.String()
+func TestResolveTask_UniqueID(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "042", Title: "Task A", FilePath: "groupA/042-task-a.md"},
+		{ID: "042", Title: "Task B", FilePath: "groupB/042-task-b.md"},
+		{ID: "001", Title: "Unique Task", FilePath: "001-unique.md"},
+	}
 
+	task, err := resolveTask("001", tasks, true, 0.6)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if task == nil {
 		t.Fatal("expected task, got nil")
 	}
-	if task.ID != "042" {
-		t.Errorf("expected ID 042, got %s", task.ID)
+	if task.ID != "001" {
+		t.Errorf("expected ID 001, got %s", task.ID)
 	}
-	if !strings.Contains(output, "042") {
-		t.Errorf("expected duplicate warning mentioning 042, got: %s", output)
+}
+
+func TestRunGet_DuplicateIDError(t *testing.T) {
+	tmpDir := createDuplicateTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+
+	err := runGet(getCmd, []string{"042"})
+	if err == nil {
+		t.Fatal("expected error for duplicate ID, got nil")
+	}
+	if !strings.Contains(err.Error(), "duplicate task ID") {
+		t.Errorf("expected 'duplicate task ID' error, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "042") {
+		t.Errorf("expected error to mention ID 042, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "Task A") {
+		t.Errorf("expected error to mention title 'Task A', got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "Task B") {
+		t.Errorf("expected error to mention title 'Task B', got: %v", err)
+	}
+}
+
+func TestRunGet_DuplicateID_UniqueTaskWorks(t *testing.T) {
+	tmpDir := createDuplicateTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+
+	output := captureGetOutput(t, "001")
+	if !strings.Contains(output, "Unique Task") {
+		t.Error("expected unique task to still work")
+	}
+}
+
+func TestRunStatus_DuplicateIDError(t *testing.T) {
+	tmpDir := createDuplicateTestFiles(t)
+	statusFormat = "text"
+	statusExact = false
+	statusThreshold = 0.6
+	statusMinimal = false
+	statusStatusline = false
+	statusScope = ""
+	taskDir = tmpDir
+
+	err := runStatusSingle("042")
+	if err == nil {
+		t.Fatal("expected error for duplicate ID, got nil")
+	}
+	if !strings.Contains(err.Error(), "duplicate task ID") {
+		t.Errorf("expected 'duplicate task ID' error, got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "042") {
+		t.Errorf("expected error to mention ID 042, got: %v", err)
 	}
 }
 
