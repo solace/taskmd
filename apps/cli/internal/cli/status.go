@@ -62,7 +62,7 @@ func init() {
 	statusCmd.Flags().Float64Var(&statusThreshold, "threshold", 0.6, "fuzzy match sensitivity (0.0-1.0)")
 	statusCmd.Flags().BoolVar(&statusMinimal, "minimal", false, "show only task metadata, skip children")
 	statusCmd.Flags().BoolVar(&statusStatusline, "statusline", false, "compact output for Claude Code statusline")
-	statusCmd.Flags().StringVar(&statusScope, "scope", "", "filter by group/directory")
+	statusCmd.Flags().StringVar(&statusScope, "scope", "", "filter by group/directory; supports wildcards (e.g. cli, cli*)")
 }
 
 // statusChild represents a child task in the recursive children tree.

@@ -66,7 +66,7 @@ func init() {
 	feedCmd.Flags().StringVar(&feedFormat, "format", "text", "output format (text, json)")
 	feedCmd.Flags().IntVar(&feedLimit, "limit", 20, "maximum number of commits to show")
 	feedCmd.Flags().StringVar(&feedSince, "since", "", "show changes since (e.g. 2d, 1w, 2026-02-28)")
-	feedCmd.Flags().StringVar(&feedScope, "scope", "", "filter to a tasks subdirectory (e.g. cli)")
+	feedCmd.Flags().StringVar(&feedScope, "scope", "", "filter to a tasks subdirectory; supports wildcards (e.g. cli, cli*)")
 }
 
 func runFeed(_ *cobra.Command, _ []string) error {
@@ -116,13 +116,30 @@ func buildGitLogArgs(tasksDir string, limit int, since, scope string) []string {
 		args = append(args, "--since="+normalizeSince(since))
 	}
 
-	pathGlob := filepath.Join(tasksDir, "**", "*.md")
-	if scope != "" {
-		pathGlob = filepath.Join(tasksDir, scope, "**", "*.md")
+	args = append(args, "--")
+
+	if scope != "" && containsGlobChars(scope) {
+		// Wildcard scope: expand to matching subdirectories.
+		matches, _ := filepath.Glob(filepath.Join(tasksDir, scope))
+		for _, m := range matches {
+			args = append(args, filepath.Join(m, "**", "*.md"))
+		}
+		// If no directories matched, fall back to the literal pattern
+		// so git returns no results rather than all results.
+		if len(matches) == 0 {
+			args = append(args, filepath.Join(tasksDir, scope, "**", "*.md"))
+		}
+	} else if scope != "" {
+		args = append(args, filepath.Join(tasksDir, scope, "**", "*.md"))
+	} else {
+		args = append(args, filepath.Join(tasksDir, "**", "*.md"))
 	}
-	args = append(args, "--", pathGlob)
 
 	return args
+}
+
+func containsGlobChars(s string) bool {
+	return strings.ContainsAny(s, "*?[")
 }
 
 // normalizeSince converts shorthand durations like "2d" or "1w" into

@@ -1,7 +1,7 @@
 ---
 title: "Show blocked/unblocked state in status command for tasks with dependencies"
 id: "01kjmggj3"
-status: in-progress
+status: completed
 priority: medium
 type: feature
 tags: []

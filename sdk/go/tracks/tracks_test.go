@@ -590,6 +590,50 @@ func TestAssign_Scope_EmptyStringNormalBehavior(t *testing.T) {
 	}
 }
 
+func TestAssign_Scope_Wildcard(t *testing.T) {
+	tasks := []*model.Task{
+		makeTask("001", model.StatusPending, model.PriorityHigh, nil, []string{"cli/graph"}),
+		makeTask("002", model.StatusPending, model.PriorityMedium, nil, []string{"cli/next"}),
+		makeTask("003", model.StatusPending, model.PriorityLow, nil, []string{"web/board"}),
+	}
+
+	result, err := Assign(tasks, Options{Scope: "cli/*"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Tracks) != 1 {
+		t.Fatalf("expected 1 track for wildcard scope, got %d", len(result.Tracks))
+	}
+
+	if len(result.Tracks[0].Tasks) != 2 {
+		t.Errorf("expected 2 tasks in track, got %d", len(result.Tracks[0].Tasks))
+	}
+
+	ids := map[string]bool{}
+	for _, task := range result.Tracks[0].Tasks {
+		ids[task.ID] = true
+	}
+	if !ids["001"] || !ids["002"] {
+		t.Errorf("expected tasks 001 and 002, got %v", ids)
+	}
+}
+
+func TestAssign_Scope_WildcardNoMatch(t *testing.T) {
+	tasks := []*model.Task{
+		makeTask("001", model.StatusPending, model.PriorityHigh, nil, []string{"web/board"}),
+	}
+
+	result, err := Assign(tasks, Options{Scope: "cli/*"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Tracks) != 0 {
+		t.Errorf("expected 0 tracks for non-matching wildcard, got %d", len(result.Tracks))
+	}
+}
+
 func TestAssign_IndependentGroups(t *testing.T) {
 	// Two disjoint clusters: {001, 002} share scope-a, {003, 004} share scope-b
 	tasks := []*model.Task{

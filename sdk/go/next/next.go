@@ -421,7 +421,7 @@ func filterByScope(tasks []*model.Task, scope string) []*model.Task {
 	var filtered []*model.Task
 	for _, task := range tasks {
 		for _, t := range task.Touches {
-			if t == scope {
+			if filter.MatchScope(scope, t) {
 				filtered = append(filtered, task)
 				break
 			}
@@ -441,7 +441,7 @@ func filterByScopeExpanded(actionable []*model.Task, allTasks []*model.Task, sco
 	seedComponents := make(map[string]bool)
 	for _, task := range allTasks {
 		for _, s := range task.Touches {
-			if s == scope {
+			if filter.MatchScope(scope, s) {
 				if comp, ok := depComponents[task.ID]; ok {
 					seedComponents[comp] = true
 				}
@@ -474,7 +474,7 @@ func filterByScopeExpanded(actionable []*model.Task, allTasks []*model.Task, sco
 
 func touchesScope(task *model.Task, scope string) bool {
 	for _, s := range task.Touches {
-		if s == scope {
+		if filter.MatchScope(scope, s) {
 			return true
 		}
 	}

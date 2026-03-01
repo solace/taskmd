@@ -54,7 +54,7 @@ func init() {
 	tracksCmd.Flags().StringVar(&tracksFormat, "format", "table", "output format (table, json, yaml)")
 	tracksCmd.Flags().StringArrayVar(&tracksFilters, "filter", []string{}, "filter tasks (e.g., --filter tag=cli)")
 	tracksCmd.Flags().IntVar(&tracksLimit, "limit", 0, "maximum number of tracks to show (0 = unlimited)")
-	tracksCmd.Flags().StringVar(&tracksScope, "scope", "", "focus on a single scope (show one ordered track)")
+	tracksCmd.Flags().StringVar(&tracksScope, "scope", "", "focus on a single scope; supports wildcards (e.g. web, web*)")
 }
 
 func runTracks(cmd *cobra.Command, args []string) error {

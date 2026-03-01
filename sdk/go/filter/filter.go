@@ -49,6 +49,9 @@ func matchesAll(task *model.Task, filters []Criteria) bool {
 
 func matches(task *model.Task, field, value string) bool {
 	if v, ok := getFieldValue(task, field); ok {
+		if field == "group" && containsWildcard(value) {
+			return MatchScope(value, v)
+		}
 		return v == value
 	}
 	switch field {
@@ -60,12 +63,24 @@ func matches(task *model.Task, field, value string) bool {
 	case "tag":
 		return slices.Contains(task.Tags, value)
 	case "touches":
-		return slices.Contains(task.Touches, value)
+		return matchesTouches(task.Touches, value)
 	case "parent":
 		return matchBoolOrValue(task.Parent, value)
 	default:
 		return false
 	}
+}
+
+func matchesTouches(touches []string, value string) bool {
+	if containsWildcard(value) {
+		for _, t := range touches {
+			if MatchScope(value, t) {
+				return true
+			}
+		}
+		return false
+	}
+	return slices.Contains(touches, value)
 }
 
 // getFieldValue returns the string value for simple equality fields.

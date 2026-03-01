@@ -624,3 +624,57 @@ func TestRecommend_ScopeExactSkipsExpansion(t *testing.T) {
 		t.Errorf("Expected only task 003, got %v", ids)
 	}
 }
+
+func TestRecommend_ScopeWildcard(t *testing.T) {
+	tasks := []*model.Task{
+		makeTaskWithTouches("001", model.StatusPending, model.PriorityHigh, nil, []string{"cli/graph"}),
+		makeTaskWithTouches("002", model.StatusPending, model.PriorityMedium, nil, []string{"cli/next"}),
+		makeTaskWithTouches("003", model.StatusPending, model.PriorityLow, nil, []string{"web/board"}),
+	}
+
+	recs, err := Recommend(tasks, Options{Limit: 10, Scope: "cli/*", ScopeExact: true})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(recs) != 2 {
+		t.Fatalf("Expected 2 recommendations for scope 'cli/*', got %d", len(recs))
+	}
+
+	ids := map[string]bool{}
+	for _, rec := range recs {
+		ids[rec.ID] = true
+	}
+	if !ids["001"] || !ids["002"] {
+		t.Errorf("Expected tasks 001 and 002, got %v", ids)
+	}
+	if ids["003"] {
+		t.Errorf("Task 003 (web/board) should not match cli/*")
+	}
+}
+
+func TestRecommend_ScopeWildcardExpanded(t *testing.T) {
+	// Task 001 touches cli/graph. Task 004 depends on 001 but touches nothing.
+	// With wildcard scope "cli/*" and expansion, 004 should also appear.
+	tasks := []*model.Task{
+		makeTaskWithTouches("001", model.StatusPending, model.PriorityHigh, nil, []string{"cli/graph"}),
+		makeTaskWithTouches("003", model.StatusPending, model.PriorityLow, nil, []string{"web/board"}),
+		makeTask("004", model.StatusPending, model.PriorityMedium, []string{"001"}),
+	}
+
+	recs, err := Recommend(tasks, Options{Limit: 10, Scope: "cli/*"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	ids := map[string]bool{}
+	for _, rec := range recs {
+		ids[rec.ID] = true
+	}
+	if !ids["001"] {
+		t.Errorf("Task 001 (cli/graph) should match cli/*")
+	}
+	if ids["003"] {
+		t.Errorf("Task 003 (web/board) should not match cli/*")
+	}
+}

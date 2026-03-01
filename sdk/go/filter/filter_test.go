@@ -76,6 +76,62 @@ func TestApply_TypeFilter(t *testing.T) {
 	}
 }
 
+func TestApply_GroupWildcardFilter(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task A", Group: "cli/graph"},
+		{ID: "002", Title: "Task B", Group: "cli/next"},
+		{ID: "003", Title: "Task C", Group: "web/board"},
+	}
+
+	filtered, err := Apply(tasks, []string{"group=cli/*"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(filtered) != 2 {
+		t.Fatalf("expected 2 tasks, got %d", len(filtered))
+	}
+	if filtered[0].ID != "001" || filtered[1].ID != "002" {
+		t.Errorf("expected tasks 001 and 002, got %s and %s", filtered[0].ID, filtered[1].ID)
+	}
+}
+
+func TestApply_TouchesWildcardFilter(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task A", Touches: []string{"cli/graph", "web/board"}},
+		{ID: "002", Title: "Task B", Touches: []string{"web/api"}},
+		{ID: "003", Title: "Task C", Touches: []string{"docs"}},
+	}
+
+	filtered, err := Apply(tasks, []string{"touches=web/*"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(filtered) != 2 {
+		t.Fatalf("expected 2 tasks, got %d", len(filtered))
+	}
+	if filtered[0].ID != "001" || filtered[1].ID != "002" {
+		t.Errorf("expected tasks 001 and 002, got %s and %s", filtered[0].ID, filtered[1].ID)
+	}
+}
+
+func TestApply_GroupExactStillWorks(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task A", Group: "cli"},
+		{ID: "002", Title: "Task B", Group: "web"},
+	}
+
+	filtered, err := Apply(tasks, []string{"group=cli"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(filtered) != 1 || filtered[0].ID != "001" {
+		t.Fatalf("expected task 001, got %v", filtered)
+	}
+}
+
 func TestApply_ParentFilter(t *testing.T) {
 	tasks := []*model.Task{
 		{ID: "001", Title: "Parent"},

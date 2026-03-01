@@ -86,7 +86,7 @@ func assignScope(items []scored, allTasks []*model.Task, scope string, warnings 
 	seedIDs := make(map[string]bool)
 	for _, it := range items {
 		for _, s := range it.task.Touches {
-			if s == scope {
+			if filter.MatchScope(scope, s) {
 				seedIDs[it.task.ID] = true
 				if comp, ok := depComponents[it.task.ID]; ok {
 					seedComponents[comp] = true

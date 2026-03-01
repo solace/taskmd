@@ -58,7 +58,7 @@ func init() {
 	nextCmd.Flags().StringArrayVar(&nextFilters, "filter", []string{}, "filter tasks (e.g., --filter tag=cli)")
 	nextCmd.Flags().BoolVar(&nextQuickWins, "quick-wins", false, "show only quick wins (effort: small)")
 	nextCmd.Flags().BoolVar(&nextCritical, "critical", false, "show only critical path tasks")
-	nextCmd.Flags().StringVar(&nextScope, "scope", "", "filter by scope (includes dependency-connected tasks)")
+	nextCmd.Flags().StringVar(&nextScope, "scope", "", "filter by scope; supports wildcards (e.g. cli, cli*)")
 	nextCmd.Flags().BoolVar(&nextExact, "exact", false, "disable dependency expansion for --scope (only direct matches)")
 }
 
