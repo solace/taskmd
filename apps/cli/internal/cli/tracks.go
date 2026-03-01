@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/driangle/taskmd/sdk/go/scanner"
 	"github.com/driangle/taskmd/sdk/go/tracks"
@@ -103,24 +102,6 @@ func runTracks(cmd *cobra.Command, args []string) error {
 	default:
 		return ValidateFormat(tracksFormat, []string{"table", "json", "yaml"})
 	}
-}
-
-func loadScopesConfig() map[string]bool {
-	raw := viper.Get("scopes")
-	if raw == nil {
-		return nil
-	}
-
-	scopeMap, ok := raw.(map[string]any)
-	if !ok {
-		return nil
-	}
-
-	known := make(map[string]bool, len(scopeMap))
-	for name := range scopeMap {
-		known[name] = true
-	}
-	return known
 }
 
 func outputTracksTable(result *tracks.Result) error {

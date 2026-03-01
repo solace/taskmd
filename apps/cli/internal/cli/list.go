@@ -20,6 +20,7 @@ var (
 	listSort    string
 	listColumns string
 	listLimit   int
+	listScope   string
 )
 
 // listCmd represents the list command
@@ -44,6 +45,8 @@ Examples:
   taskmd list --sort priority
   taskmd list --columns id,title,deps
   taskmd list --format json
+  taskmd list --scope cli
+  taskmd list --scope "web*"
   taskmd list --sort priority --limit 5`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runList,
@@ -57,6 +60,7 @@ func init() {
 	listCmd.Flags().StringVar(&listSort, "sort", "", "sort by field (id, title, status, priority, effort, created)")
 	listCmd.Flags().StringVar(&listColumns, "columns", "id,title,status,priority,file", "comma-separated list of columns to display")
 	listCmd.Flags().IntVar(&listLimit, "limit", 0, "maximum number of tasks to display (0 = unlimited)")
+	listCmd.Flags().StringVar(&listScope, "scope", "", "filter by scope; supports wildcards (e.g. cli, cli*)")
 }
 
 func runList(cmd *cobra.Command, args []string) error {
@@ -87,6 +91,12 @@ func runList(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("filter error: %w", err)
 		}
+	}
+
+	// Apply scope filter
+	if listScope != "" {
+		warnUnknownScope(listScope)
+		tasks = filterTasksByScope(tasks, listScope)
 	}
 
 	// Apply sorting

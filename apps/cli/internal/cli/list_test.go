@@ -98,6 +98,7 @@ func resetListFlags() {
 	listSort = ""
 	listColumns = "id,title,status,priority,file"
 	listLimit = 0
+	listScope = ""
 	noColor = true
 }
 
@@ -502,6 +503,145 @@ func TestListCommand_LimitJSONOutput(t *testing.T) {
 	if strings.Contains(output, "003") {
 		t.Error("Task 003 should not appear in limited JSON output")
 	}
+}
+
+func TestFilterTasksByScope(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Web feature", Touches: []string{"web", "api"}},
+		{ID: "002", Title: "CLI feature", Touches: []string{"cli"}},
+		{ID: "003", Title: "Web styling", Touches: []string{"web"}},
+		{ID: "004", Title: "No scope", Touches: nil},
+	}
+
+	tests := []struct {
+		name    string
+		scope   string
+		wantIDs []string
+	}{
+		{"exact match", "cli", []string{"002"}},
+		{"multiple matches", "web", []string{"001", "003"}},
+		{"wildcard match", "web*", []string{"001", "003"}},
+		{"wildcard all", "c*", []string{"002"}},
+		{"no match", "nonexistent", nil},
+		{"api match", "api", []string{"001"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := filterTasksByScope(tasks, tt.scope)
+			if len(result) != len(tt.wantIDs) {
+				t.Fatalf("got %d tasks, want %d", len(result), len(tt.wantIDs))
+			}
+			for i, task := range result {
+				if task.ID != tt.wantIDs[i] {
+					t.Errorf("task[%d].ID = %s, want %s", i, task.ID, tt.wantIDs[i])
+				}
+			}
+		})
+	}
+}
+
+// createScopedListTaskFiles creates test task files with touches fields for list tests.
+func createScopedListTaskFiles(t *testing.T) string {
+	t.Helper()
+	tmpDir := t.TempDir()
+
+	taskFiles := map[string]string{
+		"001-web.md":     "---\nid: \"001\"\ntitle: \"Web feature\"\nstatus: pending\npriority: high\ntouches: [\"web\", \"api\"]\ncreated: 2026-01-01\n---\n# Web feature\n",
+		"002-cli.md":     "---\nid: \"002\"\ntitle: \"CLI feature\"\nstatus: pending\npriority: medium\ntouches: [\"cli\"]\ncreated: 2026-01-01\n---\n# CLI feature\n",
+		"003-web.md":     "---\nid: \"003\"\ntitle: \"Web styling\"\nstatus: pending\npriority: low\ntouches: [\"web\"]\ncreated: 2026-01-01\n---\n# Web styling\n",
+		"004-noscope.md": "---\nid: \"004\"\ntitle: \"No scope task\"\nstatus: pending\npriority: medium\ncreated: 2026-01-01\n---\n# No scope task\n",
+	}
+
+	for name, content := range taskFiles {
+		if err := os.WriteFile(tmpDir+"/"+name, []byte(content), 0o644); err != nil {
+			t.Fatalf("failed to write %s: %v", name, err)
+		}
+	}
+	return tmpDir
+}
+
+// captureRunList runs runList and captures stdout.
+func captureRunList(t *testing.T, args []string) string {
+	t.Helper()
+
+	oldStdout := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	err := runList(listCmd, args)
+	w.Close()
+	os.Stdout = oldStdout
+
+	if err != nil {
+		t.Fatalf("runList failed: %v", err)
+	}
+
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	return buf.String()
+}
+
+func TestListCommand_ScopeFilter(t *testing.T) {
+	tmpDir := createScopedListTaskFiles(t)
+
+	t.Run("scope filters to matching tasks", func(t *testing.T) {
+		resetListFlags()
+		listFormat = "json"
+		listScope = "web"
+
+		output := captureRunList(t, []string{tmpDir})
+
+		if !strings.Contains(output, "001") {
+			t.Error("Expected task 001 (touches web)")
+		}
+		if !strings.Contains(output, "003") {
+			t.Error("Expected task 003 (touches web)")
+		}
+		if strings.Contains(output, `"004"`) {
+			t.Error("Task 004 should be excluded (no touches)")
+		}
+	})
+
+	t.Run("scope with wildcard", func(t *testing.T) {
+		resetListFlags()
+		listFormat = "json"
+		listScope = "w*"
+
+		output := captureRunList(t, []string{tmpDir})
+
+		if !strings.Contains(output, "001") || !strings.Contains(output, "003") {
+			t.Error("Expected tasks 001 and 003 to match w* wildcard")
+		}
+	})
+
+	t.Run("scope with no matches", func(t *testing.T) {
+		resetListFlags()
+		listFormat = "table"
+		listScope = "nonexistent"
+
+		output := captureRunList(t, []string{tmpDir})
+
+		if !strings.Contains(output, "No tasks found") {
+			t.Error("Expected 'No tasks found' message for non-matching scope")
+		}
+	})
+
+	t.Run("scope combined with filter", func(t *testing.T) {
+		resetListFlags()
+		listFormat = "json"
+		listScope = "web"
+		listFilters = []string{"priority=high"}
+
+		output := captureRunList(t, []string{tmpDir})
+
+		if !strings.Contains(output, "001") {
+			t.Error("Expected task 001 (web + high priority)")
+		}
+		if strings.Contains(output, `"003"`) {
+			t.Error("Task 003 should be excluded (web but low priority)")
+		}
+	})
 }
 
 func TestOutputJSON_NilTasks_ReturnsEmptyArray(t *testing.T) {

@@ -22,6 +22,7 @@ var (
 	graphExcludeStatus []string
 	graphAll           bool
 	graphFilters       []string
+	graphScope         string
 )
 
 // graphCmd represents the graph command
@@ -49,6 +50,8 @@ Examples:
   taskmd graph --filter priority=high
   taskmd graph --filter priority=high --filter effort=small
   taskmd graph --filter tag=cli --exclude-status completed
+  taskmd graph --scope cli
+  taskmd graph --scope "web*" --format mermaid
 
 By default, completed tasks are excluded. Use --all to include them.`,
 	Args: cobra.MaximumNArgs(1),
@@ -67,6 +70,7 @@ func init() {
 	graphCmd.Flags().BoolVar(&graphAll, "all", false, "include all tasks (overrides --exclude-status)")
 	graphCmd.Flags().StringVarP(&graphOut, "out", "o", "", "write output to file instead of stdout")
 	graphCmd.Flags().StringArrayVar(&graphFilters, "filter", []string{}, "filter tasks (can specify multiple times for AND conditions, e.g., --filter priority=high --filter effort=small)")
+	graphCmd.Flags().StringVar(&graphScope, "scope", "", "filter by scope; supports wildcards (e.g. cli, cli*)")
 }
 
 //nolint:gocognit,gocyclo,funlen // TODO: refactor to reduce complexity
@@ -113,6 +117,13 @@ func runGraph(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("filter error: %w", err)
 		}
+		filtered = true
+	}
+
+	// Apply scope filter
+	if graphScope != "" {
+		warnUnknownScope(graphScope)
+		tasks = filterTasksByScope(tasks, graphScope)
 		filtered = true
 	}
 

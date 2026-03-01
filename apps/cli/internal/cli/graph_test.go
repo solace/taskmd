@@ -1011,6 +1011,7 @@ func resetGraphFlags() {
 	graphDownstream = false
 	graphOut = ""
 	graphFilters = []string{}
+	graphScope = ""
 }
 
 // captureGraphOutput runs runGraph and captures stdout, returning the output string.
@@ -1323,5 +1324,136 @@ func TestGraphCommand_ASCII_NoColor_Flag(t *testing.T) {
 	}
 	if !strings.Contains(output, "Root Task") {
 		t.Error("Expected output to contain 'Root Task'")
+	}
+}
+
+// createScopedTestTaskFiles creates test task files with touches fields.
+func createScopedTestTaskFiles(t *testing.T) string {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+
+	tasks := map[string]string{
+		"001-web.md": `---
+id: "001"
+title: "Web feature"
+status: pending
+priority: high
+touches: ["web", "api"]
+created: 2026-02-08
+---
+# Web feature
+`,
+		"002-cli.md": `---
+id: "002"
+title: "CLI feature"
+status: pending
+priority: medium
+touches: ["cli"]
+dependencies: ["001"]
+created: 2026-02-08
+---
+# CLI feature
+`,
+		"003-web.md": `---
+id: "003"
+title: "Web styling"
+status: pending
+priority: low
+touches: ["web"]
+created: 2026-02-08
+---
+# Web styling
+`,
+		"004-noscope.md": `---
+id: "004"
+title: "No scope task"
+status: pending
+priority: medium
+created: 2026-02-08
+---
+# No scope task
+`,
+	}
+
+	for filename, content := range tasks {
+		err := os.WriteFile(filepath.Join(tmpDir, filename), []byte(content), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create test file %s: %v", filename, err)
+		}
+	}
+
+	return tmpDir
+}
+
+func TestGraphCommand_Scope_FiltersToMatchingTasks(t *testing.T) {
+	tmpDir := createScopedTestTaskFiles(t)
+
+	resetGraphFlags()
+	graphScope = "web"
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+	ids := graphNodeIDs(t, result)
+
+	// Should include tasks 001 and 003 (both touch "web")
+	idSet := make(map[string]bool)
+	for _, id := range ids {
+		idSet[id] = true
+	}
+
+	if len(ids) != 2 {
+		t.Errorf("Expected 2 nodes for scope=web, got %d: %v", len(ids), ids)
+	}
+	if !idSet["001"] || !idSet["003"] {
+		t.Errorf("Expected tasks 001 and 003, got %v", ids)
+	}
+}
+
+func TestGraphCommand_Scope_RemovesDanglingDeps(t *testing.T) {
+	tmpDir := createScopedTestTaskFiles(t)
+
+	resetGraphFlags()
+	graphScope = "cli"
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+	ids := graphNodeIDs(t, result)
+
+	// Should include only task 002 (touches cli)
+	if len(ids) != 1 {
+		t.Errorf("Expected 1 node for scope=cli, got %d: %v", len(ids), ids)
+	}
+	if len(ids) > 0 && ids[0] != "002" {
+		t.Errorf("Expected task 002, got %v", ids)
+	}
+
+	// Dependency on 001 should be cleaned up since 001 was filtered out
+	edges, ok := result["edges"].([]any)
+	if !ok {
+		t.Fatal("Expected 'edges' to be an array")
+	}
+	if len(edges) != 0 {
+		t.Errorf("Expected 0 edges after scope filtering (dangling dep cleaned), got %d", len(edges))
+	}
+}
+
+func TestGraphCommand_Scope_Wildcard(t *testing.T) {
+	tmpDir := createScopedTestTaskFiles(t)
+
+	resetGraphFlags()
+	graphScope = "w*"
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+	ids := graphNodeIDs(t, result)
+
+	idSet := make(map[string]bool)
+	for _, id := range ids {
+		idSet[id] = true
+	}
+
+	if !idSet["001"] || !idSet["003"] {
+		t.Errorf("Expected tasks 001 and 003 for wildcard w*, got %v", ids)
 	}
 }

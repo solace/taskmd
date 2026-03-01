@@ -4,50 +4,11 @@ package e2e
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 )
-
-// writeTaskWithTouches creates a task file with a touches field.
-func writeTaskWithTouches(t *testing.T, dir, filename, id, title, status, priority string, touches []string) {
-	t.Helper()
-
-	touchesYAML := "[]"
-	if len(touches) > 0 {
-		touchesYAML = "["
-		for i, s := range touches {
-			if i > 0 {
-				touchesYAML += ", "
-			}
-			touchesYAML += fmt.Sprintf("%q", s)
-		}
-		touchesYAML += "]"
-	}
-
-	content := fmt.Sprintf(`---
-id: %q
-title: %q
-status: %s
-priority: %s
-effort: small
-touches: %s
-created: 2026-01-01
----
-
-# %s
-`, id, title, status, priority, touchesYAML, title)
-
-	path := filepath.Join(dir, filename)
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		t.Fatalf("failed to create directory for %s: %v", path, err)
-	}
-	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
-		t.Fatalf("failed to write task file %s: %v", path, err)
-	}
-}
 
 type nextRec struct {
 	ID    string `json:"id"`
