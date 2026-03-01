@@ -259,8 +259,8 @@ The web server exposes a JSON API you can access directly. All endpoints return 
 | `GET` | `/api/graph` | Dependency graph as JSON (nodes and edges) |
 | `GET` | `/api/graph/mermaid` | Dependency graph in Mermaid syntax (returns `text/plain`) |
 | `GET` | `/api/stats` | Project statistics and metrics |
-| `GET` | `/api/next?limit=<n>` | Scored task recommendations with reasons |
-| `GET` | `/api/tracks` | Parallel work tracks grouped by scope overlap |
+| `GET` | `/api/next?limit=<n>&filter=<expr>` | Scored task recommendations with reasons (filter is repeatable) |
+| `GET` | `/api/tracks?filter=<expr>&scope=<s>&limit=<n>` | Parallel work tracks grouped by scope overlap |
 | `GET` | `/api/validate` | Validation errors and warnings for all tasks |
 
 ### Other Endpoints
@@ -321,6 +321,7 @@ Send a JSON body with only the fields you want to change:
   "effort": "small",
   "type": "bug",
   "owner": "alice",
+  "parent": "010",
   "tags": ["backend", "urgent"],
   "body": "# Updated description\n\nNew content..."
 }

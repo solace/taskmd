@@ -129,6 +129,7 @@ taskmd list ./tasks/cli
 | `snapshot` | Produce a frozen, machine-readable representation of tasks |
 | `report` | Generate a comprehensive project report |
 | `tracks` | Show parallel work tracks based on scope overlap |
+| `feed` | Show a chronological activity feed of task changes |
 | `archive` | Archive or delete completed/cancelled tasks |
 | `rm` | Delete a task file permanently |
 | `deduplicate` | Detect and resolve duplicate task IDs |
@@ -1563,6 +1564,46 @@ taskmd tracks --limit 3
 
 # Export track assignments
 taskmd tracks --format json > tracks.json
+```
+
+### feed - Activity Feed
+
+Show a chronological activity feed of recent changes to task files. Uses git log to detect task creation, modification, and renames, presenting them as a time-ordered feed.
+
+**Basic usage:**
+```bash
+# Show recent task activity
+taskmd feed
+
+# Show changes from the last 7 days
+taskmd feed --since 7d
+```
+
+**Flags:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--format string` | `text` | Output format (`text`, `json`) |
+| `--limit int` | `20` | Maximum number of commits to show |
+| `--scope string` | | Filter to a tasks subdirectory; supports wildcards (e.g. `cli`, `cli*`) |
+| `--since string` | | Show changes since (e.g. `2d`, `1w`, `2026-02-28`) |
+
+**Examples:**
+```bash
+# Show recent task activity
+taskmd feed
+
+# Show changes from the last 7 days
+taskmd feed --since 7d
+
+# Limit to 10 entries
+taskmd feed --limit 10
+
+# Filter to a specific scope
+taskmd feed --scope cli
+
+# Export as JSON
+taskmd feed --format json
 ```
 
 ### sync - Sync External Sources
