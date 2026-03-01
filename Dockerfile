@@ -19,24 +19,28 @@ RUN pnpm --filter @taskmd/web build
 # Stage 2: Build Go binary
 FROM golang:1.24-alpine AS go-builder
 
-WORKDIR /build/apps/cli
+WORKDIR /build
 
-# Download Go dependencies first (cache layer)
-COPY apps/cli/go.mod apps/cli/go.sum ./
-RUN go mod download
+# Copy Go workspace files and module definitions for dependency caching
+COPY go.work go.work.sum ./
+COPY apps/cli/go.mod apps/cli/go.sum apps/cli/
+COPY sdk/go/go.mod sdk/go/go.sum sdk/go/
+
+RUN cd apps/cli && go mod download
 
 # Copy web dist from stage 1 into the embed location
 COPY --from=web-builder /build/apps/web/dist /build/apps/cli/internal/web/static/dist
 
 # Copy Go source
-COPY apps/cli/ ./
+COPY apps/cli/ apps/cli/
+COPY sdk/go/ sdk/go/
 
 # Build args for version info
 ARG VERSION=dev
 ARG GIT_COMMIT=unknown
 ARG BUILD_DATE=unknown
 
-RUN CGO_ENABLED=0 go build \
+RUN cd apps/cli && CGO_ENABLED=0 go build \
     -tags embed_web \
     -ldflags="-s -w \
       -X 'github.com/driangle/taskmd/apps/cli/internal/cli.Version=${VERSION}' \
