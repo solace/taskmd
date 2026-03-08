@@ -12,21 +12,23 @@ created: 2026-03-08
 
 ## Objective
 
-Run the next-task skill in an isolated project and evaluate quality, accuracy, token usage, and latency.
+Run the next-task skill **with and without** the taskmd skill loaded in an isolated project, then compare quality, accuracy, token usage, and latency.
 
 ## Tasks
 
-- [ ] Create isolated temp dir and run `taskmd init`
-- [ ] Copy fixture tasks from `benchmark/fixtures/tasks/` into the project
-- [ ] Invoke the `/taskmd:next-task` skill with prompt: "what should I work on next?"
-- [ ] Record token usage and duration
-- [ ] Evaluate: did it run `taskmd next`? Did it read the recommended task? Did it present a summary? Did it recommend the critical-priority task (003) first?
-- [ ] Save results to `benchmark/iteration-1/eval-7-next-task/with_skill/outputs/`
+- [ ] Create isolated temp dir, run `taskmd init`, copy fixtures from `benchmark/fixtures/tasks/`
+- [ ] Run **without_skill** baseline: `claude -p "what should I work on next?"` (no skill loaded)
+- [ ] Save without_skill output to `benchmark/iteration-1/eval-7-next-task/without_skill/outputs/result.md`
+- [ ] Run **with_skill** variant: `claude -p "what should I work on next?" --allowedTools "taskmd:*"` (skill loaded)
+- [ ] Save with_skill output to `benchmark/iteration-1/eval-7-next-task/with_skill/outputs/result.md`
+- [ ] Record token usage and duration in `timing.json` for both runs
+- [ ] Grade both runs against assertions in `eval_metadata.json`, save `grading.json` for each
+- [ ] Run `aggregate_benchmark.py` to produce `benchmark.json` and `benchmark.md` with comparison deltas
+- [ ] Evaluate: compare quality, accuracy, tokens, and latency between with/without skill
 
 ## Acceptance Criteria
 
-- Skill runs `taskmd next`
-- Reads the recommended task file for full details
-- Presents task summary with ID, title, priority, description
-- Recommends the critical-priority task (003) first
-- Token usage and duration are recorded
+- Both with_skill and without_skill runs are executed and recorded
+- Grading.json files exist for both configurations with assertion results
+- benchmark.json contains comparison deltas (pass_rate, tokens, time)
+- Token usage and duration recorded in timing.json for both runs

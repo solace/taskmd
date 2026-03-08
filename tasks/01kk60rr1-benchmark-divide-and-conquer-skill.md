@@ -12,21 +12,23 @@ created: 2026-03-08
 
 ## Objective
 
-Run the divide-and-conquer skill in an isolated project and evaluate quality, accuracy, token usage, and latency.
+Run the divide-and-conquer skill **with and without** the taskmd skill loaded in an isolated project, then compare quality, accuracy, token usage, and latency.
 
 ## Tasks
 
-- [ ] Create isolated temp dir and run `taskmd init`
-- [ ] Copy fixture tasks from `benchmark/fixtures/tasks/` into the project
-- [ ] Invoke the `/taskmd:divide-and-conquer` skill with prompt: "task 002 is too big, can you split it into smaller pieces?"
-- [ ] Record token usage and duration
-- [ ] Evaluate: did it read the task? Did it assess complexity? Did it create sub-tasks? Did it report the split?
-- [ ] Save results to `benchmark/iteration-1/eval-11-divide-and-conquer/with_skill/outputs/`
+- [ ] Create isolated temp dir, run `taskmd init`, copy fixtures from `benchmark/fixtures/tasks/`
+- [ ] Run **without_skill** baseline: `claude -p "task 002 is too big, can you split it into smaller pieces?"` (no skill loaded)
+- [ ] Save without_skill output to `benchmark/iteration-1/eval-11-divide-and-conquer/without_skill/outputs/result.md`
+- [ ] Run **with_skill** variant: `claude -p "task 002 is too big, can you split it into smaller pieces?" --allowedTools "taskmd:*"` (skill loaded)
+- [ ] Save with_skill output to `benchmark/iteration-1/eval-11-divide-and-conquer/with_skill/outputs/result.md`
+- [ ] Record token usage and duration in `timing.json` for both runs
+- [ ] Grade both runs against assertions in `eval_metadata.json`, save `grading.json` for each
+- [ ] Run `aggregate_benchmark.py` to produce `benchmark.json` and `benchmark.md` with comparison deltas
+- [ ] Evaluate: compare quality, accuracy, tokens, and latency between with/without skill
 
 ## Acceptance Criteria
 
-- Skill reads the task to understand scope
-- Evaluates complexity and explains why splitting is warranted
-- Creates focused sub-task files
-- Lists created sub-tasks with IDs and titles
-- Token usage and duration are recorded
+- Both with_skill and without_skill runs are executed and recorded
+- Grading.json files exist for both configurations with assertion results
+- benchmark.json contains comparison deltas (pass_rate, tokens, time)
+- Token usage and duration recorded in timing.json for both runs

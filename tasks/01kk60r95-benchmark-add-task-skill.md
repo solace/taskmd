@@ -12,21 +12,23 @@ created: 2026-03-08
 
 ## Objective
 
-Run the add-task skill in an isolated project and evaluate quality, accuracy, token usage, and latency.
+Run the add-task skill **with and without** the taskmd skill loaded in an isolated project, then compare quality, accuracy, token usage, and latency.
 
 ## Tasks
 
-- [ ] Create isolated temp dir and run `taskmd init`
-- [ ] Copy fixture tasks from `benchmark/fixtures/tasks/` into the project
-- [ ] Invoke the `/taskmd:add-task` skill with prompt: "create a new task to implement user notifications via email and in-app, high priority, tags: notifications,backend"
-- [ ] Record token usage and duration
-- [ ] Evaluate: did it run `taskmd add` with correct flags? Did it fill in content? Did it validate? Did it confirm?
-- [ ] Save results to `benchmark/iteration-1/eval-4-add-task/with_skill/outputs/`
+- [ ] Create isolated temp dir, run `taskmd init`, copy fixtures from `benchmark/fixtures/tasks/`
+- [ ] Run **without_skill** baseline: `claude -p "create a new task to implement user notifications via email and in-app, high priority, tags: notifications,backend"` (no skill loaded)
+- [ ] Save without_skill output to `benchmark/iteration-1/eval-4-add-task/without_skill/outputs/result.md`
+- [ ] Run **with_skill** variant: `claude -p "create a new task to implement user notifications via email and in-app, high priority, tags: notifications,backend" --allowedTools "taskmd:*"` (skill loaded)
+- [ ] Save with_skill output to `benchmark/iteration-1/eval-4-add-task/with_skill/outputs/result.md`
+- [ ] Record token usage and duration in `timing.json` for both runs
+- [ ] Grade both runs against assertions in `eval_metadata.json`, save `grading.json` for each
+- [ ] Run `aggregate_benchmark.py` to produce `benchmark.json` and `benchmark.md` with comparison deltas
+- [ ] Evaluate: compare quality, accuracy, tokens, and latency between with/without skill
 
 ## Acceptance Criteria
 
-- Skill runs `taskmd add` with title and flags (--priority high, --tags)
-- Placeholder content is replaced with real objective, tasks, and acceptance criteria
-- Runs `taskmd validate` after creation
-- Reports created file path and task ID
-- Token usage and duration are recorded
+- Both with_skill and without_skill runs are executed and recorded
+- Grading.json files exist for both configurations with assertion results
+- benchmark.json contains comparison deltas (pass_rate, tokens, time)
+- Token usage and duration recorded in timing.json for both runs

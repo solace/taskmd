@@ -12,20 +12,23 @@ created: 2026-03-08
 
 ## Objective
 
-Run the update-task skill in an isolated project and evaluate quality, accuracy, token usage, and latency.
+Run the update-task skill **with and without** the taskmd skill loaded in an isolated project, then compare quality, accuracy, token usage, and latency.
 
 ## Tasks
 
-- [ ] Create isolated temp dir and run `taskmd init`
-- [ ] Copy fixture tasks from `benchmark/fixtures/tasks/` into the project
-- [ ] Invoke the `/taskmd:update-task` skill with prompt: "change task 002 to high priority and add the tag backend"
-- [ ] Record token usage and duration
-- [ ] Evaluate: did it look up the task? Did it run `taskmd set` with correct flags? Did it confirm?
-- [ ] Save results to `benchmark/iteration-1/eval-5-update-task/with_skill/outputs/`
+- [ ] Create isolated temp dir, run `taskmd init`, copy fixtures from `benchmark/fixtures/tasks/`
+- [ ] Run **without_skill** baseline: `claude -p "change task 002 to high priority and add the tag backend"` (no skill loaded)
+- [ ] Save without_skill output to `benchmark/iteration-1/eval-5-update-task/without_skill/outputs/result.md`
+- [ ] Run **with_skill** variant: `claude -p "change task 002 to high priority and add the tag backend" --allowedTools "taskmd:*"` (skill loaded)
+- [ ] Save with_skill output to `benchmark/iteration-1/eval-5-update-task/with_skill/outputs/result.md`
+- [ ] Record token usage and duration in `timing.json` for both runs
+- [ ] Grade both runs against assertions in `eval_metadata.json`, save `grading.json` for each
+- [ ] Run `aggregate_benchmark.py` to produce `benchmark.json` and `benchmark.md` with comparison deltas
+- [ ] Evaluate: compare quality, accuracy, tokens, and latency between with/without skill
 
 ## Acceptance Criteria
 
-- Skill looks up the task with `taskmd get`
-- Runs `taskmd set` with `--priority high --add-tag backend`
-- Confirms changes to the user
-- Token usage and duration are recorded
+- Both with_skill and without_skill runs are executed and recorded
+- Grading.json files exist for both configurations with assertion results
+- benchmark.json contains comparison deltas (pass_rate, tokens, time)
+- Token usage and duration recorded in timing.json for both runs
