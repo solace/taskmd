@@ -1,0 +1,22 @@
+{
+  "eval_id": 3,
+  "eval_name": "get-task-status",
+  "prompt": "what's the status of task 042?",
+  "assertions": [
+    {
+      "id": "runs-status-command",
+      "text": "Runs taskmd status with the task ID",
+      "type": "behavior"
+    },
+    {
+      "id": "handles-not-found",
+      "text": "Gracefully handles task not found and suggests alternatives",
+      "type": "behavior"
+    },
+    {
+      "id": "presents-metadata",
+      "text": "Presents task metadata (status, priority, etc.) when found",
+      "type": "output"
+    }
+  ]
+}

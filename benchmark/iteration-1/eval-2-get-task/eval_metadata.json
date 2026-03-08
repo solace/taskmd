@@ -1,0 +1,19 @@
+{
+  "eval_id": 2,
+  "eval_name": "get-task",
+  "prompt": "show me the details of task 042",
+  "assertions": [
+    {
+      "id": "runs-get-command",
+      "description": "Runs taskmd get with task ID"
+    },
+    {
+      "id": "reads-task-file",
+      "description": "Reads the task file for full details"
+    },
+    {
+      "id": "presents-summary",
+      "description": "Presents ID, title, status, priority, tags, description"
+    }
+  ]
+}

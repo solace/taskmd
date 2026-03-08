@@ -1,0 +1,19 @@
+{
+  "eval_id": 10,
+  "eval_name": "verify-task",
+  "prompt": "verify the acceptance criteria for task 042",
+  "assertions": [
+    {
+      "id": "runs-verify",
+      "description": "Runs taskmd verify with --format json"
+    },
+    {
+      "id": "interprets-results",
+      "description": "Interprets pass/fail for each check"
+    },
+    {
+      "id": "reports-verdict",
+      "description": "Reports overall verdict"
+    }
+  ]
+}

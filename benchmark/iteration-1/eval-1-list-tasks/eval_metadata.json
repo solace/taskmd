@@ -1,0 +1,19 @@
+{
+  "eval_id": 1,
+  "eval_name": "list-tasks",
+  "prompt": "show me all my tasks",
+  "assertions": [
+    {
+      "id": "runs-list-command",
+      "description": "Runs taskmd list"
+    },
+    {
+      "id": "displays-task-table",
+      "description": "Displays tasks in readable format"
+    },
+    {
+      "id": "shows-key-fields",
+      "description": "Shows ID, title, status for each task"
+    }
+  ]
+}

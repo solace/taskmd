@@ -1,0 +1,23 @@
+{
+  "eval_id": 8,
+  "eval_name": "do-task",
+  "prompt": "pick up task 042 and start working on it",
+  "assertions": [
+    {
+      "id": "looks-up-task",
+      "description": "Runs taskmd get to find the task"
+    },
+    {
+      "id": "marks-in-progress",
+      "description": "Sets task status to in-progress"
+    },
+    {
+      "id": "starts-worklog",
+      "description": "Creates/appends worklog entry"
+    },
+    {
+      "id": "begins-work",
+      "description": "Starts working on the task"
+    }
+  ]
+}

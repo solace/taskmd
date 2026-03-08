@@ -1,0 +1,156 @@
+{
+  "skill_name": "taskmd-plugin",
+  "skill_path": "/Users/driangle/.claude/plugins/cache/taskmd-marketplace/taskmd/0.1.3/skills",
+  "fixtures_path": "fixtures/",
+  "setup": {
+    "description": "Each eval runs in an isolated temp directory. Before running the skill, the subagent must: (1) create a temp dir via mktemp -d, (2) cd into it, (3) run `taskmd init`, (4) copy fixture tasks from fixtures/tasks/ into the project's tasks/ dir, (5) copy fixtures/src/ into src/. The fixture data provides 5 baseline tasks (001-005) with mixed statuses and priorities, plus source files with TODO comments.",
+    "baseline_tasks": [
+      {"id": "001", "title": "Fix login SSO bug", "status": "in-progress", "priority": "high", "type": "bug"},
+      {"id": "002", "title": "Add full-text search", "status": "pending", "priority": "medium", "type": "feature"},
+      {"id": "003", "title": "Patch XSS vulnerability in comments", "status": "pending", "priority": "critical", "type": "bug"},
+      {"id": "004", "title": "Update README with setup instructions", "status": "pending", "priority": "low", "type": "docs"},
+      {"id": "005", "title": "Refactor authentication module", "status": "completed", "priority": "high", "type": "improvement"}
+    ]
+  },
+  "evals": [
+    {
+      "id": 1,
+      "skill": "list-tasks",
+      "prompt": "show me all my tasks",
+      "expected_output": "Runs taskmd list and displays all 5 baseline tasks with IDs, titles, statuses, and priorities",
+      "assertions": [
+        {"id": "runs-list", "text": "Runs taskmd list command"},
+        {"id": "shows-all-tasks", "text": "Output shows all 5 baseline tasks"},
+        {"id": "readable-format", "text": "Output is in a readable table or list format"}
+      ]
+    },
+    {
+      "id": 2,
+      "skill": "get-task",
+      "prompt": "show me the details of task 001",
+      "expected_output": "Runs taskmd get 001, reads the file, presents full details of the SSO bug",
+      "assertions": [
+        {"id": "runs-get", "text": "Runs taskmd get with the task ID"},
+        {"id": "reads-file", "text": "Reads the task file for full details"},
+        {"id": "shows-details", "text": "Presents ID, title, status, priority, tags, and description"}
+      ]
+    },
+    {
+      "id": 3,
+      "skill": "get-task-status",
+      "prompt": "what's the status of task 002?",
+      "expected_output": "Runs taskmd status 002, shows it as pending with medium priority",
+      "assertions": [
+        {"id": "runs-status", "text": "Runs taskmd status with task ID"},
+        {"id": "shows-status", "text": "Shows task status (pending)"},
+        {"id": "shows-metadata", "text": "Shows priority and other metadata"}
+      ]
+    },
+    {
+      "id": 4,
+      "skill": "add-task",
+      "prompt": "create a new task to implement user notifications via email and in-app, high priority, tags: notifications,backend",
+      "expected_output": "Runs taskmd add with title and flags, fills in content, validates, confirms creation",
+      "assertions": [
+        {"id": "runs-add", "text": "Runs taskmd add with title and flags"},
+        {"id": "fills-content", "text": "Replaces placeholder content with real objective, tasks, and acceptance criteria"},
+        {"id": "validates", "text": "Runs taskmd validate after creation"},
+        {"id": "confirms", "text": "Reports created file path and task ID"}
+      ]
+    },
+    {
+      "id": 5,
+      "skill": "update-task",
+      "prompt": "change task 002 to high priority and add the tag backend",
+      "expected_output": "Looks up task 002, runs taskmd set with --priority high --add-tag backend, confirms",
+      "assertions": [
+        {"id": "looks-up", "text": "Looks up the task with taskmd get"},
+        {"id": "runs-set", "text": "Runs taskmd set with --priority high --add-tag backend"},
+        {"id": "confirms", "text": "Confirms changes to the user"}
+      ]
+    },
+    {
+      "id": 6,
+      "skill": "complete-task",
+      "prompt": "mark task 001 as done",
+      "expected_output": "Checks workflow mode, handles worklog, runs taskmd set 001 --status completed --verify",
+      "assertions": [
+        {"id": "checks-workflow", "text": "Checks .taskmd.yaml for workflow mode"},
+        {"id": "runs-complete", "text": "Runs taskmd set with --status completed --verify"},
+        {"id": "confirms", "text": "Confirms the status change"}
+      ]
+    },
+    {
+      "id": 7,
+      "skill": "next-task",
+      "prompt": "what should I work on next?",
+      "expected_output": "Runs taskmd next, reads recommended task, presents summary. Should recommend task 003 (critical priority) first.",
+      "assertions": [
+        {"id": "runs-next", "text": "Runs taskmd next"},
+        {"id": "reads-file", "text": "Reads the recommended task file"},
+        {"id": "presents-summary", "text": "Presents task summary with ID, title, priority, description"},
+        {"id": "correct-priority", "text": "Recommends the critical-priority task (003) first"}
+      ]
+    },
+    {
+      "id": 8,
+      "skill": "do-task",
+      "prompt": "pick up task 003 and start working on it",
+      "expected_output": "Looks up task 003, marks in-progress, starts worklog, begins working on the XSS fix",
+      "assertions": [
+        {"id": "looks-up", "text": "Runs taskmd get to find the task"},
+        {"id": "marks-in-progress", "text": "Sets task status to in-progress"},
+        {"id": "starts-worklog", "text": "Creates or appends a worklog entry"},
+        {"id": "does-work", "text": "Starts working on the task (attempts the XSS fix)"}
+      ]
+    },
+    {
+      "id": 9,
+      "skill": "validate-tasks",
+      "prompt": "check if all my task files are valid",
+      "setup_extra": "Create an additional malformed task file tasks/bad-task.md with missing required frontmatter to test error detection.",
+      "expected_output": "Runs taskmd validate, detects the malformed file, suggests fixes",
+      "assertions": [
+        {"id": "runs-validate", "text": "Runs taskmd validate"},
+        {"id": "detects-errors", "text": "Detects the malformed task file"},
+        {"id": "suggests-fixes", "text": "Suggests how to fix the validation errors"}
+      ]
+    },
+    {
+      "id": 10,
+      "skill": "verify-task",
+      "prompt": "verify the acceptance criteria for task 003",
+      "setup_extra": "Add a verify field to task 003's frontmatter: `verify: [{step: 'bash', run: 'grep -r sanitize src/'}]`",
+      "expected_output": "Runs taskmd verify 003 --format json, interprets results, reports verdict",
+      "assertions": [
+        {"id": "runs-verify", "text": "Runs taskmd verify with --format json"},
+        {"id": "interprets", "text": "Interprets pass/fail for each check"},
+        {"id": "reports-verdict", "text": "Reports overall verdict"}
+      ]
+    },
+    {
+      "id": 11,
+      "skill": "divide-and-conquer",
+      "prompt": "task 002 is too big, can you split it into smaller pieces?",
+      "expected_output": "Looks up task 002 (8 subtasks spanning backend, frontend, tests), assesses as complex enough, creates 3-4 sub-tasks",
+      "assertions": [
+        {"id": "looks-up", "text": "Reads the task to understand scope"},
+        {"id": "assesses", "text": "Evaluates complexity and explains why splitting is warranted"},
+        {"id": "creates-subtasks", "text": "Creates focused sub-task files"},
+        {"id": "reports", "text": "Lists created sub-tasks with IDs and titles"}
+      ]
+    },
+    {
+      "id": 12,
+      "skill": "import-todos",
+      "prompt": "find all the TODO comments in the code and turn them into tasks",
+      "expected_output": "Runs taskmd todos list, finds 3 TODOs in src/app.go, presents as table, asks which to convert",
+      "assertions": [
+        {"id": "runs-todos", "text": "Runs taskmd todos list --format json"},
+        {"id": "presents-table", "text": "Displays TODOs in a numbered table format"},
+        {"id": "checks-dupes", "text": "Checks existing tasks for duplicates"},
+        {"id": "asks-selection", "text": "Asks user which TODOs to convert"}
+      ]
+    }
+  ]
+}

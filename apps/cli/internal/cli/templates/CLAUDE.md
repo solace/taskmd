@@ -2,6 +2,10 @@
 
 This project uses [taskmd](https://github.com/driangle/taskmd) for task management. Tasks are stored as markdown files with YAML frontmatter.
 
+## Working Directory
+
+Run all `taskmd` commands from the **project root** — the directory containing `.taskmd.yaml`. The CLI looks for `.taskmd.yaml` in the current directory to locate configuration, scopes, and the task directory. It does not search parent directories.
+
 ## Task File Format
 
 Each task is a `.md` file with this structure:
