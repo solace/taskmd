@@ -13,7 +13,7 @@ Mark a task as completed using the `taskmd` CLI.
 The user's query is in `$ARGUMENTS` (a task ID like `077`).
 
 1. **Add a final worklog entry** (if worklogs are enabled):
-   - Check `.taskmd.yaml` for `worklogs: false` -- if set, skip this step
+   - Check `.taskmd.yaml` for `worklogs: true` -- only create worklogs if explicitly enabled; skip this step otherwise
    - Otherwise, find the worklog file at `tasks/<group>/.worklogs/<ID>.md` (or `tasks/.worklogs/<ID>.md`)
    - If a worklog exists, append a timestamped completion summary
 2. **Check the workflow mode** in `.taskmd.yaml`:

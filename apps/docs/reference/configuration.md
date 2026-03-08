@@ -38,7 +38,7 @@ Command-line flags always override config file values.
 |--------|------|---------|-------------|
 | `dir` | string | `.` | Default task directory |
 | `ignore` | string[] | `[]` | Additional directories to skip when scanning (beyond the built-in skip list) |
-| `worklogs` | boolean | `true` | Enable or disable worklog file creation |
+| `worklogs` | boolean | `false` | Enable or disable worklog file creation |
 | `workflow` | string | `"solo"` | Workflow mode: `"solo"` or `"pr-review"` |
 | `todos.exclude` | string[] | `[]` | Glob patterns to exclude from TODO/FIXME scanning |
 | `web.port` | integer | `8080` | Web server port |
@@ -59,7 +59,7 @@ ignore:
   - "legacy"
 ```
 
-**`worklogs`** — When set to `false`, agents and workflows skip creating worklog files in `.worklogs/` directories. Existing worklogs can still be read.
+**`worklogs`** — Worklogs are disabled by default. When set to `true`, agents and workflows create worklog files in `.worklogs/` directories. Existing worklogs can always be read regardless of this setting.
 
 **`workflow`** — Controls the development workflow mode:
 - `solo` (default) — optimized for single-developer workflows

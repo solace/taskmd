@@ -17,8 +17,8 @@ The user's query is in `$ARGUMENTS` (a task ID like `077` or a task name/keyword
 2. **Read the task file** with the `Read` tool to get the full description, subtasks, and acceptance criteria
 3. **Mark the task as in-progress**: Run `taskmd set <ID> --status in-progress`
 4. **Start a worklog entry** (if worklogs are enabled):
-   - Check `.taskmd.yaml` for `worklogs: false` -- if set, skip worklog steps
-   - Otherwise, find or create the worklog file at `tasks/<group>/.worklogs/<ID>.md` (or `tasks/.worklogs/<ID>.md` for root tasks)
+   - Check `.taskmd.yaml` for `worklogs: true` -- only create worklogs if explicitly enabled
+   - If enabled, find or create the worklog file at `tasks/<group>/.worklogs/<ID>.md` (or `tasks/.worklogs/<ID>.md` for root tasks)
    - Append a timestamped entry noting your approach and initial findings
 5. **Do the task**: Follow the task description and complete the work described
    - Use `EnterPlanMode` for non-trivial implementation tasks
@@ -26,12 +26,7 @@ The user's query is in `$ARGUMENTS` (a task ID like `077` or a task name/keyword
    - Append worklog entries when you make key decisions, hit blockers, or complete significant subtasks
    - In the Plan, include a reference to the original task ID, and task file path.
 6. **Write a final worklog entry** summarizing what was done, decisions made, and any open items
-7. **Mark the task as done**:
-   - Check `.taskmd.yaml` for `workflow: pr-review` -- if set, use the PR-review workflow below
-   - **Solo workflow** (default): Run `taskmd set <ID> --status completed --verify`
-     - The `--verify` flag will run any verification checks defined in the task before applying the status change
-     - If verification fails, fix the issues and try again
-   - **PR-review workflow**: Open a PR, then run `taskmd set <ID> --status in-review --add-pr <PR-URL>` and stop
+7. **Mark the task as done**: Use the `/complete-task` skill (invoke it with the task ID) to complete the task. It handles verification and status changes automatically.
 
 ## Worklog Format
 

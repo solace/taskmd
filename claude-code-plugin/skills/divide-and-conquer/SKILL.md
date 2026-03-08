@@ -17,8 +17,8 @@ The user's query is in `$ARGUMENTS` (a task ID like `077` or a task name/keyword
 2. **Read the task file** with the `Read` tool to get the full description, subtasks, and acceptance criteria
 3. **Mark the task as in-progress**: Run `taskmd set <ID> --status in-progress`
 4. **Start a worklog entry** (if worklogs are enabled):
-   - Check `.taskmd.yaml` for `worklogs: false` -- if set, skip worklog steps
-   - Otherwise, find or create the worklog file at `tasks/<group>/.worklogs/<ID>.md` (or `tasks/.worklogs/<ID>.md` for root tasks)
+   - Check `.taskmd.yaml` for `worklogs: true` -- only create worklogs if explicitly enabled
+   - If enabled, find or create the worklog file at `tasks/<group>/.worklogs/<ID>.md` (or `tasks/.worklogs/<ID>.md` for root tasks)
    - Append a timestamped entry noting your approach and initial findings
 5. **Plan and identify workstreams**:
    - Use `EnterPlanMode` to design the overall approach

@@ -386,16 +386,16 @@ burst traffic better for our use case.
 
 **Why?** Worklogs create an audit trail that's invaluable for debugging, onboarding, and understanding past decisions. When someone asks "why did we use token bucket instead of sliding window?", the answer is in the worklog.
 
-### When to Disable Worklogs
+### When to Enable Worklogs
 
-If you're working solo on a small project, worklogs may be overhead:
+Worklogs are disabled by default. For team projects or when you want an audit trail, enable them:
 
 ```yaml
 # .taskmd.yaml
-worklogs: false
+worklogs: true
 ```
 
-You can always re-enable them later. Existing worklogs are still readable when the setting is off.
+Existing worklogs are always readable regardless of this setting.
 
 ## Common Pitfalls
 

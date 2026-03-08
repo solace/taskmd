@@ -139,7 +139,7 @@ The group is inferred from the directory name unless explicitly set in frontmatt
 
 ## Task Worklogs
 
-Worklogs are enabled by default. To disable them, set `worklogs: false` in `.taskmd.yaml`. When worklogs are disabled, skip all worklog steps in the task workflow.
+Worklogs are disabled by default. To enable them, set `worklogs: true` in `.taskmd.yaml`. When worklogs are enabled, create timestamped entries in `.worklogs/` directories to track progress.
 
 Each task can have a companion **worklog file** that records progress notes, decisions, and blockers. Worklogs live in a `.worklogs/` directory alongside the task files:
 
