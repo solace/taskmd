@@ -170,3 +170,35 @@ func TestApply_ParentFilter(t *testing.T) {
 		}
 	})
 }
+
+func TestApply_MilestoneFilter(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task A", Milestone: "v0.2"},
+		{ID: "002", Title: "Task B", Milestone: "v0.3"},
+		{ID: "003", Title: "Task C", Milestone: "v0.2"},
+		{ID: "004", Title: "Task D"},
+	}
+
+	t.Run("exact match", func(t *testing.T) {
+		filtered, err := Apply(tasks, []string{"milestone=v0.2"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(filtered) != 2 {
+			t.Fatalf("expected 2 tasks, got %d", len(filtered))
+		}
+		if filtered[0].ID != "001" || filtered[1].ID != "003" {
+			t.Errorf("expected tasks 001 and 003, got %s and %s", filtered[0].ID, filtered[1].ID)
+		}
+	})
+
+	t.Run("no match", func(t *testing.T) {
+		filtered, err := Apply(tasks, []string{"milestone=v1.0"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if len(filtered) != 0 {
+			t.Fatalf("expected 0 tasks, got %d", len(filtered))
+		}
+	})
+}

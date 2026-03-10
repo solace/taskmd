@@ -100,6 +100,8 @@ func getFieldValue(task *model.Task, field string) (string, bool) {
 		return task.Group, true
 	case "owner":
 		return task.Owner, true
+	case "milestone":
+		return task.Milestone, true
 	default:
 		return "", false
 	}

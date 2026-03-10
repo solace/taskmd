@@ -15,12 +15,13 @@ import (
 )
 
 var (
-	listFormat  string
-	listFilters []string
-	listSort    string
-	listColumns string
-	listLimit   int
-	listScope   string
+	listFormat    string
+	listFilters   []string
+	listSort      string
+	listColumns   string
+	listLimit     int
+	listScope     string
+	listMilestone string
 )
 
 // listCmd represents the list command
@@ -61,6 +62,7 @@ func init() {
 	listCmd.Flags().StringVar(&listColumns, "columns", "id,title,status,priority,file", "comma-separated list of columns to display")
 	listCmd.Flags().IntVar(&listLimit, "limit", 0, "maximum number of tasks to display (0 = unlimited)")
 	listCmd.Flags().StringVar(&listScope, "scope", "", "filter by scope; supports wildcards (e.g. cli, cli*)")
+	listCmd.Flags().StringVar(&listMilestone, "milestone", "", "filter by milestone")
 }
 
 func runList(cmd *cobra.Command, args []string) error {
@@ -85,30 +87,9 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	debugLog("format: %s, sort: %q, filters: %v", listFormat, listSort, listFilters)
 
-	// Apply filters (multiple filters are AND'ed together)
-	if len(listFilters) > 0 {
-		tasks, err = applyFilters(tasks, listFilters)
-		if err != nil {
-			return fmt.Errorf("filter error: %w", err)
-		}
-	}
-
-	// Apply scope filter
-	if listScope != "" {
-		warnUnknownScope(listScope)
-		tasks = filterTasksByScope(tasks, listScope)
-	}
-
-	// Apply sorting
-	if listSort != "" {
-		if err := sortTasks(tasks, listSort); err != nil {
-			return fmt.Errorf("sort error: %w", err)
-		}
-	}
-
-	// Apply limit (after sorting)
-	if listLimit > 0 && listLimit < len(tasks) {
-		tasks = tasks[:listLimit]
+	tasks, err = applyListFiltersAndSort(tasks)
+	if err != nil {
+		return err
 	}
 
 	// Output in requested format
@@ -122,6 +103,44 @@ func runList(cmd *cobra.Command, args []string) error {
 	default:
 		return ValidateFormat(listFormat, []string{"table", "json", "yaml"})
 	}
+}
+
+// applyListFiltersAndSort applies all list filters, sorting, and limit.
+func applyListFiltersAndSort(tasks []*model.Task) ([]*model.Task, error) {
+	var err error
+
+	// Apply filters (multiple filters are AND'ed together)
+	if len(listFilters) > 0 {
+		tasks, err = applyFilters(tasks, listFilters)
+		if err != nil {
+			return nil, fmt.Errorf("filter error: %w", err)
+		}
+	}
+
+	// Apply scope filter
+	if listScope != "" {
+		warnUnknownScope(listScope)
+		tasks = filterTasksByScope(tasks, listScope)
+	}
+
+	// Apply milestone filter
+	if listMilestone != "" {
+		tasks = filterTasksByMilestone(tasks, listMilestone)
+	}
+
+	// Apply sorting
+	if listSort != "" {
+		if err := sortTasks(tasks, listSort); err != nil {
+			return nil, fmt.Errorf("sort error: %w", err)
+		}
+	}
+
+	// Apply limit (after sorting)
+	if listLimit > 0 && listLimit < len(tasks) {
+		tasks = tasks[:listLimit]
+	}
+
+	return tasks, nil
 }
 
 // sortTasks sorts tasks by the specified field
@@ -254,6 +273,17 @@ func makeFilePathsRelative(tasks []*model.Task, baseDir string) {
 	}
 }
 
+// filterTasksByMilestone returns tasks whose milestone matches the given value.
+func filterTasksByMilestone(tasks []*model.Task, milestone string) []*model.Task {
+	var filtered []*model.Task
+	for _, task := range tasks {
+		if task.Milestone == milestone {
+			filtered = append(filtered, task)
+		}
+	}
+	return filtered
+}
+
 // getColumnValue extracts the value for a specific column from a task
 func getColumnValue(task *model.Task, column string) string {
 	scalar := getScalarColumnValue(task, column)
@@ -296,6 +326,8 @@ func getScalarColumnValue(task *model.Task, column string) string {
 		return task.Owner
 	case "parent":
 		return task.Parent
+	case "milestone":
+		return task.Milestone
 	case "file":
 		return task.FilePath
 	default:

@@ -99,6 +99,7 @@ func resetListFlags() {
 	listColumns = "id,title,status,priority,file"
 	listLimit = 0
 	listScope = ""
+	listMilestone = ""
 	noColor = true
 }
 
@@ -665,5 +666,80 @@ func TestOutputJSON_NilTasks_ReturnsEmptyArray(t *testing.T) {
 
 	if output != "[]" {
 		t.Errorf("expected empty JSON array '[]', got %q", output)
+	}
+}
+
+func TestGetColumnValue_Milestone(t *testing.T) {
+	task := &model.Task{
+		ID:        "001",
+		Title:     "Test Task",
+		Milestone: "v0.2",
+	}
+
+	result := getColumnValue(task, "milestone")
+	if result != "v0.2" {
+		t.Errorf("getColumnValue(milestone) = %s, want v0.2", result)
+	}
+
+	// Empty milestone
+	task2 := &model.Task{ID: "002", Title: "No Milestone"}
+	result2 := getColumnValue(task2, "milestone")
+	if result2 != "" {
+		t.Errorf("getColumnValue(milestone) for task without milestone = %q, want empty", result2)
+	}
+}
+
+func TestListCommand_MilestoneColumn(t *testing.T) {
+	resetListFlags()
+
+	tasks := []*model.Task{
+		{ID: "001", Title: "Feature A", Status: model.StatusPending, Milestone: "v0.2"},
+		{ID: "002", Title: "Feature B", Status: model.StatusPending, Milestone: "v0.3"},
+		{ID: "003", Title: "Feature C", Status: model.StatusPending},
+	}
+
+	output := captureListTableOutput(t, tasks, "id,title,milestone")
+
+	if !strings.Contains(output, "milestone") {
+		t.Error("Expected 'milestone' column header in output")
+	}
+	if !strings.Contains(output, "v0.2") {
+		t.Error("Expected milestone value 'v0.2' in output")
+	}
+	if !strings.Contains(output, "v0.3") {
+		t.Error("Expected milestone value 'v0.3' in output")
+	}
+}
+
+func TestFilterTasksByMilestone(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Feature A", Milestone: "v0.2"},
+		{ID: "002", Title: "Feature B", Milestone: "v0.3"},
+		{ID: "003", Title: "Feature C", Milestone: "v0.2"},
+		{ID: "004", Title: "Feature D"},
+	}
+
+	tests := []struct {
+		name      string
+		milestone string
+		wantIDs   []string
+	}{
+		{"exact match", "v0.2", []string{"001", "003"}},
+		{"single match", "v0.3", []string{"002"}},
+		{"no match", "v1.0", nil},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := filterTasksByMilestone(tasks, tt.milestone)
+			if len(result) != len(tt.wantIDs) {
+				t.Fatalf("got %d tasks, want %d", len(result), len(tt.wantIDs))
+			}
+			for i, task := range result {
+				if task.ID != tt.wantIDs[i] {
+					t.Errorf("task[%d].ID = %s, want %s", i, task.ID, tt.wantIDs[i])
+				}
+			}
+		})
 	}
 }
