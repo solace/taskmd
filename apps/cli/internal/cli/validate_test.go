@@ -836,6 +836,71 @@ func TestParseIDConfig_ViperIntTypes(t *testing.T) {
 	}
 }
 
+// --- parseMilestonesConfig tests ---
+
+func TestParseMilestonesConfig_FullConfig(t *testing.T) {
+	raw := []any{
+		map[string]any{
+			"name":        "v0.2",
+			"description": "Core CLI features",
+			"due":         "2026-04-01",
+		},
+		map[string]any{
+			"name":        "v0.3",
+			"description": "Web dashboard",
+		},
+	}
+
+	milestones := parseMilestonesConfig(raw)
+	if len(milestones) != 2 {
+		t.Fatalf("expected 2 milestones, got %d", len(milestones))
+	}
+	if milestones[0].Name != "v0.2" {
+		t.Errorf("Name = %q, want %q", milestones[0].Name, "v0.2")
+	}
+	if milestones[0].Description != "Core CLI features" {
+		t.Errorf("Description = %q, want %q", milestones[0].Description, "Core CLI features")
+	}
+	if milestones[0].Due.IsZero() {
+		t.Error("expected non-zero due date for v0.2")
+	}
+	if milestones[1].Name != "v0.3" {
+		t.Errorf("Name = %q, want %q", milestones[1].Name, "v0.3")
+	}
+	if !milestones[1].Due.IsZero() {
+		t.Error("expected zero due date for v0.3 (no due set)")
+	}
+}
+
+func TestParseMilestonesConfig_Nil(t *testing.T) {
+	milestones := parseMilestonesConfig(nil)
+	if milestones != nil {
+		t.Errorf("expected nil, got %+v", milestones)
+	}
+}
+
+func TestParseMilestonesConfig_NotASlice(t *testing.T) {
+	milestones := parseMilestonesConfig("not-a-slice")
+	if milestones != nil {
+		t.Errorf("expected nil for non-slice input, got %+v", milestones)
+	}
+}
+
+func TestParseMilestonesConfig_SkipsNonMapEntries(t *testing.T) {
+	raw := []any{
+		"not-a-map",
+		map[string]any{"name": "v0.2"},
+	}
+
+	milestones := parseMilestonesConfig(raw)
+	if len(milestones) != 1 {
+		t.Fatalf("expected 1 milestone (skipping non-map), got %d", len(milestones))
+	}
+	if milestones[0].Name != "v0.2" {
+		t.Errorf("Name = %q, want %q", milestones[0].Name, "v0.2")
+	}
+}
+
 func TestParseScopeEntries_NonMapEntry(t *testing.T) {
 	// Test with a scope value that is not a map (e.g., a string)
 	scopeMap := map[string]any{

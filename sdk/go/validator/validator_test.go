@@ -1316,3 +1316,99 @@ func TestValidateConfig_IDIsKnownKey(t *testing.T) {
 		}
 	}
 }
+
+// --- Milestone validation tests ---
+
+func TestValidateMilestones_UndefinedMilestone(t *testing.T) {
+	v := NewValidator(false)
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task 1", Milestone: "v0.2"},
+		{ID: "002", Title: "Task 2", Milestone: "v0.9"},
+	}
+	known := map[string]bool{"v0.2": true, "v0.3": true}
+
+	result := v.ValidateMilestonesAgainstConfig(tasks, known)
+
+	if result.Warnings != 1 {
+		t.Errorf("Expected 1 warning for undefined milestone, got %d", result.Warnings)
+		for _, issue := range result.Issues {
+			t.Logf("  Issue: [%s] task=%s %s", issue.Level, issue.TaskID, issue.Message)
+		}
+	}
+
+	found := false
+	for _, issue := range result.Issues {
+		if issue.TaskID == "002" && issue.Level == LevelWarning {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Expected warning for task 002 referencing undefined milestone v0.9")
+	}
+}
+
+func TestValidateMilestones_NoConfigSkipsValidation(t *testing.T) {
+	v := NewValidator(false)
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task 1", Milestone: "anything"},
+	}
+
+	// nil milestones
+	result := v.ValidateMilestonesAgainstConfig(tasks, nil)
+	if result.Warnings != 0 {
+		t.Errorf("Expected no warnings for nil milestones, got %d", result.Warnings)
+	}
+
+	// empty milestones
+	result = v.ValidateMilestonesAgainstConfig(tasks, map[string]bool{})
+	if result.Warnings != 0 {
+		t.Errorf("Expected no warnings for empty milestones, got %d", result.Warnings)
+	}
+}
+
+func TestValidateMilestones_DeduplicatesWarnings(t *testing.T) {
+	v := NewValidator(false)
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task 1", Milestone: "unknown"},
+		{ID: "002", Title: "Task 2", Milestone: "unknown"},
+	}
+	known := map[string]bool{"v0.2": true}
+
+	result := v.ValidateMilestonesAgainstConfig(tasks, known)
+
+	if result.Warnings != 1 {
+		t.Errorf("Expected 1 deduplicated warning, got %d", result.Warnings)
+	}
+}
+
+func TestValidateMilestones_EmptyMilestoneSkipped(t *testing.T) {
+	v := NewValidator(false)
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task 1", Milestone: ""},
+		{ID: "002", Title: "Task 2", Milestone: "v0.2"},
+	}
+	known := map[string]bool{"v0.2": true}
+
+	result := v.ValidateMilestonesAgainstConfig(tasks, known)
+
+	if result.Warnings != 0 {
+		t.Errorf("Expected no warnings, got %d", result.Warnings)
+	}
+}
+
+func TestValidateConfig_MilestonesIsKnownKey(t *testing.T) {
+	v := NewValidator(false)
+	config := &ConfigData{
+		TopKeys:    []string{"milestones"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	if result.Warnings != 0 {
+		t.Errorf("Expected no warnings for 'milestones' config key, got %d", result.Warnings)
+		for _, issue := range result.Issues {
+			t.Logf("  Issue: [%s] %s", issue.Level, issue.Message)
+		}
+	}
+}

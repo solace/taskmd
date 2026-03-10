@@ -81,6 +81,49 @@ This is the task body.
 	}
 }
 
+func TestParseTaskContent_Milestone(t *testing.T) {
+	content := []byte(`---
+id: "050"
+title: "Milestone Task"
+status: pending
+milestone: "v0.2"
+---
+
+# Milestone Task
+
+A task with a milestone.
+`)
+
+	task, err := ParseTaskContent("test.md", content)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if task.Milestone != "v0.2" {
+		t.Errorf("expected milestone 'v0.2', got '%s'", task.Milestone)
+	}
+}
+
+func TestParseTaskContent_NoMilestone(t *testing.T) {
+	content := []byte(`---
+id: "051"
+title: "No Milestone"
+status: pending
+---
+
+Body.
+`)
+
+	task, err := ParseTaskContent("test.md", content)
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if task.Milestone != "" {
+		t.Errorf("expected empty milestone, got '%s'", task.Milestone)
+	}
+}
+
 func TestParseTaskContent_QuotedCreatedDate(t *testing.T) {
 	content := []byte(`---
 id: "010"

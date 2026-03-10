@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"gopkg.in/yaml.v3"
 
 	"github.com/driangle/taskmd/sdk/go/model"
 	"github.com/driangle/taskmd/sdk/go/scanner"
@@ -204,6 +205,14 @@ func validateConfig(v *validator.Validator, validationResult *validator.Validati
 		}
 		mergeValidationResults(validationResult, v.ValidateTouchesAgainstScopes(tasks, knownScopes))
 	}
+
+	if configData != nil && len(configData.Milestones) > 0 {
+		knownMilestones := make(map[string]bool, len(configData.Milestones))
+		for _, m := range configData.Milestones {
+			knownMilestones[m.Name] = true
+		}
+		mergeValidationResults(validationResult, v.ValidateMilestonesAgainstConfig(tasks, knownMilestones))
+	}
 }
 
 // loadConfigForValidation extracts config data from viper for validation.
@@ -241,6 +250,10 @@ func loadConfigForValidation() *validator.ConfigData {
 		config.ID = parseIDConfig(viper.Get("id"))
 	}
 
+	if viper.InConfig("milestones") {
+		config.Milestones = parseMilestonesConfig(viper.Get("milestones"))
+	}
+
 	return config
 }
 
@@ -267,6 +280,42 @@ func parseIDConfig(raw any) *validator.IDConfig {
 	cfg.Padding = toInt(m["padding"])
 
 	return cfg
+}
+
+// parseMilestonesConfig converts raw viper milestones data into typed MilestoneConfig entries.
+func parseMilestonesConfig(raw any) []validator.MilestoneConfig {
+	if raw == nil {
+		return nil
+	}
+	items, ok := raw.([]any)
+	if !ok {
+		return nil
+	}
+
+	milestones := make([]validator.MilestoneConfig, 0, len(items))
+	for _, item := range items {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		mc := validator.MilestoneConfig{}
+		if name, ok := m["name"].(string); ok {
+			mc.Name = name
+		}
+		if desc, ok := m["description"].(string); ok {
+			mc.Description = desc
+		}
+		// Due date is optional; skip if not present or not a string
+		if due, ok := m["due"].(string); ok {
+			ft := model.FlexibleTime{}
+			node := yaml.Node{Kind: yaml.ScalarNode, Value: due, Tag: "!!str"}
+			if err := ft.UnmarshalYAML(&node); err == nil {
+				mc.Due = ft
+			}
+		}
+		milestones = append(milestones, mc)
+	}
+	return milestones
 }
 
 // toInt converts a viper numeric value (int, int64, float64) to int.
