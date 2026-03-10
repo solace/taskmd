@@ -1,7 +1,7 @@
 ---
 title: "Support milestone filtering in list command"
 id: "01kka730t"
-status: in-progress
+status: completed
 priority: high
 type: feature
 dependencies: ["01kka72zy"]
