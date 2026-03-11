@@ -6,5 +6,6 @@ export function useSearch(query: string) {
   return useSWR<SearchResult[]>(
     query ? `/api/search?q=${encodeURIComponent(query)}` : null,
     fetcher,
+    { keepPreviousData: true },
   );
 }

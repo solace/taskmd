@@ -14,16 +14,20 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
   const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
+  const prevOpenRef = useRef(false);
   const navigate = useNavigate();
-  const { data: results, isLoading } = useSearch(query);
+
+  // Reset state synchronously during render to avoid flash of stale results
+  if (open && !prevOpenRef.current) {
+    query && setQuery("");
+    activeIndex !== -1 && setActiveIndex(-1);
+  }
+  prevOpenRef.current = open;
+
+  const { data: results } = useSearch(query);
 
   useEffect(() => {
     if (open) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setQuery("");
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setActiveIndex(-1);
-      // Small delay to ensure the dialog is rendered before focusing
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [open]);
@@ -104,7 +108,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
-        <div className="flex items-center gap-3 px-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center gap-3 px-4 pt-3 border-b border-gray-200 dark:border-gray-700">
           <svg
             className="w-4 h-4 text-gray-400 shrink-0"
             fill="none"
@@ -143,19 +147,13 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
             </p>
           )}
 
-          {query && isLoading && (
-            <p className="px-4 py-8 text-center text-sm text-gray-400">
-              Searching...
-            </p>
-          )}
-
-          {query && !isLoading && results?.length === 0 && (
+          {query && !results?.length && (
             <p className="px-4 py-8 text-center text-sm text-gray-400">
               No results found for &ldquo;{query}&rdquo;
             </p>
           )}
 
-          {results && results.length > 0 && (
+          {query && results && results.length > 0 && (
             <ul id="search-results" role="listbox" className="py-2">
               {results.map((result, idx) => (
                 <li
