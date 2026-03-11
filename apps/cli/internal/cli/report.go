@@ -35,6 +35,7 @@ Supported group-by fields:
   - type: Group by work type
   - group: Group by task group
   - tag: Group by tags
+  - milestone: Group by milestone
 
 Examples:
   taskmd report tasks/
@@ -49,7 +50,7 @@ func init() {
 	rootCmd.AddCommand(reportCmd)
 
 	reportCmd.Flags().StringVar(&reportFormat, "format", "md", "output format (md, html, json)")
-	reportCmd.Flags().StringVar(&reportGroupBy, "group-by", "status", "field to group by (status, priority, effort, type, group, tag)")
+	reportCmd.Flags().StringVar(&reportGroupBy, "group-by", "status", "field to group by (status, priority, effort, type, group, tag, milestone)")
 	reportCmd.Flags().StringVarP(&reportOut, "out", "o", "", "write output to file instead of stdout")
 	reportCmd.Flags().BoolVar(&reportIncludeGraph, "include-graph", false, "embed dependency graph in report")
 }

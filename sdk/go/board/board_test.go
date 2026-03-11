@@ -275,6 +275,39 @@ func TestGroupTasks_Tag(t *testing.T) {
 	}
 }
 
+func TestGroupTasks_Milestone(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "V0.2 task", Milestone: "v0.2"},
+		{ID: "002", Title: "V0.3 task", Milestone: "v0.3"},
+		{ID: "003", Title: "V0.2 task 2", Milestone: "v0.2"},
+		{ID: "004", Title: "No milestone"},
+	}
+
+	result, err := GroupTasks(tasks, "milestone")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(result.Groups) != 3 {
+		t.Fatalf("expected 3 groups, got %d", len(result.Groups))
+	}
+	if len(result.Groups["v0.2"]) != 2 {
+		t.Errorf("expected 2 tasks in v0.2, got %d", len(result.Groups["v0.2"]))
+	}
+	if len(result.Groups["v0.3"]) != 1 {
+		t.Errorf("expected 1 task in v0.3, got %d", len(result.Groups["v0.3"]))
+	}
+	if len(result.Groups[defaultGroupKey]) != 1 {
+		t.Errorf("expected 1 task in (none), got %d", len(result.Groups[defaultGroupKey]))
+	}
+
+	// sortedKeys: alphabetical with (none) last
+	lastKey := result.Keys[len(result.Keys)-1]
+	if lastKey != defaultGroupKey {
+		t.Errorf("last key = %q, want %q", lastKey, defaultGroupKey)
+	}
+}
+
 func TestGroupTasks_UnsupportedField(t *testing.T) {
 	tasks := []*model.Task{{ID: "001", Title: "Test"}}
 

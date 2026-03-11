@@ -693,6 +693,51 @@ status: pending
 	}
 }
 
+func TestBoardCommand_GroupByMilestone(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	tasks := map[string]string{
+		"001.md": `---
+id: "001"
+title: "V0.2 feature"
+status: pending
+milestone: v0.2
+---
+`,
+		"002.md": `---
+id: "002"
+title: "V0.3 feature"
+status: pending
+milestone: v0.3
+---
+`,
+		"003.md": `---
+id: "003"
+title: "No milestone"
+status: pending
+---
+`,
+	}
+	for name, content := range tasks {
+		os.WriteFile(filepath.Join(tmpDir, name), []byte(content), 0644)
+	}
+
+	resetBoardFlags()
+	boardGroupBy = "milestone"
+
+	output := captureBoardOutput(t, tmpDir)
+
+	if !strings.Contains(output, "## v0.2") {
+		t.Error("Expected output to contain '## v0.2' header")
+	}
+	if !strings.Contains(output, "## v0.3") {
+		t.Error("Expected output to contain '## v0.3' header")
+	}
+	if !strings.Contains(output, "## (none)") {
+		t.Error("Expected output to contain '## (none)' header for tasks without milestone")
+	}
+}
+
 func TestBoardCommand_HeadingNoColorFlag(t *testing.T) {
 	tmpDir := createBoardTestFiles(t)
 	resetBoardFlags()

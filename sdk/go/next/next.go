@@ -20,6 +20,8 @@ const (
 	ScoreDownstreamMax    = 15
 	ScoreEffortSmall      = 5
 	ScoreEffortMedium     = 2
+	ScoreMilestoneBase    = 25
+	ScoreMilestoneDecay   = 5
 )
 
 // Recommendation represents a scored task recommendation.
@@ -39,13 +41,15 @@ type Recommendation struct {
 
 // Options controls recommendation behaviour.
 type Options struct {
-	Limit         int
-	Filters       []string
-	QuickWins     bool
-	Critical      bool
-	Scope         string
-	ScopeExact    bool
-	ArchivedTasks []*model.Task
+	Limit          int
+	Filters        []string
+	QuickWins      bool
+	Critical       bool
+	Scope          string
+	ScopeExact     bool
+	ArchivedTasks  []*model.Task
+	Milestone      string
+	MilestoneOrder []string
 }
 
 type scoredTask struct {
@@ -79,7 +83,7 @@ func Recommend(tasks []*model.Task, opts Options) ([]Recommendation, error) {
 		return nil, err
 	}
 
-	scored := scoreAndSort(actionable, criticalPath, downstreamInfo)
+	scored := scoreAndSort(actionable, opts.MilestoneOrder, criticalPath, downstreamInfo)
 
 	limit := min(opts.Limit, len(scored))
 	return buildRecommendations(scored[:limit], criticalPath, downstreamInfo), nil
@@ -165,6 +169,16 @@ func filterActionable(
 		}
 	}
 
+	if opts.Milestone != "" {
+		var filtered []*model.Task
+		for _, task := range actionable {
+			if task.Milestone == opts.Milestone {
+				filtered = append(filtered, task)
+			}
+		}
+		actionable = filtered
+	}
+
 	if opts.Scope != "" {
 		if opts.ScopeExact {
 			actionable = filterByScope(actionable, opts.Scope)
@@ -178,12 +192,16 @@ func filterActionable(
 
 func scoreAndSort(
 	tasks []*model.Task,
+	milestoneOrder []string,
 	criticalPath map[string]bool,
 	downstreamInfo map[string]DownstreamInfo,
 ) []scoredTask {
 	scored := make([]scoredTask, len(tasks))
 	for i, task := range tasks {
 		s, r := ScoreTask(task, criticalPath, downstreamInfo)
+		ms, mr := scoreMilestone(task, milestoneOrder)
+		s += ms
+		r = append(r, mr...)
 		scored[i] = scoredTask{task: task, score: s, reasons: r}
 	}
 
@@ -325,6 +343,24 @@ func ScoreTask(
 	}
 
 	return score, reasons
+}
+
+// scoreMilestone computes a milestone-based scoring bonus.
+// Tasks from earlier milestones in the configured order get higher bonuses.
+func scoreMilestone(task *model.Task, milestoneOrder []string) (int, []string) {
+	if task.Milestone == "" || len(milestoneOrder) == 0 {
+		return 0, nil
+	}
+	for i, name := range milestoneOrder {
+		if name == task.Milestone {
+			bonus := ScoreMilestoneBase - (i * ScoreMilestoneDecay)
+			if bonus <= 0 {
+				return 0, nil
+			}
+			return bonus, []string{fmt.Sprintf("milestone %s", task.Milestone)}
+		}
+	}
+	return 0, nil
 }
 
 // CalculateCriticalPathTasks identifies tasks on the critical path.

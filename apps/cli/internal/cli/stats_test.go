@@ -15,6 +15,7 @@ import (
 // resetStatsFlags resets all stats command flags to defaults.
 func resetStatsFlags() {
 	statsFormat = "table"
+	statsGroupBy = ""
 }
 
 // createStatsTestFiles creates test task files with varying status/priority/effort.
@@ -197,7 +198,7 @@ func TestOutputStatsTable_EmptyBreakdowns(t *testing.T) {
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	err := outputStatsTable(m)
+	err := outputStatsTable(m, "")
 
 	w.Close()
 	os.Stdout = oldStdout
@@ -214,5 +215,121 @@ func TestOutputStatsTable_EmptyBreakdowns(t *testing.T) {
 	count := strings.Count(output, "(none)")
 	if count < 3 {
 		t.Errorf("expected at least 3 '(none)' strings (status, priority, effort), got %d\noutput:\n%s", count, output)
+	}
+}
+
+func createStatsMilestoneTestFiles(t *testing.T) string {
+	t.Helper()
+	tmpDir := t.TempDir()
+
+	tasks := map[string]string{
+		"001.md": `---
+id: "001"
+title: "V0.2 task A"
+status: pending
+priority: high
+milestone: v0.2
+---`,
+		"002.md": `---
+id: "002"
+title: "V0.2 task B"
+status: completed
+priority: medium
+milestone: v0.2
+---`,
+		"003.md": `---
+id: "003"
+title: "V0.3 task"
+status: pending
+priority: low
+milestone: v0.3
+---`,
+		"004.md": `---
+id: "004"
+title: "No milestone"
+status: pending
+priority: medium
+---`,
+	}
+
+	for filename, content := range tasks {
+		if err := os.WriteFile(filepath.Join(tmpDir, filename), []byte(content), 0644); err != nil {
+			t.Fatalf("failed to create test file %s: %v", filename, err)
+		}
+	}
+	return tmpDir
+}
+
+func TestRunStats_GroupByMilestone_Table(t *testing.T) {
+	tmpDir := createStatsMilestoneTestFiles(t)
+	resetStatsFlags()
+	statsGroupBy = "milestone"
+
+	output, err := captureStatsOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runStats failed: %v", err)
+	}
+
+	if !strings.Contains(output, "BY MILESTONE:") {
+		t.Errorf("expected BY MILESTONE section in output:\n%s", output)
+	}
+	if !strings.Contains(output, "v0.2:") {
+		t.Errorf("expected v0.2 milestone in output:\n%s", output)
+	}
+	if !strings.Contains(output, "v0.3:") {
+		t.Errorf("expected v0.3 milestone in output:\n%s", output)
+	}
+}
+
+func TestRunStats_GroupByMilestone_JSON(t *testing.T) {
+	tmpDir := createStatsMilestoneTestFiles(t)
+	resetStatsFlags()
+	statsFormat = "json"
+	statsGroupBy = "milestone"
+
+	output, err := captureStatsOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runStats failed: %v", err)
+	}
+
+	var m metrics.Metrics
+	if err := json.Unmarshal([]byte(output), &m); err != nil {
+		t.Fatalf("failed to parse JSON: %v\noutput: %s", err, output)
+	}
+
+	if m.TasksByMilestone["v0.2"] != 2 {
+		t.Errorf("tasks_by_milestone[v0.2] = %d, want 2", m.TasksByMilestone["v0.2"])
+	}
+	if m.TasksByMilestone["v0.3"] != 1 {
+		t.Errorf("tasks_by_milestone[v0.3] = %d, want 1", m.TasksByMilestone["v0.3"])
+	}
+}
+
+func TestRunStats_InvalidGroupBy(t *testing.T) {
+	tmpDir := createStatsMilestoneTestFiles(t)
+	resetStatsFlags()
+	statsGroupBy = "invalid"
+
+	_, err := captureStatsOutput(t, []string{tmpDir})
+	if err == nil {
+		t.Fatal("expected error for invalid group-by, got nil")
+	}
+	if !strings.Contains(err.Error(), "unsupported group-by field") {
+		t.Errorf("expected 'unsupported group-by field' error, got: %v", err)
+	}
+}
+
+func TestRunStats_MilestoneShownWhenPresent(t *testing.T) {
+	tmpDir := createStatsMilestoneTestFiles(t)
+	resetStatsFlags()
+	// No --group-by flag, but tasks have milestones — section should still appear
+
+	output, err := captureStatsOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runStats failed: %v", err)
+	}
+
+	if !strings.Contains(output, "BY MILESTONE:") {
+		t.Errorf("expected BY MILESTONE section when milestones exist:\n%s", output)
 	}
 }

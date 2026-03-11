@@ -1,7 +1,7 @@
 ---
 title: "Milestone-aware next command and board grouping"
 id: "01kka732f"
-status: pending
+status: completed
 priority: medium
 type: feature
 dependencies: ["01kka72zy"]
@@ -18,12 +18,12 @@ Make `taskmd next` prefer tasks from the earliest open milestone (based on order
 
 ## Tasks
 
-- [ ] Update `taskmd next` ranking to factor in milestone ordering (earliest milestone first)
-- [ ] Add `--milestone` filter to `taskmd next`
-- [ ] Add `milestone` as a `--group-by` option in `taskmd board`
-- [ ] Add `milestone` as a `--group-by` option in `taskmd stats`
-- [ ] Add tests for next command milestone preference
-- [ ] Add tests for board/stats grouping by milestone
+- [x]Update `taskmd next` ranking to factor in milestone ordering (earliest milestone first)
+- [x]Add `--milestone` filter to `taskmd next`
+- [x]Add `milestone` as a `--group-by` option in `taskmd board`
+- [x]Add `milestone` as a `--group-by` option in `taskmd stats`
+- [x]Add tests for next command milestone preference
+- [x]Add tests for board/stats grouping by milestone
 
 ## Acceptance Criteria
 

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/driangle/taskmd/sdk/go/next"
 	"github.com/driangle/taskmd/sdk/go/scanner"
@@ -22,6 +23,7 @@ var (
 	nextCritical  bool
 	nextScope     string
 	nextExact     bool
+	nextMilestone string
 )
 
 var nextCmd = &cobra.Command{
@@ -31,8 +33,8 @@ var nextCmd = &cobra.Command{
 	Long: `Next analyzes all tasks and recommends the best ones to work on next.
 
 Tasks are scored based on priority, critical path position, downstream impact,
-and effort. Only actionable tasks (pending or in-progress with all dependencies
-completed) are shown.
+effort, and milestone ordering (from .taskmd.yaml). Only actionable tasks
+(pending or in-progress with all dependencies completed) are shown.
 
 Output formats: table (default), json, yaml
 
@@ -45,7 +47,8 @@ Examples:
   taskmd next --quick-wins
   taskmd next --critical --limit 1
   taskmd next --scope web/graph
-  taskmd next --scope web/graph --exact`,
+  taskmd next --scope web/graph --exact
+  taskmd next --milestone v0.2`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runNext,
 }
@@ -60,6 +63,7 @@ func init() {
 	nextCmd.Flags().BoolVar(&nextCritical, "critical", false, "show only critical path tasks")
 	nextCmd.Flags().StringVar(&nextScope, "scope", "", "filter by scope; supports wildcards (e.g. cli, cli*)")
 	nextCmd.Flags().BoolVar(&nextExact, "exact", false, "disable dependency expansion for --scope (only direct matches)")
+	nextCmd.Flags().StringVar(&nextMilestone, "milestone", "", "filter by milestone")
 }
 
 func runNext(cmd *cobra.Command, args []string) error {
@@ -82,14 +86,18 @@ func runNext(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("archive scan failed: %w", err)
 	}
 
+	milestoneOrder := loadMilestoneOrder()
+
 	recs, err := next.Recommend(allTasks, next.Options{
-		Limit:         nextLimit,
-		Filters:       nextFilters,
-		QuickWins:     nextQuickWins,
-		Critical:      nextCritical,
-		Scope:         nextScope,
-		ScopeExact:    nextExact,
-		ArchivedTasks: archivedTasks,
+		Limit:          nextLimit,
+		Filters:        nextFilters,
+		QuickWins:      nextQuickWins,
+		Critical:       nextCritical,
+		Scope:          nextScope,
+		ScopeExact:     nextExact,
+		ArchivedTasks:  archivedTasks,
+		Milestone:      nextMilestone,
+		MilestoneOrder: milestoneOrder,
 	})
 	if err != nil {
 		return err
@@ -105,6 +113,29 @@ func runNext(cmd *cobra.Command, args []string) error {
 	default:
 		return ValidateFormat(nextFormat, []string{"table", "json", "yaml"})
 	}
+}
+
+// loadMilestoneOrder reads milestone names from the viper config, preserving order.
+func loadMilestoneOrder() []string {
+	raw := viper.Get("milestones")
+	if raw == nil {
+		return nil
+	}
+	items, ok := raw.([]any)
+	if !ok {
+		return nil
+	}
+	var names []string
+	for _, item := range items {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		if name, ok := m["name"].(string); ok {
+			names = append(names, name)
+		}
+	}
+	return names
 }
 
 func outputNextJSON(recs []Recommendation) error {

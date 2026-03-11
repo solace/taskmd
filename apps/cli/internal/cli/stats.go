@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -13,8 +14,10 @@ import (
 	"github.com/driangle/taskmd/sdk/go/scanner"
 )
 
-// statsCmd represents the stats command
-var statsFormat string
+var (
+	statsFormat  string
+	statsGroupBy string
+)
 
 var statsCmd = &cobra.Command{
 	Use:        "stats",
@@ -45,6 +48,7 @@ func init() {
 	rootCmd.AddCommand(statsCmd)
 
 	statsCmd.Flags().StringVar(&statsFormat, "format", "table", "output format (table, json, yaml)")
+	statsCmd.Flags().StringVar(&statsGroupBy, "group-by", "", "group tasks by field (milestone)")
 }
 
 func runStats(cmd *cobra.Command, args []string) error {
@@ -75,6 +79,10 @@ func runStats(cmd *cobra.Command, args []string) error {
 	// Calculate metrics
 	m := metrics.Calculate(tasks)
 
+	if statsGroupBy != "" && statsGroupBy != "milestone" {
+		return fmt.Errorf("unsupported group-by field: %s (supported: milestone)", statsGroupBy)
+	}
+
 	// Output in requested format
 	switch statsFormat {
 	case "json":
@@ -82,7 +90,7 @@ func runStats(cmd *cobra.Command, args []string) error {
 	case "yaml":
 		return WriteYAML(os.Stdout, m)
 	case "table":
-		return outputStatsTable(m)
+		return outputStatsTable(m, statsGroupBy)
 	default:
 		return ValidateFormat(statsFormat, []string{"table", "json", "yaml"})
 	}
@@ -96,7 +104,7 @@ func outputStatsJSON(m *metrics.Metrics) error {
 // outputStatsTable outputs metrics in a human-readable table format
 //
 //nolint:funlen // stats display has many sections by nature
-func outputStatsTable(m *metrics.Metrics) error {
+func outputStatsTable(m *metrics.Metrics, groupBy string) error {
 	r := getRenderer()
 
 	fmt.Println(formatLabel("TASK STATISTICS", r))
@@ -126,6 +134,13 @@ func outputStatsTable(m *metrics.Metrics) error {
 	// Tasks by effort
 	fmt.Println(formatLabel("BY EFFORT:", r))
 	printStatsBreakdownByEffort(m, r)
+
+	// Tasks by milestone (shown when --group-by milestone or when milestones exist)
+	if groupBy == "milestone" || len(m.TasksByMilestone) > 0 {
+		fmt.Println()
+		fmt.Println(formatLabel("BY MILESTONE:", r))
+		printStatsBreakdownByMilestone(m)
+	}
 
 	return nil
 }
@@ -165,6 +180,27 @@ func printStatsBreakdownByPriority(m *metrics.Metrics, r *lipgloss.Renderer) {
 			val := fmt.Sprintf("%d", count)
 			tw.AddRow([]string{label, val}, []string{colorLabel, val})
 		}
+	}
+	tw.Flush(os.Stdout)
+}
+
+func printStatsBreakdownByMilestone(m *metrics.Metrics) {
+	if len(m.TasksByMilestone) == 0 {
+		fmt.Println("  (none)")
+		return
+	}
+	// Sort milestone names alphabetically
+	names := make([]string, 0, len(m.TasksByMilestone))
+	for name := range m.TasksByMilestone {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	tw := NewTableWriter()
+	for _, name := range names {
+		label := fmt.Sprintf("  %s:", name)
+		val := fmt.Sprintf("%d", m.TasksByMilestone[name])
+		tw.AddRow([]string{label, val}, []string{label, val})
 	}
 	tw.Flush(os.Stdout)
 }
