@@ -4,11 +4,12 @@ import { PriorityBadge } from "../tasks/TaskTable/Badges.tsx";
 
 interface RecommendationCardProps {
   rec: Recommendation;
+  focused?: boolean;
 }
 
-export function RecommendationCard({ rec }: RecommendationCardProps) {
+export function RecommendationCard({ rec, focused = false }: RecommendationCardProps) {
   return (
-    <div className="flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700">
+    <div className={`flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700 ${focused ? "ring-2 ring-blue-500" : ""}`}>
       <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-900 text-white text-sm font-bold shrink-0 dark:bg-white dark:text-gray-900">
         {rec.rank}
       </div>

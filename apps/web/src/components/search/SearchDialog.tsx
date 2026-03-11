@@ -11,7 +11,9 @@ interface SearchDialogProps {
 
 export function SearchDialog({ open, onClose }: SearchDialogProps) {
   const [query, setQuery] = useState("");
+  const [activeIndex, setActiveIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { data: results, isLoading } = useSearch(query);
 
@@ -19,18 +21,58 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
     if (open) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setQuery("");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setActiveIndex(-1);
       // Small delay to ensure the dialog is rendered before focusing
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [open]);
 
+  // Reset active index when results change
+  useEffect(() => {
+    setActiveIndex(-1);
+  }, [results]);
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
+        return;
+      }
+
+      const count = results?.length ?? 0;
+      if (count === 0) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveIndex((prev) => (prev < count - 1 ? prev + 1 : 0));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveIndex((prev) => (prev > 0 ? prev - 1 : count - 1));
+      } else if (e.key === "Enter" && activeIndex >= 0 && activeIndex < count) {
+        e.preventDefault();
+        onClose();
+        navigate(`/tasks/${results![activeIndex].id}`);
+      }
+
+      // Focus trap: Tab wrapping within the dialog
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+          'input, button, [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     },
-    [onClose],
+    [onClose, results, activeIndex, navigate],
   );
 
   const handleSelect = useCallback(
@@ -54,6 +96,10 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
 
       {/* Dialog */}
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search tasks"
         className="relative w-full max-w-lg mx-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
@@ -79,6 +125,10 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search tasks..."
             className="flex-1 py-3 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 outline-none"
+            role="combobox"
+            aria-expanded={!!results && results.length > 0}
+            aria-controls="search-results"
+            aria-activedescendant={activeIndex >= 0 ? `search-result-${activeIndex}` : undefined}
           />
           <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium text-gray-400 bg-gray-100 dark:bg-gray-700 rounded">
             ESC
@@ -106,12 +156,17 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
           )}
 
           {results && results.length > 0 && (
-            <ul className="py-2">
-              {results.map((result) => (
-                <li key={result.id}>
+            <ul id="search-results" role="listbox" className="py-2">
+              {results.map((result, idx) => (
+                <li
+                  key={result.id}
+                  id={`search-result-${idx}`}
+                  role="option"
+                  aria-selected={idx === activeIndex}
+                >
                   <button
                     type="button"
-                    className="w-full px-4 py-2.5 text-left hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                    className={`w-full px-4 py-2.5 text-left transition-colors ${idx === activeIndex ? "bg-gray-100 dark:bg-gray-700/50" : "hover:bg-gray-100 dark:hover:bg-gray-700/50"}`}
                     onClick={() => handleSelect(result.id)}
                   >
                     <div className="flex items-center gap-2 mb-0.5">

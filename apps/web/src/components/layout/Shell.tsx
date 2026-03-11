@@ -24,6 +24,8 @@ export function Shell({ children }: ShellProps) {
 
   // Global keyboard shortcuts
   useEffect(() => {
+    const FOCUSABLE = 'a, button, [tabindex="0"], input, select, textarea';
+
     function handleKeyDown(e: KeyboardEvent) {
       // Cmd+K / Ctrl+K - open search
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
@@ -45,16 +47,95 @@ export function Shell({ children }: ShellProps) {
           setSearchOpen(true);
         }
       }
+
+      // Escape - close mobile menu
+      if (e.key === "Escape" && menuOpen) {
+        setMenuOpen(false);
+      }
+
+      // Skip arrow-nav handling for text inputs
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      // ArrowLeft/Right — navigate within any [data-arrow-nav] container
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        const container = (e.target as HTMLElement).closest?.("[data-arrow-nav]");
+        if (!container) return;
+        const items = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE));
+        const idx = items.indexOf(e.target as HTMLElement);
+        if (idx < 0) return;
+        e.preventDefault();
+        const next = e.key === "ArrowRight"
+          ? items[(idx + 1) % items.length]
+          : items[(idx - 1 + items.length) % items.length];
+        next.focus();
+        return;
+      }
+
+      // ArrowUp/Down — move between sibling [data-arrow-nav] rows, or to next/prev focusable
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        const container = (e.target as HTMLElement).closest?.("[data-arrow-nav]");
+        if (container) {
+          // Try sibling [data-arrow-nav] containers first
+          const siblings = Array.from(
+            (container.parentElement?.querySelectorAll(":scope > [data-arrow-nav]") ?? []),
+          ) as HTMLElement[];
+          if (siblings.length > 1) {
+            const colIdx = siblings.indexOf(container as HTMLElement);
+            const items = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE));
+            const posIdx = items.indexOf(e.target as HTMLElement);
+            const nextRowIdx = e.key === "ArrowDown"
+              ? (colIdx + 1) % siblings.length
+              : (colIdx - 1 + siblings.length) % siblings.length;
+            const nextRow = siblings[nextRowIdx];
+            const nextItems = Array.from(nextRow.querySelectorAll<HTMLElement>(FOCUSABLE));
+            if (nextItems.length > 0) {
+              e.preventDefault();
+              nextItems[Math.min(posIdx, nextItems.length - 1)].focus();
+              return;
+            }
+          }
+
+          // No sibling row — jump to next/prev focusable element outside the container
+          const all = Array.from(document.querySelectorAll<HTMLElement>(FOCUSABLE));
+          const containerItems = new Set(container.querySelectorAll<HTMLElement>(FOCUSABLE));
+          if (e.key === "ArrowDown") {
+            const lastInContainer = all.findIndex((el) => containerItems.has(el)) + containerItems.size;
+            const next = all.slice(lastInContainer).find((el) => !containerItems.has(el));
+            if (next) { e.preventDefault(); next.focus(); return; }
+          } else {
+            const firstInContainer = all.findIndex((el) => containerItems.has(el));
+            for (let i = firstInContainer - 1; i >= 0; i--) {
+              if (!containerItems.has(all[i])) { e.preventDefault(); all[i].focus(); return; }
+            }
+          }
+        }
+
+        // ArrowDown from header — jump to main content
+        if (e.key === "ArrowDown" && (e.target as HTMLElement).closest?.("header")) {
+          e.preventDefault();
+          const main = document.getElementById("main-content");
+          if (!main) return;
+          const focusable = main.querySelector<HTMLElement>(FOCUSABLE);
+          (focusable ?? main).focus();
+        }
+      }
     }
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [menuOpen]);
 
   const closeSearch = useCallback(() => setSearchOpen(false), []);
 
   return (
     <div className={`overflow-x-hidden bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100 ${isGraphPage ? "h-screen flex flex-col overflow-hidden" : "min-h-screen"}`}>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded"
+      >
+        Skip to main content
+      </a>
       <header className="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
@@ -115,7 +196,19 @@ export function Shell({ children }: ShellProps) {
         </div>
         {menuOpen && <MobileMenu />}
       </header>
-      <main className={isGraphPage ? "px-2 py-2 flex-1 min-h-0" : "max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-6"}>{children}</main>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className={isGraphPage ? "px-2 py-2 flex-1 min-h-0" : "max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-6"}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowUp" && e.target === e.currentTarget) {
+            e.preventDefault();
+            const nav = document.querySelector<HTMLElement>("header nav");
+            const link = nav?.querySelector<HTMLElement>("a, button");
+            (link ?? nav)?.focus();
+          }
+        }}
+      >{children}</main>
       <SearchDialog open={searchOpen} onClose={closeSearch} />
     </div>
   );

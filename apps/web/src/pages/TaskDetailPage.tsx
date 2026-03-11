@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -20,6 +20,19 @@ export function TaskDetailPage() {
   const { readonly } = useConfig();
   const [isEditing, setIsEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+
+  // Escape key cancels editing
+  useEffect(() => {
+    if (!isEditing) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIsEditing(false);
+        setEditError(null);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isEditing]);
 
   if (isLoading) return <LoadingState variant="detail" />;
   if (error) return <ErrorState error={error} onRetry={() => mutate()} />;
@@ -55,7 +68,7 @@ export function TaskDetailPage() {
 
   return (
     <div>
-      <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 dark:bg-gray-800 dark:border-gray-700">
+<div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 dark:bg-gray-800 dark:border-gray-700">
         {isEditing && !readonly ? (
           <TaskEditForm
             task={task}
@@ -116,7 +129,7 @@ export function TaskDetailPage() {
                 <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">
                   Dependencies
                 </h3>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap" data-arrow-nav>
                   {task.dependencies.map((dep) => (
                     <Link
                       key={dep}
@@ -135,7 +148,7 @@ export function TaskDetailPage() {
                 <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">
                   Tags
                 </h3>
-                <div className="flex gap-1 flex-wrap">
+                <div className="flex gap-1 flex-wrap" data-arrow-nav>
                   {task.tags.map((t) => (
                     <Link
                       key={t}

@@ -23,7 +23,7 @@ interface DesktopNavProps {
 
 export function DesktopNav({ onSearchOpen }: DesktopNavProps) {
   return (
-    <nav className="hidden md:flex items-center gap-1">
+    <nav className="hidden md:flex items-center gap-1" data-arrow-nav>
       {tabs.map((tab) => (
         <NavLink key={tab.path} to={tab.path} className={navLinkClass}>
           {tab.label}

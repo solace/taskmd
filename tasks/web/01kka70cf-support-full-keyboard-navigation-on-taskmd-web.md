@@ -1,7 +1,7 @@
 ---
 title: "Support full keyboard navigation on taskmd web"
 id: "01kka70cf"
-status: pending
+status: completed
 priority: high
 type: feature
 tags: ["accessibility", "ux"]

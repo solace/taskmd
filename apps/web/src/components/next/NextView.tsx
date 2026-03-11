@@ -1,7 +1,9 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Recommendation } from "../../api/types.ts";
 import { RecommendationCard } from "./RecommendationCard.tsx";
 import { FolderAutocomplete } from "./FolderAutocomplete.tsx";
+import { KeyboardList } from "../shared/KeyboardList.tsx";
 import { useTasks } from "../../hooks/use-tasks.ts";
 
 interface NextViewProps {
@@ -21,6 +23,7 @@ export function NextView({
   group,
   onGroupChange,
 }: NextViewProps) {
+  const navigate = useNavigate();
   const { data: tasks } = useTasks();
 
   const groups = useMemo(() => {
@@ -50,7 +53,7 @@ export function NextView({
               onChange={onGroupChange}
             />
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" data-arrow-nav>
             <span className="text-sm text-gray-500 dark:text-gray-400 mr-2">
               Show:
             </span>
@@ -71,11 +74,21 @@ export function NextView({
         </div>
       </div>
 
-      <div className="space-y-3">
-        {recommendations.map((rec) => (
-          <RecommendationCard key={rec.id} rec={rec} />
-        ))}
-      </div>
+      <KeyboardList
+        className="space-y-3"
+        aria-label="Recommended tasks"
+        itemCount={recommendations.length}
+        onActivate={(index) => {
+          const rec = recommendations[index];
+          if (rec) navigate(`/tasks/${rec.id}`);
+        }}
+      >
+        {(focusedIndex) =>
+          recommendations.map((rec, idx) => (
+            <RecommendationCard key={rec.id} rec={rec} focused={idx === focusedIndex} />
+          ))
+        }
+      </KeyboardList>
     </div>
   );
 }

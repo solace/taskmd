@@ -12,7 +12,7 @@ function FilterRow({ label, items, selected, colors, onToggle, onSelectAll }: {
 }) {
   const allSelected = selected.size === items.length;
   return (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex items-center gap-2 flex-wrap" data-arrow-nav>
       <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">{label}:</span>
       <button
         onClick={onSelectAll}
@@ -140,7 +140,7 @@ export function FilterBar({
       />
 
       {selectedTags.size > 0 && (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap" data-arrow-nav>
           <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Tags:</span>
           {[...selectedTags].map((tag) => (
             <button

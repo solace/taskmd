@@ -6,6 +6,7 @@ interface TaskCardProps {
   task: BoardTask;
   sourceGroup: string;
   canDrag: boolean;
+  focused?: boolean;
 }
 
 // Prevent browser default drop behavior (navigation) anywhere on the page
@@ -13,7 +14,7 @@ function preventNavigation(e: Event) {
   e.preventDefault();
 }
 
-export function TaskCard({ task, sourceGroup, canDrag }: TaskCardProps) {
+export function TaskCard({ task, sourceGroup, canDrag, focused = false }: TaskCardProps) {
   const guardActive = useRef(false);
   const [dragging, setDragging] = useState(false);
 
@@ -49,7 +50,7 @@ export function TaskCard({ task, sourceGroup, canDrag }: TaskCardProps) {
       draggable={canDrag}
       onDragStart={canDrag ? handleDragStart : undefined}
       onDragEnd={canDrag ? handleDragEnd : undefined}
-      className={`p-3 bg-white rounded border border-gray-100 shadow-sm dark:bg-gray-800/50 dark:border-gray-700 group transition-opacity ${dragging ? "opacity-50" : ""}`}
+      className={`p-3 bg-white rounded border border-gray-100 shadow-sm dark:bg-gray-800/50 dark:border-gray-700 group transition-opacity ${dragging ? "opacity-50" : ""} ${focused ? "ring-2 ring-blue-500" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
         {canDrag && (
