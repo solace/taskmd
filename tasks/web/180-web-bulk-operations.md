@@ -9,6 +9,7 @@ tags:
   - web
   - ux
 created: 2026-02-20
+phase: Web UI
 ---
 
 # Add Bulk Operations to Web UI

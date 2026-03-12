@@ -8,6 +8,7 @@ tags: []
 touches:
   - vscode
 created: 2026-02-20
+phase: VSCode Extension
 ---
 
 # VSCode Extension: Task ID Navigation and Hover

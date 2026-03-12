@@ -6,6 +6,7 @@ priority: low
 type: chore
 tags: ["testing", "quality"]
 created: "2026-02-25"
+phase: Web UI
 ---
 
 # Create incremental test coverage improvement plan

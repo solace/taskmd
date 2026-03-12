@@ -7,6 +7,7 @@ effort: small
 tags: [docs, windows]
 dependencies: ["148"]
 created: 2026-02-17
+phase: Windows Support
 ---
 
 # Update installation docs with Windows instructions

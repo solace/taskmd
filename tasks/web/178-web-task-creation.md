@@ -9,6 +9,7 @@ tags:
   - web
   - ux
 created: 2026-02-20
+phase: Web UI
 ---
 
 # Add Task Creation Dialog to Web UI

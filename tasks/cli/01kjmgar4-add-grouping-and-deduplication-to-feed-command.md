@@ -6,6 +6,7 @@ priority: low
 type: feature
 tags: ["cli"]
 created: "2026-03-01"
+phase: Feed Enhancements
 ---
 
 # Add grouping and deduplication to feed command

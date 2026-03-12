@@ -8,6 +8,7 @@ effort: medium
 tags: ["testing", "quality"]
 dependencies: ["214"]
 created: "2026-02-26"
+phase: Web UI
 ---
 
 # Test board drag-and-drop and page containers

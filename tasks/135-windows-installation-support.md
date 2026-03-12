@@ -6,6 +6,7 @@ priority: low
 effort: medium
 tags: [distribution, windows, packaging]
 created: 2026-02-16
+phase: Windows Support
 ---
 
 # Windows Installation Support

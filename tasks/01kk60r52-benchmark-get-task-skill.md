@@ -6,6 +6,7 @@ priority: medium
 dependencies: []
 tags: ["benchmark", "skill-eval"]
 created: 2026-03-08
+phase: Skill Benchmarks
 ---
 
 # Benchmark get-task skill
