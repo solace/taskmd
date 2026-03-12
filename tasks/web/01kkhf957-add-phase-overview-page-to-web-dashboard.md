@@ -1,7 +1,7 @@
 ---
 title: "Add phase overview page to web dashboard"
 id: "01kkhf957"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["web", "phases", "ux"]
@@ -18,15 +18,15 @@ Add a dedicated "Phases" page to the web dashboard that lists all configured pha
 
 ## Tasks
 
-- [ ] Add "Phases" tab to `NavTabs.tsx` (route: `/phases`)
-- [ ] Create `PhasesView` page component
-- [ ] Create `PhaseCard` component showing: phase name, description, progress bar, task count breakdown (pending/in-progress/completed/blocked), due date
-- [ ] Compute per-phase stats from task data
-- [ ] Clicking a phase card navigates to `/tasks?phase=<id>` (integrates with phase selector from 01kkhf93y)
-- [ ] Show a summary row or section for tasks with no phase assigned ("Unphased")
-- [ ] Handle edge case: no phases configured (show helpful message explaining how to configure phases)
-- [ ] Add route to React Router config
-- [ ] Add tests for PhasesView and PhaseCard components
+- [x] Add "Phases" tab to `NavTabs.tsx` (route: `/phases`)
+- [x] Create `PhasesView` page component
+- [x] Create `PhaseCard` component showing: phase name, description, progress bar, task count breakdown (pending/in-progress/completed/blocked), due date
+- [x] Compute per-phase stats from task data
+- [x] Clicking a phase card navigates to `/tasks?phase=<id>` (integrates with phase selector from 01kkhf93y)
+- [x] Show a summary row or section for tasks with no phase assigned ("Unphased")
+- [x] Handle edge case: no phases configured (show helpful message explaining how to configure phases)
+- [x] Add route to React Router config
+- [x] Add tests for PhasesView and PhaseCard components
 
 ## Acceptance Criteria
 

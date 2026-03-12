@@ -1,6 +1,12 @@
 import { NavLink } from "react-router-dom";
+import { useConfig } from "../../hooks/use-config.ts";
 
-const tabs = [
+interface Tab {
+  path: string;
+  label: string;
+}
+
+const baseTabs: Tab[] = [
   { path: "/tasks", label: "Tasks" },
   { path: "/next", label: "Next Up" },
   { path: "/board", label: "Board" },
@@ -9,6 +15,16 @@ const tabs = [
   { path: "/stats", label: "Stats" },
   { path: "/validate", label: "Validate" },
 ];
+
+function useTabs(): Tab[] {
+  const { phases } = useConfig();
+  if (phases.length === 0) return baseTabs;
+  return [
+    ...baseTabs.slice(0, 5), // Tasks through Graph
+    { path: "/phases", label: "Phases" },
+    ...baseTabs.slice(5),    // Stats, Validate
+  ];
+}
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   `px-3 py-1.5 text-sm rounded-md transition-colors ${
@@ -22,6 +38,7 @@ interface DesktopNavProps {
 }
 
 export function DesktopNav({ onSearchOpen }: DesktopNavProps) {
+  const tabs = useTabs();
   return (
     <nav className="hidden md:flex items-center gap-1" data-arrow-nav>
       {tabs.map((tab) => (
@@ -65,6 +82,7 @@ export function DesktopNav({ onSearchOpen }: DesktopNavProps) {
 }
 
 export function MobileMenu() {
+  const tabs = useTabs();
   return (
     <nav className="md:hidden border-t border-gray-200 dark:border-gray-700 px-4 py-2 space-y-1">
       {tabs.map((tab) => (

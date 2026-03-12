@@ -8,6 +8,7 @@ import { NextPage } from "./pages/NextPage.tsx";
 import { TracksPage } from "./pages/TracksPage.tsx";
 import { StatsPage } from "./pages/StatsPage.tsx";
 import { ValidatePage } from "./pages/ValidatePage.tsx";
+import { PhasesPage } from "./pages/PhasesPage.tsx";
 import { useLiveReload } from "./hooks/use-live-reload.ts";
 import { PhaseProvider } from "./hooks/use-phase.tsx";
 
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="/tracks" element={<TracksPage />} />
         <Route path="/graph" element={<GraphPage />} />
         <Route path="/next" element={<NextPage />} />
+        <Route path="/phases" element={<PhasesPage />} />
         <Route path="/stats" element={<StatsPage />} />
         <Route path="/validate" element={<ValidatePage />} />
       </Routes>
