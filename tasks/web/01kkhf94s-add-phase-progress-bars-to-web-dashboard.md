@@ -1,7 +1,7 @@
 ---
 title: "Add phase progress bars to web dashboard"
 id: "01kkhf94s"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["web", "phases", "ux"]
@@ -18,14 +18,14 @@ Add a visual progress indicator for each phase showing completion percentage and
 
 ## Tasks
 
-- [ ] Create a `PhaseProgressBar` component that takes phase name, total tasks, and completed count
-- [ ] Render a horizontal bar with fill proportional to completion %
-- [ ] Show label: phase name, "X / Y tasks (Z%)"
-- [ ] Color-code the bar (e.g., green for high completion, yellow for mid, gray for empty)
-- [ ] Create a `PhaseProgressList` component that renders a bar for each configured phase
-- [ ] Integrate into the stats view or a dedicated section
-- [ ] Handle edge cases: no phases configured, phase with zero tasks
-- [ ] Add tests for PhaseProgressBar and PhaseProgressList components
+- [x] Create a `PhaseProgressBar` component that takes phase name, total tasks, and completed count
+- [x] Render a horizontal bar with fill proportional to completion %
+- [x] Show label: phase name, "X / Y tasks (Z%)"
+- [x] Color-code the bar (e.g., green for high completion, yellow for mid, gray for empty)
+- [x] Create a `PhaseProgressList` component that renders a bar for each configured phase
+- [x] Integrate into the stats view or a dedicated section
+- [x] Handle edge cases: no phases configured, phase with zero tasks
+- [x] Add tests for PhaseProgressBar and PhaseProgressList components
 
 ## Acceptance Criteria
 

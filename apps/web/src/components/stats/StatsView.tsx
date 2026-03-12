@@ -1,11 +1,14 @@
 import { Link } from "react-router-dom";
 import type { Stats } from "../../api/types.ts";
+import { PhaseProgressList } from "./PhaseProgressList.tsx";
+import type { PhaseProgress } from "./PhaseProgressBar.tsx";
 
 interface StatsViewProps {
   stats: Stats;
+  phaseProgress?: PhaseProgress[];
 }
 
-export function StatsView({ stats }: StatsViewProps) {
+export function StatsView({ stats, phaseProgress }: StatsViewProps) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -27,11 +30,7 @@ export function StatsView({ stats }: StatsViewProps) {
         <BreakdownCard title="By Effort" data={stats.tasks_by_effort} linkParam="effort" />
       </div>
 
-      {stats.tasks_by_phase && Object.keys(stats.tasks_by_phase).length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <BreakdownCard title="By Phase" data={stats.tasks_by_phase} />
-        </div>
-      )}
+      {phaseProgress && <PhaseProgressList phases={phaseProgress} />}
 
       <div className="bg-white rounded-lg border border-gray-200 p-4 dark:bg-gray-800 dark:border-gray-700">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Tags</h3>
