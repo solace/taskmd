@@ -1,0 +1,312 @@
+package cli
+
+import (
+	"bytes"
+	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+
+	"github.com/spf13/viper"
+)
+
+func resetPhasesFlags() {
+	phasesFormat = "table"
+}
+
+func setupPhasesConfig(t *testing.T, phases []map[string]any) {
+	t.Helper()
+	if phases == nil {
+		viper.Set("phases", nil)
+	} else {
+		// Convert to []any so viper.Get returns a type that parsePhasesConfig can assert.
+		items := make([]any, len(phases))
+		for i, p := range phases {
+			items[i] = p
+		}
+		viper.Set("phases", items)
+	}
+	t.Cleanup(func() {
+		viper.Set("phases", nil)
+	})
+}
+
+func createPhasesTestFiles(t *testing.T) string {
+	t.Helper()
+	tmpDir := t.TempDir()
+
+	tasks := map[string]string{
+		"001.md": `---
+id: "001"
+title: "MVP task A"
+status: pending
+priority: high
+phase: mvp
+---`,
+		"002.md": `---
+id: "002"
+title: "MVP task B"
+status: completed
+priority: medium
+phase: mvp
+---`,
+		"003.md": `---
+id: "003"
+title: "MVP task C"
+status: in-progress
+priority: low
+phase: mvp
+---`,
+		"004.md": `---
+id: "004"
+title: "V2 task"
+status: pending
+priority: medium
+phase: v2
+---`,
+		"005.md": `---
+id: "005"
+title: "No phase task"
+status: pending
+priority: low
+---`,
+	}
+
+	for filename, content := range tasks {
+		if err := os.WriteFile(filepath.Join(tmpDir, filename), []byte(content), 0644); err != nil {
+			t.Fatalf("failed to create test file %s: %v", filename, err)
+		}
+	}
+	return tmpDir
+}
+
+func capturePhasesOutput(t *testing.T, args []string) (string, string, error) {
+	t.Helper()
+
+	oldStdout := os.Stdout
+	rOut, wOut, _ := os.Pipe()
+	os.Stdout = wOut
+
+	oldStderr := os.Stderr
+	rErr, wErr, _ := os.Pipe()
+	os.Stderr = wErr
+
+	err := runPhases(phasesCmd, args)
+
+	wOut.Close()
+	wErr.Close()
+	os.Stdout = oldStdout
+	os.Stderr = oldStderr
+
+	var bufOut, bufErr bytes.Buffer
+	bufOut.ReadFrom(rOut)
+	bufErr.ReadFrom(rErr)
+	return bufOut.String(), bufErr.String(), err
+}
+
+func TestPhases_TableOutput(t *testing.T) {
+	tmpDir := createPhasesTestFiles(t)
+	resetPhasesFlags()
+	setupPhasesConfig(t, []map[string]any{
+		{"id": "mvp", "name": "MVP", "due": "2026-06-01"},
+		{"id": "v2", "name": "Version 2"},
+	})
+
+	stdout, _, err := capturePhasesOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runPhases failed: %v", err)
+	}
+
+	for _, expected := range []string{"ID", "Name", "Tasks", "Done", "Progress", "Due"} {
+		if !strings.Contains(stdout, expected) {
+			t.Errorf("table output missing header %q:\n%s", expected, stdout)
+		}
+	}
+	if !strings.Contains(stdout, "mvp") {
+		t.Errorf("table output missing mvp phase:\n%s", stdout)
+	}
+	if !strings.Contains(stdout, "MVP") {
+		t.Errorf("table output missing MVP name:\n%s", stdout)
+	}
+	if !strings.Contains(stdout, "33%") {
+		t.Errorf("table output missing 33%% progress for mvp (1/3 done):\n%s", stdout)
+	}
+	if !strings.Contains(stdout, "2026-06-01") {
+		t.Errorf("table output missing due date:\n%s", stdout)
+	}
+}
+
+func TestPhases_JSONOutput(t *testing.T) {
+	tmpDir := createPhasesTestFiles(t)
+	resetPhasesFlags()
+	phasesFormat = "json"
+	setupPhasesConfig(t, []map[string]any{
+		{"id": "mvp", "name": "MVP", "due": "2026-06-01"},
+		{"id": "v2", "name": "Version 2"},
+	})
+
+	stdout, _, err := capturePhasesOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runPhases failed: %v", err)
+	}
+
+	var summaries []PhaseSummary
+	if err := json.Unmarshal([]byte(stdout), &summaries); err != nil {
+		t.Fatalf("failed to parse JSON: %v\noutput: %s", err, stdout)
+	}
+
+	if len(summaries) != 2 {
+		t.Fatalf("expected 2 phases, got %d", len(summaries))
+	}
+
+	mvp := summaries[0]
+	if mvp.ID != "mvp" {
+		t.Errorf("first phase ID = %q, want mvp", mvp.ID)
+	}
+	if mvp.Tasks != 3 {
+		t.Errorf("mvp tasks = %d, want 3", mvp.Tasks)
+	}
+	if mvp.Done != 1 {
+		t.Errorf("mvp done = %d, want 1", mvp.Done)
+	}
+	if mvp.Progress != "33%" {
+		t.Errorf("mvp progress = %q, want 33%%", mvp.Progress)
+	}
+	if mvp.Due != "2026-06-01" {
+		t.Errorf("mvp due = %q, want 2026-06-01", mvp.Due)
+	}
+	if mvp.ByStatus["pending"] != 1 {
+		t.Errorf("mvp by_status[pending] = %d, want 1", mvp.ByStatus["pending"])
+	}
+	if mvp.ByStatus["completed"] != 1 {
+		t.Errorf("mvp by_status[completed] = %d, want 1", mvp.ByStatus["completed"])
+	}
+	if mvp.ByStatus["in-progress"] != 1 {
+		t.Errorf("mvp by_status[in-progress] = %d, want 1", mvp.ByStatus["in-progress"])
+	}
+
+	v2 := summaries[1]
+	if v2.Tasks != 1 {
+		t.Errorf("v2 tasks = %d, want 1", v2.Tasks)
+	}
+	if v2.Done != 0 {
+		t.Errorf("v2 done = %d, want 0", v2.Done)
+	}
+	if v2.Progress != "0%" {
+		t.Errorf("v2 progress = %q, want 0%%", v2.Progress)
+	}
+}
+
+func TestPhases_YAMLOutput(t *testing.T) {
+	tmpDir := createPhasesTestFiles(t)
+	resetPhasesFlags()
+	phasesFormat = "yaml"
+	setupPhasesConfig(t, []map[string]any{
+		{"id": "mvp", "name": "MVP"},
+	})
+
+	stdout, _, err := capturePhasesOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runPhases failed: %v", err)
+	}
+
+	if !strings.Contains(stdout, "id: mvp") {
+		t.Errorf("YAML output missing 'id: mvp':\n%s", stdout)
+	}
+	if !strings.Contains(stdout, "tasks: 3") {
+		t.Errorf("YAML output missing 'tasks: 3':\n%s", stdout)
+	}
+}
+
+func TestPhases_NoPhasesConfigured(t *testing.T) {
+	tmpDir := createPhasesTestFiles(t)
+	resetPhasesFlags()
+	viper.Set("phases", nil)
+	t.Cleanup(func() { viper.Set("phases", nil) })
+
+	_, stderr, err := capturePhasesOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runPhases should not error when no phases configured: %v", err)
+	}
+
+	if !strings.Contains(stderr, "No phases configured") {
+		t.Errorf("expected helpful message about no phases, got stderr:\n%s", stderr)
+	}
+}
+
+func TestPhases_OrphanedPhaseValues(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetPhasesFlags()
+	setupPhasesConfig(t, []map[string]any{
+		{"id": "mvp", "name": "MVP"},
+	})
+
+	content := `---
+id: "001"
+title: "Orphaned phase task"
+status: pending
+phase: unknown-phase
+---`
+	if err := os.WriteFile(filepath.Join(tmpDir, "001.md"), []byte(content), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	_, stderr, err := capturePhasesOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runPhases failed: %v", err)
+	}
+
+	if !strings.Contains(stderr, "undefined phase") {
+		t.Errorf("expected warning about undefined phase, got stderr:\n%s", stderr)
+	}
+	if !strings.Contains(stderr, "unknown-phase") {
+		t.Errorf("expected orphaned phase name in warning, got stderr:\n%s", stderr)
+	}
+}
+
+func TestPhases_InvalidFormat(t *testing.T) {
+	tmpDir := createPhasesTestFiles(t)
+	resetPhasesFlags()
+	phasesFormat = "invalid"
+	setupPhasesConfig(t, []map[string]any{
+		{"id": "mvp", "name": "MVP"},
+	})
+
+	_, _, err := capturePhasesOutput(t, []string{tmpDir})
+	if err == nil {
+		t.Fatal("expected error for invalid format, got nil")
+	}
+	if !strings.Contains(err.Error(), "unsupported format") {
+		t.Errorf("expected 'unsupported format' error, got: %v", err)
+	}
+}
+
+func TestPhases_EmptyPhaseHasZeroProgress(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetPhasesFlags()
+	phasesFormat = "json"
+	setupPhasesConfig(t, []map[string]any{
+		{"id": "future", "name": "Future Work"},
+	})
+
+	stdout, _, err := capturePhasesOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runPhases failed: %v", err)
+	}
+
+	var summaries []PhaseSummary
+	if err := json.Unmarshal([]byte(stdout), &summaries); err != nil {
+		t.Fatalf("failed to parse JSON: %v\noutput: %s", err, stdout)
+	}
+
+	if len(summaries) != 1 {
+		t.Fatalf("expected 1 phase, got %d", len(summaries))
+	}
+	if summaries[0].Tasks != 0 {
+		t.Errorf("expected 0 tasks, got %d", summaries[0].Tasks)
+	}
+	if summaries[0].Progress != "0%" {
+		t.Errorf("expected 0%% progress, got %q", summaries[0].Progress)
+	}
+}

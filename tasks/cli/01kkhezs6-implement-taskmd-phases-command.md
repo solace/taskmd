@@ -1,7 +1,7 @@
 ---
 title: "Implement taskmd phases command"
 id: "01kkhezs6"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["cli", "phases"]
