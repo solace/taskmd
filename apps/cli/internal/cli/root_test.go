@@ -36,6 +36,7 @@ func TestResolveRelativeToConfig_RelativePath(t *testing.T) {
 	}
 
 	viper.Reset()
+	defer viper.Reset()
 	viper.SetConfigFile(configPath)
 	if err := viper.ReadInConfig(); err != nil {
 		t.Fatalf("failed to read config: %v", err)
@@ -57,6 +58,7 @@ func TestResolveRelativeToConfig_DotPath(t *testing.T) {
 	}
 
 	viper.Reset()
+	defer viper.Reset()
 	viper.SetConfigFile(configPath)
 	if err := viper.ReadInConfig(); err != nil {
 		t.Fatalf("failed to read config: %v", err)

@@ -55,6 +55,8 @@ verbose: true
 	if err := os.Chdir(projectDir); err != nil {
 		t.Fatalf("failed to change directory: %v", err)
 	}
+	// Use os.Getwd to get the canonical cwd path (matches what initConfig sees via filepath.Abs)
+	projectDir, _ = os.Getwd()
 
 	// Re-initialize cobra command to pick up new config
 	rootCmd = &cobra.Command{Use: "taskmd"}
@@ -76,8 +78,9 @@ verbose: true
 
 	// Test that config values are loaded
 	flags := GetGlobalFlags()
-	if flags.TaskDir != "./my-tasks" {
-		t.Errorf("expected dir to be './my-tasks', got '%s'", flags.TaskDir)
+	expectedDir := filepath.Join(projectDir, "my-tasks")
+	if flags.TaskDir != expectedDir {
+		t.Errorf("expected dir to be %q, got %q", expectedDir, flags.TaskDir)
 	}
 	if !flags.Verbose {
 		t.Error("expected verbose to be true from config")
@@ -130,8 +133,9 @@ verbose: true
 
 	// Test that global config values are loaded
 	flags := GetGlobalFlags()
-	if flags.TaskDir != "./global-tasks" {
-		t.Errorf("expected dir to be './global-tasks', got '%s'", flags.TaskDir)
+	expectedDir := filepath.Join(homeDir, "global-tasks")
+	if flags.TaskDir != expectedDir {
+		t.Errorf("expected dir to be %q, got %q", expectedDir, flags.TaskDir)
 	}
 	if !flags.Verbose {
 		t.Error("expected verbose to be true from global config")
@@ -168,6 +172,8 @@ verbose: false
 	if err := os.Chdir(projectDir); err != nil {
 		t.Fatalf("failed to change directory: %v", err)
 	}
+	// Use os.Getwd to get the canonical cwd path (matches what initConfig sees via filepath.Abs)
+	projectDir, _ = os.Getwd()
 
 	// Re-initialize cobra command
 	rootCmd = &cobra.Command{Use: "taskmd"}
@@ -189,8 +195,9 @@ verbose: false
 
 	// Test that project config takes precedence
 	flags := GetGlobalFlags()
-	if flags.TaskDir != "./project-tasks" {
-		t.Errorf("expected project config dir './project-tasks', got '%s'", flags.TaskDir)
+	expectedDir := filepath.Join(projectDir, "project-tasks")
+	if flags.TaskDir != expectedDir {
+		t.Errorf("expected project config dir %q, got %q", expectedDir, flags.TaskDir)
 	}
 	if flags.Verbose {
 		t.Error("expected verbose to be false from project config (not true from global)")
@@ -388,8 +395,9 @@ verbose: true
 
 	// Test that custom config file is loaded
 	flags := GetGlobalFlags()
-	if flags.TaskDir != "./custom-tasks" {
-		t.Errorf("expected dir to be './custom-tasks', got '%s'", flags.TaskDir)
+	expectedDir := filepath.Join(configDir, "custom-tasks")
+	if flags.TaskDir != expectedDir {
+		t.Errorf("expected dir to be %q, got %q", expectedDir, flags.TaskDir)
 	}
 	if !flags.Verbose {
 		t.Error("expected verbose to be true from custom config")

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/viper"
+
 	"github.com/driangle/taskmd/apps/cli/internal/taskcontext"
 )
 
@@ -494,7 +496,7 @@ func setupTestConfig(t *testing.T, dir string) {
 	oldConfigFile := cfgFile
 	t.Cleanup(func() {
 		cfgFile = oldConfigFile
-		initConfig()
+		viper.Reset()
 	})
 	cfgFile = configPath
 	initConfig()
