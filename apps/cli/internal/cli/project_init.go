@@ -273,7 +273,7 @@ func collectInitFiles() (rootFiles, taskDirFiles []fileToWrite) {
 	if !projectInitNoSpec {
 		taskDirFiles = append(taskDirFiles, fileToWrite{
 			filename: specFilename,
-			content:  specTemplate,
+			content:  initSpecTemplate,
 		})
 	}
 

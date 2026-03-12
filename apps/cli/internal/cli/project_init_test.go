@@ -48,7 +48,7 @@ func TestProjectInit_DefaultWritesBothFiles(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read %s: %v", specFilename, err)
 	}
-	if !bytes.Equal(content, specTemplate) {
+	if !bytes.Equal(content, initSpecTemplate) {
 		t.Error("TASKMD_SPEC.md content does not match template")
 	}
 }
@@ -192,7 +192,7 @@ func TestProjectInit_ForceOverwritesExistingFiles(t *testing.T) {
 	}
 
 	specContent, _ := os.ReadFile(specPath)
-	if !bytes.Equal(specContent, specTemplate) {
+	if !bytes.Equal(specContent, initSpecTemplate) {
 		t.Error("TASKMD_SPEC.md should have been overwritten")
 	}
 }
@@ -293,7 +293,7 @@ func TestProjectInit_StdoutPrintsWithoutCreatingFiles(t *testing.T) {
 	if !strings.Contains(output, string(claudeTemplate)) {
 		t.Error("stdout output should contain Claude template")
 	}
-	if !strings.Contains(output, string(specTemplate)) {
+	if !strings.Contains(output, string(initSpecTemplate)) {
 		t.Error("stdout output should contain spec template")
 	}
 
