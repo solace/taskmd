@@ -1,7 +1,7 @@
 import { createColumnHelper } from "@tanstack/react-table";
 import { Link } from "react-router-dom";
 import type { Task } from "../../../api/types.ts";
-import { StatusBadge, PriorityBadge, TypeBadge, MilestoneBadge, BlockedStatusBadge } from "./Badges.tsx";
+import { StatusBadge, PriorityBadge, TypeBadge, PhaseBadge, BlockedStatusBadge } from "./Badges.tsx";
 
 export function createTaskColumns(
   selectedTags: Set<string>,
@@ -69,12 +69,12 @@ export function createTaskColumns(
         return v ? <TypeBadge type={v} /> : "-";
       },
     }),
-    columnHelper.accessor("milestone", {
-      header: "Milestone",
+    columnHelper.accessor("phase", {
+      header: "Phase",
       meta: { className: "hidden md:table-cell" },
       cell: (info) => {
         const v = info.getValue();
-        return v ? <MilestoneBadge milestone={v} /> : "-";
+        return v ? <PhaseBadge phase={v} /> : "-";
       },
     }),
     columnHelper.accessor("owner", {

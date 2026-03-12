@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useTracks } from "../hooks/use-tracks.ts";
+import { usePhase } from "../hooks/use-phase.tsx";
 import { TracksView } from "../components/tracks/TracksView.tsx";
 import { LoadingState } from "../components/shared/LoadingState.tsx";
 import { ErrorState } from "../components/shared/ErrorState.tsx";
 
 export function TracksPage() {
   const [limit, setLimit] = useState(0);
-  const { data, error, isLoading, mutate } = useTracks(limit);
+  const { phase } = usePhase();
+  const { data, error, isLoading, mutate } = useTracks(limit, phase);
 
   if (isLoading) return <LoadingState variant="board" />;
   if (error) return <ErrorState error={error} onRetry={() => mutate()} />;

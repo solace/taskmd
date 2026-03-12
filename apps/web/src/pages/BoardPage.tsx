@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useBoard } from "../hooks/use-board.ts";
+import { usePhase } from "../hooks/use-phase.tsx";
 import { useConfig } from "../hooks/use-config.ts";
 import { updateTask } from "../api/client.ts";
 import { BoardView } from "../components/board/BoardView.tsx";
@@ -10,7 +11,7 @@ import { ErrorState } from "../components/shared/ErrorState.tsx";
 import type { BoardGroup } from "../api/types.ts";
 import { STATUSES, PRIORITIES, EFFORTS, TYPES } from "../components/tasks/TaskTable/constants.ts";
 
-const groupByOptions = ["status", "priority", "effort", "type", "group", "tag", "milestone"];
+const groupByOptions = ["status", "priority", "effort", "type", "group", "tag", "phase"];
 
 const groupByToField: Record<string, string> = {
   status: "status",
@@ -22,7 +23,8 @@ const groupByToField: Record<string, string> = {
 export function BoardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const groupBy = searchParams.get("groupBy") ?? "status";
-  const { data, error, isLoading, mutate } = useBoard(groupBy);
+  const { phase } = usePhase();
+  const { data, error, isLoading, mutate } = useBoard(groupBy, phase);
   const { readonly } = useConfig();
   const [moveError, setMoveError] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);

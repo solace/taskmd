@@ -1,5 +1,6 @@
 import { useSearchParams } from "react-router-dom";
 import { useNext } from "../hooks/use-next.ts";
+import { usePhase } from "../hooks/use-phase.tsx";
 import { NextView } from "../components/next/NextView.tsx";
 import { LoadingState } from "../components/shared/LoadingState.tsx";
 import { ErrorState } from "../components/shared/ErrorState.tsx";
@@ -8,7 +9,8 @@ export function NextPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const limit = Number(searchParams.get("limit")) || 5;
   const group = searchParams.get("group") ?? "";
-  const { data, error, isLoading, mutate } = useNext(limit, group || undefined);
+  const { phase } = usePhase();
+  const { data, error, isLoading, mutate } = useNext(limit, group || undefined, phase);
 
   function setLimit(n: number) {
     setSearchParams(

@@ -15,7 +15,7 @@ export function TaskEditForm({ task, onSave, onCancel, error }: TaskEditFormProp
   const [priority, setPriority] = useState(task.priority);
   const [effort, setEffort] = useState(task.effort);
   const [taskType, setTaskType] = useState(task.type ?? "");
-  const [milestone, setMilestone] = useState(task.milestone ?? "");
+  const [phase, setPhase] = useState(task.phase ?? "");
   const [owner, setOwner] = useState(task.owner ?? "");
   const [parent, setParent] = useState(task.parent ?? "");
   const [tags, setTags] = useState((task.tags ?? []).join(", "));
@@ -33,7 +33,7 @@ export function TaskEditForm({ task, onSave, onCancel, error }: TaskEditFormProp
     if (priority !== task.priority) data.priority = priority;
     if (effort !== task.effort) data.effort = effort;
     if (taskType !== (task.type ?? "")) data.type = taskType || undefined;
-    if (milestone !== (task.milestone ?? "")) data.milestone = milestone || undefined;
+    if (phase !== (task.phase ?? "")) data.phase = phase || undefined;
     if (owner !== (task.owner ?? "")) data.owner = owner;
     if (parent !== (task.parent ?? "")) data.parent = parent;
 
@@ -92,7 +92,7 @@ export function TaskEditForm({ task, onSave, onCancel, error }: TaskEditFormProp
       />
 
       <MetadataFields
-        milestone={milestone} onMilestoneChange={setMilestone}
+        phase={phase} onPhaseChange={setPhase}
         owner={owner} onOwnerChange={setOwner}
         parent={parent} onParentChange={setParent}
         tags={tags} onTagsChange={setTags}

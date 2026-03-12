@@ -27,9 +27,9 @@ export function StatsView({ stats }: StatsViewProps) {
         <BreakdownCard title="By Effort" data={stats.tasks_by_effort} linkParam="effort" />
       </div>
 
-      {stats.tasks_by_milestone && Object.keys(stats.tasks_by_milestone).length > 0 && (
+      {stats.tasks_by_phase && Object.keys(stats.tasks_by_phase).length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <BreakdownCard title="By Milestone" data={stats.tasks_by_milestone} />
+          <BreakdownCard title="By Phase" data={stats.tasks_by_phase} />
         </div>
       )}
 

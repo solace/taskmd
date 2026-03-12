@@ -21,17 +21,43 @@ import (
 
 // ConfigResponse is the JSON response for GET /api/config.
 type ConfigResponse struct {
-	ReadOnly bool   `json:"readonly"`
-	Version  string `json:"version"`
+	ReadOnly bool        `json:"readonly"`
+	Version  string      `json:"version"`
+	Phases   []PhaseInfo `json:"phases"`
 }
 
 func handleConfig(cfg Config) http.HandlerFunc {
+	phases := cfg.Phases
+	if phases == nil {
+		phases = []PhaseInfo{}
+	}
 	return func(w http.ResponseWriter, _ *http.Request) {
 		writeJSON(w, ConfigResponse{
 			ReadOnly: cfg.ReadOnly,
 			Version:  cfg.Version,
+			Phases:   phases,
 		})
 	}
+}
+
+// getFilteredTasks returns tasks from the provider, optionally filtered by a
+// "phase" query parameter.
+func getFilteredTasks(dp *DataProvider, r *http.Request) ([]*model.Task, error) {
+	tasks, err := dp.GetTasks()
+	if err != nil {
+		return nil, err
+	}
+	phase := r.URL.Query().Get("phase")
+	if phase == "" {
+		return tasks, nil
+	}
+	filtered := make([]*model.Task, 0, len(tasks))
+	for _, t := range tasks {
+		if t.Phase == phase {
+			filtered = append(filtered, t)
+		}
+	}
+	return filtered, nil
 }
 
 func writeJSON(w http.ResponseWriter, v any) {
@@ -59,7 +85,7 @@ func handleSearch(dp *DataProvider) http.HandlerFunc {
 			return
 		}
 
-		tasks, err := dp.GetTasks()
+		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -76,7 +102,7 @@ func handleSearch(dp *DataProvider) http.HandlerFunc {
 
 func handleTasks(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := dp.GetTasks()
+		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -134,7 +160,7 @@ func handleTaskByID(dp *DataProvider) http.HandlerFunc {
 
 func handleBoard(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := dp.GetTasks()
+		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -157,7 +183,7 @@ func handleBoard(dp *DataProvider) http.HandlerFunc {
 
 func handleGraph(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := dp.GetTasks()
+		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -170,7 +196,7 @@ func handleGraph(dp *DataProvider) http.HandlerFunc {
 
 func handleGraphMermaid(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := dp.GetTasks()
+		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -184,7 +210,7 @@ func handleGraphMermaid(dp *DataProvider) http.HandlerFunc {
 
 func handleStats(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := dp.GetTasks()
+		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -197,7 +223,7 @@ func handleStats(dp *DataProvider) http.HandlerFunc {
 
 func handleNext(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := dp.GetTasks()
+		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -234,7 +260,7 @@ func handleNext(dp *DataProvider) http.HandlerFunc {
 
 func handleTracks(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := dp.GetTasks()
+		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -271,7 +297,7 @@ func handleTracks(dp *DataProvider) http.HandlerFunc {
 
 func handleValidate(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		tasks, err := dp.GetTasks()
+		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

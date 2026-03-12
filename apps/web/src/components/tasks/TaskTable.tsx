@@ -46,23 +46,23 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
   const [selectedEffort, setSelectedEffort] = useState<Set<string>>(
     () => initialEffort && initialEffort.length > 0 ? new Set(initialEffort) : new Set(EFFORTS),
   );
-  const [selectedMilestones, setSelectedMilestones] = useState<Set<string>>(
+  const [selectedPhases, setSelectedPhases] = useState<Set<string>>(
     () => new Set<string>(),
   );
 
-  const availableMilestones = useMemo(() => {
-    const milestones = new Set<string>();
+  const availablePhases = useMemo(() => {
+    const phases = new Set<string>();
     for (const task of tasks) {
-      if (task.milestone) milestones.add(task.milestone);
+      if (task.phase) phases.add(task.phase);
     }
-    return [...milestones].sort();
+    return [...phases].sort();
   }, [tasks]);
 
-  const filterState = { selectedStatuses, selectedPriorities, selectedTypes, selectedTags, selectedEffort, selectedMilestones, globalFilter };
+  const filterState = { selectedStatuses, selectedPriorities, selectedTypes, selectedTags, selectedEffort, selectedPhases, globalFilter };
   const hasActiveFilters = checkActiveFilters(filterState);
 
   const syncFiltersToUrl = useCallback(
-    (updates: { tag?: Set<string>; status?: Set<string>; priority?: Set<string>; effort?: Set<string>; type?: Set<string>; milestone?: Set<string> }) => {
+    (updates: { tag?: Set<string>; status?: Set<string>; priority?: Set<string>; effort?: Set<string>; type?: Set<string>; phase?: Set<string> }) => {
       setSearchParams(
         (prev) => {
           for (const [param, values] of Object.entries(updates)) {
@@ -85,8 +85,8 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
     setSelectedTypes(new Set(TYPES));
     setSelectedTags(new Set());
     setSelectedEffort(new Set(EFFORTS));
-    setSelectedMilestones(new Set());
-    syncFiltersToUrl({ tag: new Set(), status: new Set(), priority: new Set(), effort: new Set(), type: new Set(), milestone: new Set() });
+    setSelectedPhases(new Set());
+    syncFiltersToUrl({ tag: new Set(), status: new Set(), priority: new Set(), effort: new Set(), type: new Set(), phase: new Set() });
     setGlobalFilter("");
   }
 
@@ -100,7 +100,7 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
 
   const filteredTasks = useMemo(
     () => applyFilters(tasks, filterState),
-    [tasks, selectedStatuses, selectedPriorities, selectedTypes, selectedTags, selectedEffort, selectedMilestones],
+    [tasks, selectedStatuses, selectedPriorities, selectedTypes, selectedTags, selectedEffort, selectedPhases],
   );
 
   const taskStatusMap = useMemo(
@@ -182,12 +182,12 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
         }}
         selectedTags={selectedTags}
         onRemoveTag={toggleTag}
-        selectedMilestones={selectedMilestones}
-        availableMilestones={availableMilestones}
-        onToggleMilestone={(m) =>
-          setSelectedMilestones((prev) => {
+        selectedPhases={selectedPhases}
+        availablePhases={availablePhases}
+        onTogglePhase={(m) =>
+          setSelectedPhases((prev) => {
             const next = toggleInSet(prev, m);
-            syncFiltersToUrl({ milestone: next });
+            syncFiltersToUrl({ phase: next });
             return next;
           })
         }

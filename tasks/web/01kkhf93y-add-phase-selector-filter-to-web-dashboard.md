@@ -1,7 +1,7 @@
 ---
 title: "Add phase selector filter to web dashboard"
 id: "01kkhf93y"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["web", "phases", "ux"]
@@ -20,19 +20,19 @@ The selector should appear in the Shell/NavTabs area and persist across page nav
 
 ## Tasks
 
-- [ ] Read phases config from the API response (already served by the CLI web server)
-- [ ] Create a `PhaseSelector` component (dropdown with phase names, "All" default)
-- [ ] Add `PhaseSelector` to `Shell.tsx` or `NavTabs.tsx` layout
-- [ ] Store selected phase in URL query param (`?phase=benchmarks`) or React context for persistence across navigation
-- [ ] Filter tasks list view by selected phase
-- [ ] Filter board view by selected phase
-- [ ] Filter stats view by selected phase
-- [ ] Filter graph view by selected phase
-- [ ] Filter next-up view by selected phase
-- [ ] Show phase name and task count in the selector options
-- [ ] Handle edge case: no phases configured (hide selector entirely)
-- [ ] Add tests for PhaseSelector component
-- [ ] Test that filtering works correctly across all views
+- [x] Read phases config from the API response (already served by the CLI web server)
+- [x] Create a `PhaseSelector` component (dropdown with phase names, "All" default)
+- [x] Add `PhaseSelector` to `Shell.tsx` or `NavTabs.tsx` layout
+- [x] Store selected phase in URL query param (`?phase=benchmarks`) or React context for persistence across navigation
+- [x] Filter tasks list view by selected phase
+- [x] Filter board view by selected phase
+- [x] Filter stats view by selected phase
+- [x] Filter graph view by selected phase
+- [x] Filter next-up view by selected phase
+- [x] Show phase name and task count in the selector options
+- [x] Handle edge case: no phases configured (hide selector entirely)
+- [x] Add tests for PhaseSelector component
+- [x] Test that filtering works correctly across all views
 
 ## Acceptance Criteria
 

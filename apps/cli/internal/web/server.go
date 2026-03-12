@@ -11,6 +11,13 @@ import (
 	"github.com/driangle/taskmd/apps/cli/internal/watcher"
 )
 
+// PhaseInfo holds phase metadata served to the frontend.
+type PhaseInfo struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
 // Config holds server configuration.
 type Config struct {
 	Port     int
@@ -19,6 +26,7 @@ type Config struct {
 	Verbose  bool
 	ReadOnly bool
 	Version  string
+	Phases   []PhaseInfo
 }
 
 // Server is the taskmd web server.

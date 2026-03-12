@@ -14,7 +14,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     type: "feature",
     dependencies: null,
     tags: ["backend", "api"],
-    milestone: "",
+    phase: "",
     group: "cli",
     owner: "alice",
     parent: "010",

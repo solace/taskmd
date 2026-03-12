@@ -5,6 +5,7 @@ import { useConfig } from "../../hooks/use-config.ts";
 import { useTheme } from "../../hooks/use-theme.ts";
 import { SearchDialog } from "../search/SearchDialog.tsx";
 import { DesktopNav, MobileMenu } from "./NavTabs.tsx";
+import { PhaseSelector } from "./PhaseSelector.tsx";
 
 interface ShellProps {
   children: ReactNode;
@@ -156,6 +157,7 @@ export function Shell({ children }: ShellProps) {
                   Read Only
                 </span>
               )}
+              <PhaseSelector />
             </div>
             <div className="flex items-center gap-1">
               <DesktopNav onSearchOpen={() => setSearchOpen(true)} />

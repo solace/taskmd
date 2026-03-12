@@ -107,8 +107,8 @@ describe("FieldGrid", () => {
 describe("MetadataFields", () => {
   function renderMetadataFields(overrides = {}) {
     const defaults = {
-      milestone: "",
-      onMilestoneChange: vi.fn(),
+      phase: "",
+      onPhaseChange: vi.fn(),
       owner: "",
       onOwnerChange: vi.fn(),
       parent: "",
@@ -123,7 +123,7 @@ describe("MetadataFields", () => {
 
   it("renders all four input fields with labels", () => {
     renderMetadataFields();
-    expect(screen.getByText("Milestone")).toBeInTheDocument();
+    expect(screen.getByText("Phase")).toBeInTheDocument();
     expect(screen.getByText("Owner")).toBeInTheDocument();
     expect(screen.getByText("Parent")).toBeInTheDocument();
     expect(screen.getByText("Tags (comma-separated)")).toBeInTheDocument();

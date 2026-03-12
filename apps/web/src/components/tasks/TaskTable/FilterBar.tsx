@@ -59,9 +59,9 @@ export interface FilterBarProps {
   onSelectAllTypes: () => void;
   selectedTags: Set<string>;
   onRemoveTag: (tag: string) => void;
-  selectedMilestones: Set<string>;
-  availableMilestones: string[];
-  onToggleMilestone: (milestone: string) => void;
+  selectedPhases: Set<string>;
+  availablePhases: string[];
+  onTogglePhase: (phase: string) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
 }
@@ -83,9 +83,9 @@ export function FilterBar({
   onSelectAllTypes,
   selectedTags,
   onRemoveTag,
-  selectedMilestones,
-  availableMilestones,
-  onToggleMilestone,
+  selectedPhases,
+  availablePhases,
+  onTogglePhase,
   onClearFilters,
   hasActiveFilters,
 }: FilterBarProps) {
@@ -145,15 +145,15 @@ export function FilterBar({
         onSelectAll={onSelectAllTypes}
       />
 
-      {availableMilestones.length > 0 && (
+      {availablePhases.length > 0 && (
         <div className="flex items-center gap-2 flex-wrap" data-arrow-nav>
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Milestone:</span>
-          {availableMilestones.map((m) => {
-            const active = selectedMilestones.has(m);
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Phase:</span>
+          {availablePhases.map((m) => {
+            const active = selectedPhases.has(m);
             return (
               <button
                 key={m}
-                onClick={() => onToggleMilestone(m)}
+                onClick={() => onTogglePhase(m)}
                 className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
                   active
                     ? "bg-teal-100 text-teal-700 font-medium ring-1 ring-teal-300 dark:bg-teal-900/30 dark:text-teal-300 dark:ring-teal-700"

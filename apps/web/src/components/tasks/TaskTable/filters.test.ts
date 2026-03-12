@@ -13,7 +13,7 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     type: "feature",
     dependencies: null,
     tags: null,
-    milestone: "",
+    phase: "",
     group: "",
     owner: "",
     parent: "",
@@ -105,7 +105,7 @@ describe("applyFilters", () => {
       selectedTypes: new Set(["feature", "bug"]),
       selectedTags: new Set(["api"]),
       selectedEffort: new Set(["small"]),
-      selectedMilestones: new Set<string>(),
+      selectedPhases: new Set<string>(),
       globalFilter: "",
     };
     const result = applyFilters(sampleTasks, filters);
@@ -189,7 +189,7 @@ describe("hasActiveFilters", () => {
       selectedTypes: new Set(TYPES),
       selectedTags: new Set<string>(),
       selectedEffort: new Set(EFFORTS),
-      selectedMilestones: new Set<string>(),
+      selectedPhases: new Set<string>(),
       globalFilter: "",
     };
     expect(hasActiveFilters(filters)).toBe(false);

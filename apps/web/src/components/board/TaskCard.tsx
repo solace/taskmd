@@ -86,9 +86,9 @@ export function TaskCard({ task, sourceGroup, canDrag, focused = false }: TaskCa
             {task.priority}
           </span>
         )}
-        {task.milestone && (
+        {task.phase && (
           <span className="px-1.5 py-0.5 text-xs rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
-            {task.milestone}
+            {task.phase}
           </span>
         )}
       </div>

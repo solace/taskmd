@@ -87,6 +87,7 @@ func runWebStart(cmd *cobra.Command, _ []string) error {
 		Verbose:  flags.Verbose,
 		ReadOnly: viper.GetBool("web.readonly"),
 		Version:  FullVersion(),
+		Phases:   parsePhasesForWeb(),
 	})
 
 	ctx, cancel := signal.NotifyContext(
@@ -100,6 +101,39 @@ func runWebStart(cmd *cobra.Command, _ []string) error {
 	}
 
 	return srv.Start(ctx)
+}
+
+// parsePhasesForWeb reads phases from viper config and converts to web.PhaseInfo.
+func parsePhasesForWeb() []web.PhaseInfo {
+	raw := viper.Get("phases")
+	if raw == nil {
+		return nil
+	}
+	items, ok := raw.([]any)
+	if !ok {
+		return nil
+	}
+	phases := make([]web.PhaseInfo, 0, len(items))
+	for _, item := range items {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		p := web.PhaseInfo{}
+		if id, ok := m["id"].(string); ok {
+			p.ID = id
+		}
+		if name, ok := m["name"].(string); ok {
+			p.Name = name
+		}
+		if desc, ok := m["description"].(string); ok {
+			p.Description = desc
+		}
+		if p.ID != "" {
+			phases = append(phases, p)
+		}
+	}
+	return phases
 }
 
 func openBrowser(url string) {

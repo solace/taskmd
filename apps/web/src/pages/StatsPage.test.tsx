@@ -6,6 +6,10 @@ vi.mock("../hooks/use-stats.ts", () => ({
   useStats: vi.fn(),
 }));
 
+vi.mock("../hooks/use-phase.tsx", () => ({
+  usePhase: () => ({ phase: null, setPhase: vi.fn() }),
+}));
+
 vi.mock("../components/stats/StatsView.tsx", () => ({
   StatsView: ({ stats }: { stats: { total_tasks: number } }) => (
     <div data-testid="stats-view">Stats: {stats.total_tasks} tasks</div>
@@ -48,7 +52,7 @@ describe("StatsPage", () => {
         tasks_by_status: {},
         tasks_by_priority: {},
         tasks_by_effort: {},
-        tasks_by_milestone: {},
+        tasks_by_phase: {},
         blocked_tasks_count: 0,
         critical_path_length: 0,
         max_dependency_depth: 0,
@@ -71,7 +75,7 @@ describe("StatsPage", () => {
         tasks_by_status: { pending: 10 },
         tasks_by_priority: { high: 5 },
         tasks_by_effort: { small: 20 },
-        tasks_by_milestone: {},
+        tasks_by_phase: {},
         blocked_tasks_count: 2,
         critical_path_length: 3,
         max_dependency_depth: 4,
