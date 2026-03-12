@@ -7,7 +7,7 @@ effort: medium
 tags: [distribution, windows, packaging]
 dependencies: ["147"]
 created: 2026-02-17
-phase: Windows Support
+phase: windows-support
 ---
 
 # Create Scoop bucket for Windows package manager

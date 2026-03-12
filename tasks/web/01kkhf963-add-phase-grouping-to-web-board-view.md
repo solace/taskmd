@@ -7,7 +7,7 @@ type: feature
 tags: ["web", "phases", "board"]
 dependencies: ["01kkhetk4"]
 created: "2026-03-12"
-phase: Phase Support
+phase: phase-support
 ---
 
 # Add phase grouping to web board view

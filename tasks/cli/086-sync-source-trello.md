@@ -13,7 +13,7 @@ touches:
   - sync/trello
   - sync/core
 created: 2026-02-14
-phase: External Integrations
+phase: external-integrations
 ---
 
 # Sync Source: Trello

@@ -6,7 +6,7 @@ priority: medium
 dependencies: []
 tags: ["benchmark", "skill-eval"]
 created: 2026-03-08
-phase: Skill Benchmarks
+phase: skill-benchmarks
 ---
 
 # Benchmark divide-and-conquer skill

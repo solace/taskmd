@@ -1,12 +1,12 @@
 ---
 title: "Add id field to phase configuration"
 id: "01kkhetk4"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["spec", "phases"]
 created: "2026-03-12"
-phase: Phase Support
+phase: phase-support
 ---
 
 # Add id field to phase configuration

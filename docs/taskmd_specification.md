@@ -120,13 +120,13 @@ tags:
 
 **`owner`** — Free-form string for assigning a task to a person or team. Used for filtering and display; no validation is applied.
 
-**`phase`** — Free-form string identifying the phase, sprint, or release a task belongs to. Used for time-based grouping and filtering.
+**`phase`** — String identifying the phase, sprint, or release a task belongs to. When phases are configured in `.taskmd.yaml`, this should match a phase `id`. Used for time-based grouping and filtering.
 
 ```yaml
-phase: "v0.2"
+phase: "core-cli"
 ```
 
-When phases are configured in `.taskmd.yaml`, tasks referencing an undefined phase produce a warning. When no phases config exists, all values are accepted silently.
+When phases are configured in `.taskmd.yaml`, tasks referencing an undefined phase `id` produce a warning. When no phases config exists, all values are accepted silently.
 
 **`touches`** — List of abstract scope identifiers declaring which code areas a task modifies. Used by the `tracks` command to detect spatial overlap and assign tasks to parallel work tracks. Two tasks that share a scope should not be worked on simultaneously (risk of merge conflicts).
 
@@ -283,21 +283,24 @@ Phases can optionally be defined in `.taskmd.yaml` with metadata:
 ```yaml
 # .taskmd.yaml
 phases:
-  - name: "v0.2"
+  - id: core-cli
+    name: "Core CLI"
     description: "Core CLI features"
     due: 2026-04-01
-  - name: "v0.3"
+  - id: web-dashboard
+    name: "Web Dashboard"
     description: "Web dashboard"
     due: 2026-06-01
 ```
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `name` | Yes | Phase identifier (matches the task's `phase` field) |
+| `id` | No | Short, stable identifier referenced by task `phase` field (falls back to `name` if omitted) |
+| `name` | Yes | Human-readable display label |
 | `description` | No | Human-readable description |
 | `due` | No | Target date in `YYYY-MM-DD` format |
 
-When phases are configured, validation warns if a task references a phase not in the list. When no phases config exists, all `phase` values are accepted silently.
+Task `phase` values are matched against the phase `id`. If `id` is omitted, the `name` is used as the key for backwards compatibility. Validation warns on duplicate `id` or `name` values across phases. When no phases config exists, all `phase` values are accepted silently.
 
 ## File Organization
 

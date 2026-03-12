@@ -8,7 +8,7 @@ tags: []
 touches:
   - vscode
 created: 2026-02-20
-phase: VSCode Extension
+phase: vscode-extension
 ---
 
 # VSCode Extension: Verify Step Runner

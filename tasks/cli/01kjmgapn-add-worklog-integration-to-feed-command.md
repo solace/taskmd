@@ -6,7 +6,7 @@ priority: low
 type: feature
 tags: ["cli", "git"]
 created: "2026-03-01"
-phase: Feed Enhancements
+phase: feed-enhancements
 ---
 
 # Add worklog integration to feed command

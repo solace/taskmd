@@ -9,7 +9,7 @@ tags:
   - web
   - worklogs
 created: 2026-02-20
-phase: Web UI
+phase: web-ui
 ---
 
 # Add Worklog Editing in Web UI

@@ -6,7 +6,7 @@ priority: low
 effort: medium
 tags: [ci, windows]
 created: 2026-02-25
-phase: Windows Support
+phase: windows-support
 ---
 # Fix CI: re-enable Windows test runner
 

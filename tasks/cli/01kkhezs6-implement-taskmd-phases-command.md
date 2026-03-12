@@ -7,7 +7,7 @@ type: feature
 tags: ["cli", "phases"]
 dependencies: ["01kkhetk4"]
 created: "2026-03-12"
-phase: Phase Support
+phase: phase-support
 ---
 
 # Implement taskmd phases command

@@ -70,6 +70,7 @@ type ConfigData struct {
 
 // PhaseConfig holds the configuration for a single phase entry.
 type PhaseConfig struct {
+	ID          string
 	Name        string
 	Description string
 	Due         model.FlexibleTime
@@ -370,6 +371,7 @@ func (v *Validator) ValidateConfig(config *ConfigData) *ValidationResult {
 	v.checkUnknownConfigKeys(config, result)
 	v.checkWorkflowValue(config, result)
 	v.checkIDConfig(config, result)
+	v.checkDuplicatePhases(config, result)
 
 	return result
 }
@@ -407,6 +409,34 @@ func (v *Validator) checkIDConfig(config *ConfigData, result *ValidationResult) 
 	if id.Padding < 0 {
 		result.AddIssue(LevelError, "", config.ConfigPath,
 			fmt.Sprintf("id padding must not be negative, got %d", id.Padding))
+	}
+}
+
+// checkDuplicatePhases warns on duplicate phase id or name values.
+func (v *Validator) checkDuplicatePhases(config *ConfigData, result *ValidationResult) {
+	if len(config.Phases) == 0 {
+		return
+	}
+
+	seenIDs := make(map[string]bool)
+	seenNames := make(map[string]bool)
+
+	for _, phase := range config.Phases {
+		if phase.ID != "" {
+			if seenIDs[phase.ID] {
+				result.AddIssue(LevelWarning, "", config.ConfigPath,
+					fmt.Sprintf("duplicate phase id: '%s'", phase.ID))
+			}
+			seenIDs[phase.ID] = true
+		}
+
+		if phase.Name != "" {
+			if seenNames[phase.Name] {
+				result.AddIssue(LevelWarning, "", config.ConfigPath,
+					fmt.Sprintf("duplicate phase name: '%s'", phase.Name))
+			}
+			seenNames[phase.Name] = true
+		}
 	}
 }
 

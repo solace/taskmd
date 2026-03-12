@@ -841,11 +841,13 @@ func TestParseIDConfig_ViperIntTypes(t *testing.T) {
 func TestParsePhasesConfig_FullConfig(t *testing.T) {
 	raw := []any{
 		map[string]any{
+			"id":          "core-cli",
 			"name":        "v0.2",
 			"description": "Core CLI features",
 			"due":         "2026-04-01",
 		},
 		map[string]any{
+			"id":          "web-dashboard",
 			"name":        "v0.3",
 			"description": "Web dashboard",
 		},
@@ -855,6 +857,9 @@ func TestParsePhasesConfig_FullConfig(t *testing.T) {
 	if len(phases) != 2 {
 		t.Fatalf("expected 2 phases, got %d", len(phases))
 	}
+	if phases[0].ID != "core-cli" {
+		t.Errorf("ID = %q, want %q", phases[0].ID, "core-cli")
+	}
 	if phases[0].Name != "v0.2" {
 		t.Errorf("Name = %q, want %q", phases[0].Name, "v0.2")
 	}
@@ -863,6 +868,9 @@ func TestParsePhasesConfig_FullConfig(t *testing.T) {
 	}
 	if phases[0].Due.IsZero() {
 		t.Error("expected non-zero due date for v0.2")
+	}
+	if phases[1].ID != "web-dashboard" {
+		t.Errorf("ID = %q, want %q", phases[1].ID, "web-dashboard")
 	}
 	if phases[1].Name != "v0.3" {
 		t.Errorf("Name = %q, want %q", phases[1].Name, "v0.3")
@@ -898,6 +906,139 @@ func TestParsePhasesConfig_SkipsNonMapEntries(t *testing.T) {
 	}
 	if phases[0].Name != "v0.2" {
 		t.Errorf("Name = %q, want %q", phases[0].Name, "v0.2")
+	}
+}
+
+func TestParsePhasesConfig_IDFieldParsed(t *testing.T) {
+	raw := []any{
+		map[string]any{
+			"id":   "my-phase",
+			"name": "My Phase",
+		},
+	}
+
+	phases := parsePhasesConfig(raw)
+	if len(phases) != 1 {
+		t.Fatalf("expected 1 phase, got %d", len(phases))
+	}
+	if phases[0].ID != "my-phase" {
+		t.Errorf("ID = %q, want %q", phases[0].ID, "my-phase")
+	}
+}
+
+func TestParsePhasesConfig_NoID(t *testing.T) {
+	raw := []any{
+		map[string]any{
+			"name": "Legacy Phase",
+		},
+	}
+
+	phases := parsePhasesConfig(raw)
+	if len(phases) != 1 {
+		t.Fatalf("expected 1 phase, got %d", len(phases))
+	}
+	if phases[0].ID != "" {
+		t.Errorf("ID = %q, want empty", phases[0].ID)
+	}
+	if phases[0].Name != "Legacy Phase" {
+		t.Errorf("Name = %q, want %q", phases[0].Name, "Legacy Phase")
+	}
+}
+
+func TestValidateConfig_DuplicatePhaseID(t *testing.T) {
+	v := validator.NewValidator(false)
+	config := &validator.ConfigData{
+		Phases: []validator.PhaseConfig{
+			{ID: "alpha", Name: "Alpha"},
+			{ID: "alpha", Name: "Beta"},
+		},
+		TopKeys:    []string{"phases"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	found := false
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Message, "duplicate phase id: 'alpha'") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected warning about duplicate phase id 'alpha'")
+	}
+}
+
+func TestValidateConfig_DuplicatePhaseName(t *testing.T) {
+	v := validator.NewValidator(false)
+	config := &validator.ConfigData{
+		Phases: []validator.PhaseConfig{
+			{ID: "a", Name: "Same Name"},
+			{ID: "b", Name: "Same Name"},
+		},
+		TopKeys:    []string{"phases"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	found := false
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Message, "duplicate phase name: 'Same Name'") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("expected warning about duplicate phase name 'Same Name'")
+	}
+}
+
+func TestValidatePhasesAgainstConfig_MatchesByID(t *testing.T) {
+	v := validator.NewValidator(false)
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task", Phase: "core-cli"},
+	}
+
+	// knownPhases uses ID, not name
+	knownPhases := map[string]bool{"core-cli": true}
+
+	result := v.ValidatePhasesAgainstConfig(tasks, knownPhases)
+
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Message, "undefined phase") {
+			t.Errorf("unexpected warning: %s", issue.Message)
+		}
+	}
+}
+
+func TestValidatePhasesAgainstConfig_FallsBackToName(t *testing.T) {
+	// When phases have no ID, validation uses name as key
+	v := validator.NewValidator(false)
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task", Phase: "Legacy Phase"},
+	}
+
+	// Simulate a config with no ID — validateConfig falls back to name
+	phases := []validator.PhaseConfig{
+		{Name: "Legacy Phase"},
+	}
+	knownPhases := make(map[string]bool)
+	for _, m := range phases {
+		key := m.ID
+		if key == "" {
+			key = m.Name
+		}
+		knownPhases[key] = true
+	}
+
+	result := v.ValidatePhasesAgainstConfig(tasks, knownPhases)
+
+	for _, issue := range result.Issues {
+		if strings.Contains(issue.Message, "undefined phase") {
+			t.Errorf("unexpected warning: %s", issue.Message)
+		}
 	}
 }
 

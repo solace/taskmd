@@ -209,7 +209,11 @@ func validateConfig(v *validator.Validator, validationResult *validator.Validati
 	if configData != nil && len(configData.Phases) > 0 {
 		knownPhases := make(map[string]bool, len(configData.Phases))
 		for _, m := range configData.Phases {
-			knownPhases[m.Name] = true
+			key := m.ID
+			if key == "" {
+				key = m.Name // backwards compat: fall back to name if no id
+			}
+			knownPhases[key] = true
 		}
 		mergeValidationResults(validationResult, v.ValidatePhasesAgainstConfig(tasks, knownPhases))
 	}
@@ -299,6 +303,9 @@ func parsePhasesConfig(raw any) []validator.PhaseConfig {
 			continue
 		}
 		mc := validator.PhaseConfig{}
+		if id, ok := m["id"].(string); ok {
+			mc.ID = id
+		}
 		if name, ok := m["name"].(string); ok {
 			mc.Name = name
 		}

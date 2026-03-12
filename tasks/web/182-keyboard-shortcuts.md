@@ -10,7 +10,7 @@ tags:
   - ux
   - accessibility
 created: 2026-02-20
-phase: Web UI
+phase: web-ui
 ---
 
 # Add Keyboard Shortcuts to Web UI

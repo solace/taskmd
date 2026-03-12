@@ -7,7 +7,7 @@ effort: medium
 type: chore
 tags: [vscode, distribution]
 created: 2026-02-22
-phase: VSCode Extension
+phase: vscode-extension
 ---
 
 # Publish VS Code extension to marketplace

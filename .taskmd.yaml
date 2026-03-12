@@ -10,21 +10,29 @@ todos:
     - "blame_test.go"
     - "todos_test.go"
 phases:
-  - name: "Phase Support"
+  - id: phase-support
+    name: "Phase Support"
     description: "Add phase ID field, phases CLI command, and web phase features"
-  - name: "Skill Benchmarks"
+  - id: skill-benchmarks
+    name: "Skill Benchmarks"
     description: "Establish quality baselines for all agent skills"
-  - name: "Web UI"
+  - id: web-ui
+    name: "Web UI"
     description: "Enhance the web interface with interactivity and test coverage"
-  - name: "Feed Enhancements"
+  - id: feed-enhancements
+    name: "Feed Enhancements"
     description: "Improve the feed command with richer output capabilities"
-  - name: "VSCode Extension"
+  - id: vscode-extension
+    name: "VSCode Extension"
     description: "Build and publish the VSCode extension"
-  - name: "Windows Support"
+  - id: windows-support
+    name: "Windows Support"
     description: "Expand platform reach to Windows"
-  - name: "External Integrations"
+  - id: external-integrations
+    name: "External Integrations"
     description: "Sync and import from third-party tools"
-  - name: "Language Libraries"
+  - id: language-libraries
+    name: "Language Libraries"
     description: "Expand ecosystem with SDK libraries"
 web:
   auto_open_browser: false

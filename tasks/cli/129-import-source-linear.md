@@ -12,7 +12,7 @@ tags:
 touches:
   - cli/import
 created: 2026-02-16
-phase: External Integrations
+phase: external-integrations
 ---
 
 # Import Source: Linear

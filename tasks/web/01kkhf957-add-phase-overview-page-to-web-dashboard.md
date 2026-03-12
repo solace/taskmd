@@ -7,7 +7,7 @@ type: feature
 tags: ["web", "phases", "ux"]
 dependencies: ["01kkhf93y", "01kkhf94s"]
 created: "2026-03-12"
-phase: Phase Support
+phase: phase-support
 ---
 
 # Add phase overview page to web dashboard
