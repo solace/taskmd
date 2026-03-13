@@ -429,6 +429,7 @@ func outputGetText(task *model.Task, deps dependencyInfo, ctxFiles []taskcontext
 	printOptionalField(w, "Priority", string(task.Priority), r)
 	printOptionalField(w, "Effort", string(task.Effort), r)
 	printOptionalField(w, "Type", string(task.Type), r)
+	printOptionalField(w, "Phase", task.Phase, r)
 	printTags(w, task.Tags, r)
 	printPRs(w, task.PRs, r)
 	if deps.Parent != nil {
@@ -550,6 +551,7 @@ type getOutput struct {
 	Priority     string                  `json:"priority,omitempty" yaml:"priority,omitempty"`
 	Effort       string                  `json:"effort,omitempty" yaml:"effort,omitempty"`
 	Type         string                  `json:"type,omitempty" yaml:"type,omitempty"`
+	Phase        string                  `json:"phase,omitempty" yaml:"phase,omitempty"`
 	Tags         []string                `json:"tags" yaml:"tags"`
 	PRs          []string                `json:"pr,omitempty" yaml:"pr,omitempty"`
 	Parent       *depEntry               `json:"parent,omitempty" yaml:"parent,omitempty"`
@@ -579,6 +581,7 @@ func buildGetOutput(task *model.Task, deps dependencyInfo, ctxFiles []taskcontex
 		Priority: string(task.Priority),
 		Effort:   string(task.Effort),
 		Type:     string(task.Type),
+		Phase:    task.Phase,
 		Tags:     task.Tags,
 		PRs:      task.PRs,
 		Parent:   deps.Parent,

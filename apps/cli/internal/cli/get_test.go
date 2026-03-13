@@ -946,3 +946,127 @@ func TestGet_FormattedMarkdown(t *testing.T) {
 		t.Error("Expected ANSI codes in formatted output")
 	}
 }
+
+func createPhaseTestFiles(t *testing.T) string {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+
+	tasks := map[string]string{
+		"p01-with-phase.md": `---
+id: "p01"
+title: "Task with phase"
+status: pending
+priority: medium
+phase: "beta"
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+
+# Task with phase
+`,
+		"p02-no-phase.md": `---
+id: "p02"
+title: "Task without phase"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+
+# Task without phase
+`,
+	}
+
+	for filename, content := range tasks {
+		path := filepath.Join(tmpDir, filename)
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file %s: %v", filename, err)
+		}
+	}
+
+	return tmpDir
+}
+
+func TestGet_PhaseText(t *testing.T) {
+	tmpDir := createPhaseTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+
+	output := captureGetOutput(t, "p01")
+
+	if !strings.Contains(output, "Phase: beta") {
+		t.Error("Expected output to contain 'Phase: beta'")
+	}
+}
+
+func TestGet_PhaseOmittedWhenEmpty_Text(t *testing.T) {
+	tmpDir := createPhaseTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+
+	output := captureGetOutput(t, "p02")
+
+	if strings.Contains(output, "Phase:") {
+		t.Error("Expected phase to be omitted when empty")
+	}
+}
+
+func TestGet_PhaseJSON(t *testing.T) {
+	tmpDir := createPhaseTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+	getFormat = "json"
+
+	output := captureGetOutput(t, "p01")
+
+	var result getOutput
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		t.Fatalf("Failed to parse JSON output: %v\nOutput: %s", err, output)
+	}
+
+	if result.Phase != "beta" {
+		t.Errorf("Expected phase 'beta', got %q", result.Phase)
+	}
+}
+
+func TestGet_PhaseOmittedWhenEmpty_JSON(t *testing.T) {
+	tmpDir := createPhaseTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+	getFormat = "json"
+
+	output := captureGetOutput(t, "p02")
+
+	if strings.Contains(output, `"phase"`) {
+		t.Error("Expected phase to be omitted from JSON when empty")
+	}
+}
+
+func TestGet_PhaseYAML(t *testing.T) {
+	tmpDir := createPhaseTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+	getFormat = "yaml"
+
+	output := captureGetOutput(t, "p01")
+
+	if !strings.Contains(output, "phase: beta") {
+		t.Errorf("Expected YAML output to contain 'phase: beta', got:\n%s", output)
+	}
+}
+
+func TestGet_PhaseOmittedWhenEmpty_YAML(t *testing.T) {
+	tmpDir := createPhaseTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+	getFormat = "yaml"
+
+	output := captureGetOutput(t, "p02")
+
+	if strings.Contains(output, "phase:") {
+		t.Error("Expected phase to be omitted from YAML when empty")
+	}
+}
