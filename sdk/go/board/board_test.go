@@ -308,6 +308,113 @@ func TestGroupTasks_Phase(t *testing.T) {
 	}
 }
 
+func TestReorderKeys_PhaseConfigOrder(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "V0.3 task", Phase: "v0.3"},
+		{ID: "002", Title: "V0.1 task", Phase: "v0.1"},
+		{ID: "003", Title: "V0.2 task", Phase: "v0.2"},
+		{ID: "004", Title: "No phase"},
+	}
+
+	result, err := GroupTasks(tasks, "phase")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Before reorder: alphabetical with (none) last
+	if result.Keys[0] != "v0.1" {
+		t.Errorf("before reorder: Keys[0] = %q, want %q", result.Keys[0], "v0.1")
+	}
+
+	// Reorder with config order: v0.2 first, then v0.3, then v0.1
+	ReorderKeys(result, []string{"v0.2", "v0.3", "v0.1"})
+
+	expected := []string{"v0.2", "v0.3", "v0.1", defaultGroupKey}
+	if len(result.Keys) != len(expected) {
+		t.Fatalf("expected %d keys, got %d", len(expected), len(result.Keys))
+	}
+	for i, want := range expected {
+		if result.Keys[i] != want {
+			t.Errorf("Keys[%d] = %q, want %q", i, result.Keys[i], want)
+		}
+	}
+}
+
+func TestReorderKeys_UnknownPhasesAppendedAlphabetically(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Phase: "beta"},
+		{ID: "002", Phase: "alpha"},
+		{ID: "003", Phase: "gamma"},
+	}
+
+	result, err := GroupTasks(tasks, "phase")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Config only knows about "gamma" — others should follow alphabetically
+	ReorderKeys(result, []string{"gamma"})
+
+	expected := []string{"gamma", "alpha", "beta"}
+	if len(result.Keys) != len(expected) {
+		t.Fatalf("expected %d keys, got %d", len(expected), len(result.Keys))
+	}
+	for i, want := range expected {
+		if result.Keys[i] != want {
+			t.Errorf("Keys[%d] = %q, want %q", i, result.Keys[i], want)
+		}
+	}
+}
+
+func TestToJSON_IncludesPhase(t *testing.T) {
+	tasks := []*model.Task{
+		{
+			ID:    "001",
+			Title: "Task with phase",
+			Phase: "v0.2",
+		},
+	}
+
+	gr := &GroupResult{
+		Keys:   []string{"pending"},
+		Groups: map[string][]*model.Task{"pending": tasks},
+	}
+
+	result := ToJSON(gr)
+	jTask := result[0].Tasks[0]
+	if jTask.Phase != "v0.2" {
+		t.Errorf("expected phase %q, got %q", "v0.2", jTask.Phase)
+	}
+}
+
+func TestToJSON_OmitsEmptyPhase(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "No phase"},
+	}
+
+	gr := &GroupResult{
+		Keys:   []string{"pending"},
+		Groups: map[string][]*model.Task{"pending": tasks},
+	}
+
+	result := ToJSON(gr)
+	jTask := result[0].Tasks[0]
+
+	data, err := json.Marshal(jTask)
+	if err != nil {
+		t.Fatalf("json.Marshal failed: %v", err)
+	}
+
+	var raw map[string]any
+	if err := json.Unmarshal(data, &raw); err != nil {
+		t.Fatalf("json.Unmarshal failed: %v", err)
+	}
+
+	if _, exists := raw["phase"]; exists {
+		t.Error("expected phase to be omitted from JSON when empty, but it was present")
+	}
+}
+
 func TestGroupTasks_UnsupportedField(t *testing.T) {
 	tasks := []*model.Task{{ID: "001", Title: "Test"}}
 

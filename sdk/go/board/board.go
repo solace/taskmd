@@ -135,6 +135,7 @@ type JSONTask struct {
 	Priority string   `json:"priority,omitempty"`
 	Effort   string   `json:"effort,omitempty"`
 	Type     string   `json:"type,omitempty"`
+	Phase    string   `json:"phase,omitempty"`
 	Tags     []string `json:"tags,omitempty"`
 }
 
@@ -152,6 +153,7 @@ func ToJSON(gr *GroupResult) []JSONGroup {
 				Priority: string(t.Priority),
 				Effort:   string(t.Effort),
 				Type:     string(t.Type),
+				Phase:    t.Phase,
 				Tags:     t.Tags,
 			}
 		}
@@ -162,6 +164,13 @@ func ToJSON(gr *GroupResult) []JSONGroup {
 		})
 	}
 	return out
+}
+
+// ReorderKeys reorders the group result keys to match the given order.
+// Keys present in order come first (in order), remaining keys follow alphabetically.
+// This is useful for phase grouping where the order comes from configuration.
+func ReorderKeys(gr *GroupResult, order []string) {
+	gr.Keys = orderedKeys(gr.Groups, order)
 }
 
 func statusOrder() []string {

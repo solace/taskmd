@@ -66,7 +66,7 @@ func (s *Server) Start(ctx context.Context) error {
 	mux.HandleFunc("GET /api/tasks/{id}", handleTaskByID(s.dp))
 	mux.HandleFunc("GET /api/tasks/{id}/worklog", handleWorklog(s.dp))
 	mux.HandleFunc("PUT /api/tasks/{id}", handleUpdateTask(s.dp, s.config.ReadOnly))
-	mux.HandleFunc("GET /api/board", handleBoard(s.dp))
+	mux.HandleFunc("GET /api/board", handleBoard(s.dp, s.config.Phases))
 	mux.HandleFunc("GET /api/graph", handleGraph(s.dp))
 	mux.HandleFunc("GET /api/graph/mermaid", handleGraphMermaid(s.dp))
 	mux.HandleFunc("GET /api/stats", handleStats(s.dp))

@@ -198,7 +198,7 @@ func TestHandleBoard(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/board?groupBy=status", nil)
 	rec := httptest.NewRecorder()
 
-	handleBoard(dp)(rec, req)
+	handleBoard(dp, nil)(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
@@ -221,7 +221,7 @@ func TestHandleBoardDefaultGroupBy(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/board", nil)
 	rec := httptest.NewRecorder()
 
-	handleBoard(dp)(rec, req)
+	handleBoard(dp, nil)(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", rec.Code)
@@ -235,10 +235,89 @@ func TestHandleBoardInvalidGroupBy(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/api/board?groupBy=invalid", nil)
 	rec := httptest.NewRecorder()
 
-	handleBoard(dp)(rec, req)
+	handleBoard(dp, nil)(rec, req)
 
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400, got %d", rec.Code)
+	}
+}
+
+func TestHandleBoardPhaseGrouping_ConfigOrder(t *testing.T) {
+	dir := t.TempDir()
+
+	// Create tasks with different phases
+	for _, tc := range []struct{ file, content string }{
+		{"001.md", "---\nid: \"001\"\ntitle: \"T1\"\nstatus: pending\nphase: beta\n---\n"},
+		{"002.md", "---\nid: \"002\"\ntitle: \"T2\"\nstatus: pending\nphase: alpha\n---\n"},
+		{"003.md", "---\nid: \"003\"\ntitle: \"T3\"\nstatus: pending\nphase: gamma\n---\n"},
+		{"004.md", "---\nid: \"004\"\ntitle: \"T4\"\nstatus: pending\n---\n"},
+	} {
+		os.WriteFile(filepath.Join(dir, tc.file), []byte(tc.content), 0644)
+	}
+
+	dp := NewDataProvider(dir, false)
+	phases := []PhaseInfo{
+		{ID: "gamma", Name: "Gamma"},
+		{ID: "alpha", Name: "Alpha"},
+		{ID: "beta", Name: "Beta"},
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "/api/board?groupBy=phase", nil)
+	rec := httptest.NewRecorder()
+
+	handleBoard(dp, phases)(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var groups []board.JSONGroup
+	if err := json.Unmarshal(rec.Body.Bytes(), &groups); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+
+	if len(groups) != 4 {
+		t.Fatalf("expected 4 groups (3 phases + unphased), got %d", len(groups))
+	}
+
+	// Verify config order: gamma, alpha, beta, (none)
+	expectedOrder := []string{"gamma", "alpha", "beta", "(none)"}
+	for i, want := range expectedOrder {
+		if groups[i].Group != want {
+			t.Errorf("groups[%d].Group = %q, want %q", i, groups[i].Group, want)
+		}
+	}
+}
+
+func TestHandleBoardPhaseGrouping_NilPhases(t *testing.T) {
+	dir := t.TempDir()
+
+	os.WriteFile(filepath.Join(dir, "001.md"), []byte("---\nid: \"001\"\ntitle: \"T1\"\nstatus: pending\nphase: beta\n---\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "002.md"), []byte("---\nid: \"002\"\ntitle: \"T2\"\nstatus: pending\nphase: alpha\n---\n"), 0644)
+
+	dp := NewDataProvider(dir, false)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/board?groupBy=phase", nil)
+	rec := httptest.NewRecorder()
+
+	// No phases configured — should still work with alphabetical order
+	handleBoard(dp, nil)(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var groups []board.JSONGroup
+	if err := json.Unmarshal(rec.Body.Bytes(), &groups); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+
+	// Alphabetical when no config: alpha, beta
+	if len(groups) != 2 {
+		t.Fatalf("expected 2 groups, got %d", len(groups))
+	}
+	if groups[0].Group != "alpha" {
+		t.Errorf("groups[0].Group = %q, want %q", groups[0].Group, "alpha")
 	}
 }
 

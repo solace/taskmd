@@ -158,7 +158,7 @@ func handleTaskByID(dp *DataProvider) http.HandlerFunc {
 	}
 }
 
-func handleBoard(dp *DataProvider) http.HandlerFunc {
+func handleBoard(dp *DataProvider, phases []PhaseInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
@@ -175,6 +175,14 @@ func handleBoard(dp *DataProvider) http.HandlerFunc {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
+		}
+
+		if groupBy == "phase" && len(phases) > 0 {
+			phaseOrder := make([]string, len(phases))
+			for i, p := range phases {
+				phaseOrder[i] = p.ID
+			}
+			board.ReorderKeys(grouped, phaseOrder)
 		}
 
 		writeJSON(w, board.ToJSON(grouped))

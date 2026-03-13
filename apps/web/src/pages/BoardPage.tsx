@@ -11,7 +11,7 @@ import { ErrorState } from "../components/shared/ErrorState.tsx";
 import type { BoardGroup } from "../api/types.ts";
 import { STATUSES, PRIORITIES, EFFORTS, TYPES } from "../components/tasks/TaskTable/constants.ts";
 
-const groupByOptions = ["status", "priority", "effort", "type", "group", "tag", "phase"];
+const baseGroupByOptions = ["status", "priority", "effort", "type", "group", "tag"];
 
 const groupByToField: Record<string, string> = {
   status: "status",
@@ -22,10 +22,15 @@ const groupByToField: Record<string, string> = {
 
 export function BoardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const groupBy = searchParams.get("groupBy") ?? "status";
   const { phase } = usePhase();
+  const { readonly, phases } = useConfig();
+  const groupByOptions = useMemo(
+    () => phases.length > 0 ? [...baseGroupByOptions, "phase"] : baseGroupByOptions,
+    [phases],
+  );
+  const rawGroupBy = searchParams.get("groupBy") ?? "status";
+  const groupBy = groupByOptions.includes(rawGroupBy) ? rawGroupBy : "status";
   const { data, error, isLoading, mutate } = useBoard(groupBy, phase);
-  const { readonly } = useConfig();
   const [moveError, setMoveError] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
 
