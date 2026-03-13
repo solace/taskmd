@@ -16,6 +16,11 @@
       "name": "taskmd-mcp",
       "source": "./claude-code-plugin-mcp",
       "description": "MCP server for taskmd. Provides direct tool access for task operations without shelling out to the CLI."
+    },
+    {
+      "name": "taskmd-lite",
+      "source": "./claude-code-plugin-lite",
+      "description": "CLI-free taskmd plugin. Manage tasks using only Claude's native tools — no CLI binary required."
     }
   ]
 }

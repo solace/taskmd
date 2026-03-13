@@ -1,7 +1,7 @@
 ---
 title: "Create CLI-free Claude Code plugin with embedded spec"
 id: "01kkjy95y"
-status: pending
+status: completed
 priority: high
 type: feature
 effort: large
@@ -29,22 +29,22 @@ The existing `claude-code-plugin` relies heavily on `taskmd` CLI commands (e.g.,
 
 ## Tasks
 
-- [ ] Create `claude-code-plugin-lite/` directory with `.claude-plugin/plugin.json` manifest
-- [ ] Write a shared spec reference document (embedded in plugin or referenced by skills) containing the taskmd specification essentials: frontmatter schema, field values, file naming, directory structure, validation rules
-- [ ] Create `list-tasks` skill — uses Glob to find `tasks/**/*.md`, reads frontmatter via Read, filters/sorts/displays results
-- [ ] Create `get-task` skill — finds task by ID pattern matching filenames with Glob, reads full file content
-- [ ] Create `get-task-status` skill — lightweight version of get-task, reads only frontmatter
-- [ ] Create `next-task` skill — scans tasks, filters pending/non-blocked, ranks by priority/dependencies/effort
-- [ ] Create `add-task` skill — generates ID (per `.taskmd.yaml` strategy or default sequential), creates file with Write tool following spec format
-- [ ] Create `update-task` skill — finds task file, uses Edit to modify frontmatter fields or body content
-- [ ] Create `complete-task` skill — finds task file, updates status to completed via Edit, checks workflow mode in `.taskmd.yaml`
-- [ ] Create `validate-tasks` skill — scans all task files, checks required fields, valid enum values, unique IDs, dependency references, no circular deps
-- [ ] Create `verify-task` skill — reads task's `verify` field, runs bash checks via Bash, evaluates assert checks by inspecting code
-- [ ] Create `do-task` skill — orchestrates: find task → read → mark in-progress → execute → complete
-- [ ] Create `split-task` skill — reads task, assesses complexity, creates sub-task files as siblings
-- [ ] Create `divide-and-conquer` skill — reads task, plans workstreams, launches parallel subagents
-- [ ] Create `import-todos` skill — uses Grep to find TODO/FIXME comments, presents list, invokes add-task for selected items
-- [ ] Register plugin in `.claude-plugin/marketplace.json` as a third plugin entry
+- [x] Create `claude-code-plugin-lite/` directory with `.claude-plugin/plugin.json` manifest
+- [x] Write a shared spec reference document (embedded in plugin or referenced by skills) containing the taskmd specification essentials: frontmatter schema, field values, file naming, directory structure, validation rules
+- [x] Create `list-tasks` skill — uses Glob to find `tasks/**/*.md`, reads frontmatter via Read, filters/sorts/displays results
+- [x] Create `get-task` skill — finds task by ID pattern matching filenames with Glob, reads full file content
+- [x] Create `get-task-status` skill — lightweight version of get-task, reads only frontmatter
+- [x] Create `next-task` skill — scans tasks, filters pending/non-blocked, ranks by priority/dependencies/effort
+- [x] Create `add-task` skill — generates ID (per `.taskmd.yaml` strategy or default sequential), creates file with Write tool following spec format
+- [x] Create `update-task` skill — finds task file, uses Edit to modify frontmatter fields or body content
+- [x] Create `complete-task` skill — finds task file, updates status to completed via Edit, checks workflow mode in `.taskmd.yaml`
+- [x] Create `validate-tasks` skill — scans all task files, checks required fields, valid enum values, unique IDs, dependency references, no circular deps
+- [x] Create `verify-task` skill — reads task's `verify` field, runs bash checks via Bash, evaluates assert checks by inspecting code
+- [x] Create `do-task` skill — orchestrates: find task → read → mark in-progress → execute → complete
+- [x] Create `split-task` skill — reads task, assesses complexity, creates sub-task files as siblings
+- [x] Create `divide-and-conquer` skill — reads task, plans workstreams, launches parallel subagents
+- [x] Create `import-todos` skill — uses Grep to find TODO/FIXME comments, presents list, invokes add-task for selected items
+- [x] Register plugin in `.claude-plugin/marketplace.json` as a third plugin entry
 - [ ] Test all skills end-to-end without the CLI installed
 
 ## Design Decisions
