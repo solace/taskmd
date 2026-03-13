@@ -38,7 +38,7 @@ export function PhaseCard({ phase, stats }: PhaseCardProps) {
     <button
       type="button"
       onClick={() => navigate(`/tasks?phase=${phase.id}`)}
-      className="w-full text-left bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-300 hover:shadow-sm transition-all dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600"
+      className="w-full text-left cursor-pointer bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-300 hover:shadow-sm transition-all dark:bg-gray-800 dark:border-gray-700 dark:hover:border-gray-600"
     >
       <div className="mb-3">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">{phase.name}</h3>
