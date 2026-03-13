@@ -1,7 +1,7 @@
 ---
 title: "Add phase badge to task cards in web UI"
 id: "01kkhf96m"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["web", "phases", "ux"]
@@ -18,13 +18,13 @@ Display a small phase badge (chip/tag) on task cards throughout the web UI — i
 
 ## Tasks
 
-- [ ] Create a `PhaseBadge` component that renders a small colored chip with the phase name
-- [ ] Assign a consistent color to each phase (derive from phase ID hash or use a predefined palette based on config order)
-- [ ] Add `PhaseBadge` to `TaskCard.tsx` (used in board view)
-- [ ] Add `PhaseBadge` to task rows in the tasks list view
-- [ ] Add `PhaseBadge` to task detail view (if one exists)
-- [ ] Hide the badge when the task has no phase or when the view is already filtered to a single phase
-- [ ] Add tests for PhaseBadge component
+- [x] Create a `PhaseBadge` component that renders a small colored chip with the phase name
+- [x] Assign a consistent color to each phase (derive from phase ID hash or use a predefined palette based on config order)
+- [x] Add `PhaseBadge` to `TaskCard.tsx` (used in board view)
+- [x] Add `PhaseBadge` to task rows in the tasks list view
+- [x] Add `PhaseBadge` to task detail view (if one exists)
+- [x] Hide the badge when the task has no phase or when the view is already filtered to a single phase
+- [x] Add tests for PhaseBadge component
 
 ## Acceptance Criteria
 

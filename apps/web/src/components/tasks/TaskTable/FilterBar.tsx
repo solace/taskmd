@@ -1,4 +1,4 @@
-import { STATUSES, PRIORITIES, EFFORTS, TYPES, STATUS_COLORS, PRIORITY_COLORS, EFFORT_COLORS, TYPE_COLORS } from "./constants.ts";
+import { STATUSES, PRIORITIES, EFFORTS, TYPES, STATUS_COLORS, PRIORITY_COLORS, EFFORT_COLORS, TYPE_COLORS, getPhaseColor } from "./constants.ts";
 
 const INACTIVE_STYLE = "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400";
 
@@ -156,7 +156,7 @@ export function FilterBar({
                 onClick={() => onTogglePhase(m)}
                 className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
                   active
-                    ? "bg-teal-100 text-teal-700 font-medium ring-1 ring-teal-300 dark:bg-teal-900/30 dark:text-teal-300 dark:ring-teal-700"
+                    ? `${getPhaseColor(m)} font-medium`
                     : INACTIVE_STYLE
                 }`}
               >

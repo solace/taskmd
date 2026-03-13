@@ -11,7 +11,7 @@ import type { TaskUpdateRequest } from "../api/types.ts";
 import { TaskEditForm } from "../components/tasks/TaskEditForm.tsx";
 import { LoadingState } from "../components/shared/LoadingState.tsx";
 import { ErrorState } from "../components/shared/ErrorState.tsx";
-import { StatusBadge } from "../components/tasks/TaskTable/Badges.tsx";
+import { StatusBadge, PhaseBadge } from "../components/tasks/TaskTable/Badges.tsx";
 
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -106,7 +106,12 @@ export function TaskDetailPage() {
                 <Field label="Priority" value={task.priority} />
               )}
               {task.effort && <Field label="Effort" value={task.effort} />}
-              {task.phase && <Field label="Phase" value={task.phase} />}
+              {task.phase && (
+                <div>
+                  <dt className="text-xs text-gray-500 dark:text-gray-400">Phase</dt>
+                  <dd className="mt-0.5"><PhaseBadge phase={task.phase} /></dd>
+                </div>
+              )}
               {task.owner && <Field label="Owner" value={task.owner} />}
               {task.group && <Field label="Group" value={task.group} />}
               {task.parent && (

@@ -1,4 +1,4 @@
-import { STATUS_COLORS, PRIORITY_COLORS, TYPE_COLORS } from "./constants.ts";
+import { STATUS_COLORS, PRIORITY_COLORS, TYPE_COLORS, getPhaseColor } from "./constants.ts";
 
 export function StatusBadge({ status }: { status: string }) {
   return (
@@ -33,7 +33,7 @@ export function TypeBadge({ type: taskType }: { type: string }) {
 export function PhaseBadge({ phase }: { phase: string }) {
   return (
     <span
-      className="px-2 py-0.5 text-xs font-medium rounded-full bg-teal-100 text-teal-700 ring-1 ring-teal-300 dark:bg-teal-900/30 dark:text-teal-300 dark:ring-teal-700"
+      className={`px-2 py-0.5 text-xs font-medium rounded-full ${getPhaseColor(phase)}`}
     >
       {phase}
     </span>

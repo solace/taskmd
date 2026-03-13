@@ -150,6 +150,7 @@ export function BoardPage() {
             groupBy={groupBy}
             readonly={readonly}
             onTaskMove={handleTaskMove}
+            showPhase={groupBy !== "phase" && !phase}
           />
           {moving && (
             <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/60 flex items-center justify-center rounded-lg">

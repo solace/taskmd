@@ -14,9 +14,10 @@ interface BoardColumnProps {
   canDrag: boolean;
   onTaskDrop?: (taskId: string, sourceGroup: string, targetGroup: string) => void;
   focusedCardIndex?: number;
+  showPhase?: boolean;
 }
 
-export function BoardColumn({ group, canDrag, onTaskDrop, focusedCardIndex = -1 }: BoardColumnProps) {
+export function BoardColumn({ group, canDrag, onTaskDrop, focusedCardIndex = -1, showPhase = true }: BoardColumnProps) {
   const [dragOver, setDragOver] = useState(false);
   const dragOverRef = useRef(false);
 
@@ -70,6 +71,7 @@ export function BoardColumn({ group, canDrag, onTaskDrop, focusedCardIndex = -1 
             sourceGroup={group.group}
             canDrag={canDrag}
             focused={idx === focusedCardIndex}
+            showPhase={showPhase}
           />
         ))}
         {group.tasks.length === 0 && (

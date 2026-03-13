@@ -10,9 +10,10 @@ interface BoardViewProps {
   groupBy: string;
   readonly: boolean;
   onTaskMove?: (taskId: string, sourceGroup: string, targetGroup: string) => void;
+  showPhase?: boolean;
 }
 
-export function BoardView({ groups, groupBy, readonly, onTaskMove }: BoardViewProps) {
+export function BoardView({ groups, groupBy, readonly, onTaskMove, showPhase = true }: BoardViewProps) {
   const canDrag = !readonly && draggableGroupByFields.includes(groupBy);
   const navigate = useNavigate();
   const [focusedCol, setFocusedCol] = useState(-1);
@@ -84,6 +85,7 @@ export function BoardView({ groups, groupBy, readonly, onTaskMove }: BoardViewPr
           canDrag={canDrag}
           onTaskDrop={onTaskMove}
           focusedCardIndex={colIdx === focusedCol ? focusedCard : -1}
+          showPhase={showPhase}
         />
       ))}
     </div>

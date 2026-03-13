@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { BoardTask } from "../../api/types.ts";
+import { PhaseBadge } from "../tasks/TaskTable/Badges.tsx";
 
 interface TaskCardProps {
   task: BoardTask;
   sourceGroup: string;
   canDrag: boolean;
   focused?: boolean;
+  showPhase?: boolean;
 }
 
 // Prevent browser default drop behavior (navigation) anywhere on the page
@@ -14,7 +16,7 @@ function preventNavigation(e: Event) {
   e.preventDefault();
 }
 
-export function TaskCard({ task, sourceGroup, canDrag, focused = false }: TaskCardProps) {
+export function TaskCard({ task, sourceGroup, canDrag, focused = false, showPhase = true }: TaskCardProps) {
   const guardActive = useRef(false);
   const [dragging, setDragging] = useState(false);
 
@@ -86,10 +88,8 @@ export function TaskCard({ task, sourceGroup, canDrag, focused = false }: TaskCa
             {task.priority}
           </span>
         )}
-        {task.phase && (
-          <span className="px-1.5 py-0.5 text-xs rounded-full bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-300">
-            {task.phase}
-          </span>
+        {showPhase && task.phase && (
+          <PhaseBadge phase={task.phase} />
         )}
       </div>
     </div>

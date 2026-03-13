@@ -7,6 +7,7 @@ export function createTaskColumns(
   selectedTags: Set<string>,
   toggleTag: (tag: string) => void,
   taskStatusMap?: Map<string, string>,
+  showPhase = true,
 ) {
   const columnHelper = createColumnHelper<Task>();
 
@@ -74,7 +75,8 @@ export function createTaskColumns(
       meta: { className: "hidden md:table-cell" },
       cell: (info) => {
         const v = info.getValue();
-        return v ? <PhaseBadge phase={v} /> : "-";
+        if (!v) return "-";
+        return showPhase ? <PhaseBadge phase={v} /> : v;
       },
     }),
     columnHelper.accessor("owner", {

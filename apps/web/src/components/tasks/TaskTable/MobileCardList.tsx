@@ -1,15 +1,16 @@
 import { Link, useNavigate } from "react-router-dom";
 import type { Row } from "@tanstack/react-table";
 import type { Task } from "../../../api/types.ts";
-import { StatusBadge, PriorityBadge } from "./Badges.tsx";
+import { StatusBadge, PriorityBadge, PhaseBadge } from "./Badges.tsx";
 import { KeyboardList } from "../../shared/KeyboardList.tsx";
 
 interface MobileCardListProps {
   rows: Row<Task>[];
   onClearFilters: () => void;
+  showPhase?: boolean;
 }
 
-export function MobileCardList({ rows, onClearFilters }: MobileCardListProps) {
+export function MobileCardList({ rows, onClearFilters, showPhase = true }: MobileCardListProps) {
   const navigate = useNavigate();
 
   return (
@@ -53,6 +54,11 @@ export function MobileCardList({ rows, onClearFilters }: MobileCardListProps) {
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-2">
                 {task.title}
               </p>
+              {showPhase && task.phase && (
+                <div className="mt-1">
+                  <PhaseBadge phase={task.phase} />
+                </div>
+              )}
             </Link>
           );
         })

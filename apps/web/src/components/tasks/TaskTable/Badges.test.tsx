@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { StatusBadge, PriorityBadge, TypeBadge, BlockedStatusBadge } from "./Badges.tsx";
-import { STATUS_COLORS, PRIORITY_COLORS, TYPE_COLORS } from "./constants.ts";
+import { StatusBadge, PriorityBadge, TypeBadge, PhaseBadge, BlockedStatusBadge } from "./Badges.tsx";
+import { STATUS_COLORS, PRIORITY_COLORS, TYPE_COLORS, getPhaseColor } from "./constants.ts";
 
 describe("StatusBadge", () => {
   it.each(Object.keys(STATUS_COLORS))("renders '%s' with correct color classes", (status) => {
@@ -52,6 +52,35 @@ describe("TypeBadge", () => {
     const { container } = render(<TypeBadge type="unknown" />);
     const badge = container.querySelector("span")!;
     expect(badge.className).toContain("bg-gray-100");
+  });
+});
+
+describe("PhaseBadge", () => {
+  it("renders the phase name", () => {
+    render(<PhaseBadge phase="alpha" />);
+    expect(screen.getByText("alpha")).toBeInTheDocument();
+  });
+
+  it("applies color classes from getPhaseColor", () => {
+    const { container } = render(<PhaseBadge phase="beta" />);
+    const badge = container.querySelector("span")!;
+    const expectedColor = getPhaseColor("beta");
+    for (const cls of expectedColor.split(" ")) {
+      expect(badge.className).toContain(cls);
+    }
+  });
+
+  it("assigns different colors to different phases", () => {
+    const color1 = getPhaseColor("alpha");
+    const color2 = getPhaseColor("beta");
+    const color3 = getPhaseColor("gamma");
+    // At least two of the three should differ (hash collision is theoretically possible but unlikely)
+    const unique = new Set([color1, color2, color3]);
+    expect(unique.size).toBeGreaterThanOrEqual(2);
+  });
+
+  it("assigns the same color to the same phase consistently", () => {
+    expect(getPhaseColor("release-1")).toBe(getPhaseColor("release-1"));
   });
 });
 

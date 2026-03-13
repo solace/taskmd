@@ -10,6 +10,7 @@ import { useState, useMemo, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { KeyboardList } from "../shared/KeyboardList.tsx";
 import type { Task } from "../../api/types.ts";
+import { usePhase } from "../../hooks/use-phase.tsx";
 import { STATUSES, PRIORITIES, EFFORTS, TYPES } from "./TaskTable/constants.ts";
 import { FilterBar } from "./TaskTable/FilterBar.tsx";
 import { createTaskColumns } from "./TaskTable/columns.tsx";
@@ -50,6 +51,8 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
     () => new Set<string>(),
   );
 
+  const { phase: globalPhase } = usePhase();
+
   const availablePhases = useMemo(() => {
     const phases = new Set<string>();
     for (const task of tasks) {
@@ -57,6 +60,9 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
     }
     return [...phases].sort();
   }, [tasks]);
+
+  // Hide phase badges when filtered to a single phase (global selector or local filter)
+  const showPhase = !globalPhase && !(selectedPhases.size === 1);
 
   const filterState = { selectedStatuses, selectedPriorities, selectedTypes, selectedTags, selectedEffort, selectedPhases, globalFilter };
   const hasActiveFilters = checkActiveFilters(filterState);
@@ -109,8 +115,8 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
   );
 
   const columns = useMemo(
-    () => createTaskColumns(selectedTags, toggleTag, taskStatusMap),
-    [selectedTags, taskStatusMap],
+    () => createTaskColumns(selectedTags, toggleTag, taskStatusMap, showPhase),
+    [selectedTags, taskStatusMap, showPhase],
   );
 
   const table = useReactTable({
@@ -194,7 +200,7 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
         onClearFilters={clearFilters}
         hasActiveFilters={hasActiveFilters}
       />
-      <MobileCardList rows={rows} onClearFilters={clearFilters} />
+      <MobileCardList rows={rows} onClearFilters={clearFilters} showPhase={showPhase} />
       {/* Desktop table */}
       <KeyboardList
         className="hidden sm:block overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
