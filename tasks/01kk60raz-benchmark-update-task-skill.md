@@ -13,23 +13,37 @@ phase: skill-benchmarks
 
 ## Objective
 
-Run the update-task skill **with and without** the taskmd skill loaded in an isolated project, then compare quality, accuracy, token usage, and latency.
+Benchmark the update-task skill by running it with and without the skill loaded, comparing quality, timing, token usage, and cost.
+
+## Prerequisites
+
+- Read `benchmark/CLAUDE.md` for methodology, control case setup, and known pitfalls
+- Use `benchmark/run_eval.sh` for all eval runs (handles stream-json, timing extraction)
+- Reference `benchmark/evals.json` for the eval prompts and assertions
 
 ## Tasks
 
-- [ ] Create isolated temp dir, run `taskmd init`, copy fixtures from `benchmark/fixtures/tasks/`
-- [ ] Run **without_skill** baseline: `claude -p "change task 002 to high priority and add the tag backend"` (no skill loaded)
-- [ ] Save without_skill output to `benchmark/iteration-1/eval-5-update-task/without_skill/outputs/result.md`
-- [ ] Run **with_skill** variant: `claude -p "change task 002 to high priority and add the tag backend" --allowedTools "taskmd:*"` (skill loaded)
-- [ ] Save with_skill output to `benchmark/iteration-1/eval-5-update-task/with_skill/outputs/result.md`
-- [ ] Record token usage and duration in `timing.json` for both runs
-- [ ] Grade both runs against assertions in `eval_metadata.json`, save `grading.json` for each
-- [ ] Run `aggregate_benchmark.py` to produce `benchmark.json` and `benchmark.md` with comparison deltas
-- [ ] Evaluate: compare quality, accuracy, tokens, and latency between with/without skill
+- [ ] Set up isolated projects using `benchmark/fixtures/setup.sh`
+  - **with_skill**: full `taskmd init` project (CLAUDE.md, .taskmd.yaml, TASKMD_SPEC.md present)
+  - **without_skill**: bare project — remove CLAUDE.md, TASKMD_SPEC.md, .taskmd.yaml, .taskmd/; block `taskmd` from PATH using shadow dir
+- [ ] Run with_skill eval using `benchmark/run_eval.sh`:
+  ```
+  bash benchmark/run_eval.sh <project-dir> "change task 002 to high priority and add the tag backend" benchmark/iteration-1/eval-5-update-task/with_skill/outputs --allowedTools "Bash,taskmd:update-task"
+  ```
+- [ ] Run without_skill baseline using `benchmark/run_eval.sh` with taskmd blocked:
+  ```
+  PATH="$SHADOW_DIR:$PATH" bash benchmark/run_eval.sh <project-dir> "change task 002 to high priority and add the tag backend" benchmark/iteration-1/eval-5-update-task/without_skill/outputs --allowedTools "Bash"
+  ```
+- [ ] Write `eval_metadata.json` with assertions from `evals.json`
+- [ ] Grade both outputs against assertions
+- [ ] Write `benchmark.json` with pass rates, timing deltas, token/cost comparison
+- [ ] Write `report.md` summarizing results (see `benchmark/iteration-1/report.md` for format)
+- [ ] Write improvement suggestions to `benchmark/suggestions/update-task.md`
 
 ## Acceptance Criteria
 
-- Both with_skill and without_skill runs are executed and recorded
-- Grading.json files exist for both configurations with assertion results
-- benchmark.json contains comparison deltas (pass_rate, tokens, time)
-- Token usage and duration recorded in timing.json for both runs
+- Both with_skill and without_skill runs are executed and saved to `benchmark/iteration-1/`
+- `timing.json` exists for both runs with duration_ms, output_tokens, total_cost_usd
+- `benchmark.json` contains pass rate deltas AND timing/cost comparison
+- `report.md` exists with results table, timing table, analysis, and recommendations
+- `benchmark/suggestions/update-task.md` written with improvement ideas
