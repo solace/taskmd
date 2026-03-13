@@ -130,7 +130,7 @@
     },
     {
       "id": 11,
-      "skill": "divide-and-conquer",
+      "skill": "split-task",
       "prompt": "task 002 is too big, can you split it into smaller pieces?",
       "expected_output": "Looks up task 002 (8 subtasks spanning backend, frontend, tests), assesses as complex enough, creates 3-4 sub-tasks",
       "assertions": [
@@ -150,6 +150,20 @@
         {"id": "presents-table", "text": "Displays TODOs in a numbered table format"},
         {"id": "checks-dupes", "text": "Checks existing tasks for duplicates"},
         {"id": "asks-selection", "text": "Asks user which TODOs to convert"}
+      ]
+    },
+    {
+      "id": 13,
+      "skill": "divide-and-conquer",
+      "prompt": "pick up task 002 and work on it using parallel subagents",
+      "expected_output": "Looks up task 002, marks in-progress, plans workstreams, launches parallel subagents, integrates results, marks complete",
+      "assertions": [
+        {"id": "looks-up", "text": "Runs taskmd get to find the task and reads the task file"},
+        {"id": "marks-in-progress", "text": "Sets task status to in-progress"},
+        {"id": "plans-workstreams", "text": "Uses EnterPlanMode to identify independent workstreams"},
+        {"id": "launches-subagents", "text": "Launches parallel subagents via the Agent tool for independent workstreams"},
+        {"id": "integrates", "text": "Reviews subagent results and integrates changes"},
+        {"id": "marks-complete", "text": "Marks the task as completed with --verify"}
       ]
     }
   ]
