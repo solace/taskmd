@@ -1,7 +1,7 @@
 ---
 title: "Sort phase warnings deterministically in taskmd phases command"
 id: "01kkk3bkw"
-status: pending
+status: completed
 priority: high
 type: bug
 tags: []
@@ -30,9 +30,9 @@ Warning order varies between runs due to non-deterministic map iteration in Go.
 
 ## Tasks
 
-- [ ] Locate the code in the `phases` command that collects and prints undefined phase warnings
-- [ ] Sort the warnings (or the phase names) before printing
-- [ ] Add a test verifying deterministic warning order
+- [x] Locate the code in the `phases` command that collects and prints undefined phase warnings
+- [x] Sort the warnings (or the phase names) before printing
+- [x] Add a test verifying deterministic warning order
 
 ## Acceptance Criteria
 

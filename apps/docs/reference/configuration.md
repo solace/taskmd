@@ -292,10 +292,12 @@ The `phases` key defines the phases available for your project. Tasks reference 
 ```yaml
 # .taskmd.yaml
 phases:
-  - name: "v0.2"
+  - id: v0.2
+    name: "v0.2 – Core CLI"
     description: "Core CLI features"
     due: 2026-04-01
-  - name: "v0.3"
+  - id: v0.3
+    name: "v0.3 – Web Dashboard"
     description: "Web dashboard"
     due: 2026-06-01
 ```
@@ -304,8 +306,9 @@ Each phase entry has the following fields:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `name` | Yes | Phase identifier (must match the task's `phase` field) |
-| `description` | No | Human-readable description of the phase's scope |
+| `id` | Yes | Unique phase identifier (must match the task's `phase` field) |
+| `name` | Yes | Human-readable display name for the phase |
+| `description` | No | Description of the phase's scope |
 | `due` | No | Target date in `YYYY-MM-DD` format |
 
 **Behavior:**

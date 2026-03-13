@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -142,8 +143,13 @@ func warnOrphanedPhases(phases []validator.PhaseConfig, tasks []*model.Task) {
 			orphaned[task.Phase]++
 		}
 	}
-	for phase, count := range orphaned {
-		fmt.Fprintf(os.Stderr, "Warning: %d task(s) reference undefined phase %q\n", count, phase)
+	sortedPhases := make([]string, 0, len(orphaned))
+	for phase := range orphaned {
+		sortedPhases = append(sortedPhases, phase)
+	}
+	sort.Strings(sortedPhases)
+	for _, phase := range sortedPhases {
+		fmt.Fprintf(os.Stderr, "Warning: %d task(s) reference undefined phase %q\n", orphaned[phase], phase)
 	}
 }
 

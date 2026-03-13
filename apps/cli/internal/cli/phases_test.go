@@ -265,6 +265,46 @@ phase: unknown-phase
 	}
 }
 
+func TestPhases_OrphanedPhaseWarningsSortedDeterministically(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetPhasesFlags()
+	setupPhasesConfig(t, []map[string]any{
+		{"id": "mvp", "name": "MVP"},
+	})
+
+	// Create tasks referencing multiple undefined phases.
+	for i, phase := range []string{"zebra", "alpha", "middle"} {
+		content := "---\nid: \"00" + string(rune('1'+i)) + "\"\ntitle: \"Task\"\nstatus: pending\nphase: " + phase + "\n---"
+		if err := os.WriteFile(filepath.Join(tmpDir, "00"+string(rune('1'+i))+".md"), []byte(content), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	// Run multiple times and verify consistent ordering.
+	var firstStderr string
+	for i := 0; i < 5; i++ {
+		_, stderr, err := capturePhasesOutput(t, []string{tmpDir})
+		if err != nil {
+			t.Fatalf("runPhases failed: %v", err)
+		}
+		if i == 0 {
+			firstStderr = stderr
+			// Verify alphabetical order: alpha, middle, zebra.
+			alphaIdx := strings.Index(stderr, "alpha")
+			middleIdx := strings.Index(stderr, "middle")
+			zebraIdx := strings.Index(stderr, "zebra")
+			if alphaIdx == -1 || middleIdx == -1 || zebraIdx == -1 {
+				t.Fatalf("expected all three undefined phases in warnings, got:\n%s", stderr)
+			}
+			if !(alphaIdx < middleIdx && middleIdx < zebraIdx) {
+				t.Errorf("expected warnings in alphabetical order (alpha < middle < zebra), got:\n%s", stderr)
+			}
+		} else if stderr != firstStderr {
+			t.Errorf("warning order changed between runs.\nFirst:\n%s\nRun %d:\n%s", firstStderr, i+1, stderr)
+		}
+	}
+}
+
 func TestPhases_InvalidFormat(t *testing.T) {
 	tmpDir := createPhasesTestFiles(t)
 	resetPhasesFlags()
