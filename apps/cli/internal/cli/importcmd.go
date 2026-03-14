@@ -31,8 +31,9 @@ var (
 )
 
 var importCmd = &cobra.Command{
-	Use:   "import",
-	Short: "Import tasks from external sources",
+	Use:        "import",
+	SuggestFor: []string{"ingest"},
+	Short:      "Import tasks from external sources",
 	Long: `Import fetches tasks from an external source (GitHub Issues, Jira, etc.)
 and creates local markdown task files. This is a one-time onboarding tool
 for populating your tasks/ directory.

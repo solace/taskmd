@@ -18,8 +18,9 @@ var (
 )
 
 var reportCmd = &cobra.Command{
-	Use:   "report [path]",
-	Short: "Generate a comprehensive project report",
+	Use:        "report [path]",
+	SuggestFor: []string{"summary"},
+	Short:      "Generate a comprehensive project report",
 	Long: `Generate a comprehensive report combining summary statistics, task groupings,
 critical path analysis, blocked tasks, and optional dependency graphs.
 

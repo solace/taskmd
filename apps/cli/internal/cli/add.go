@@ -35,8 +35,9 @@ var (
 )
 
 var addCmd = &cobra.Command{
-	Use:   "add <title>",
-	Short: "Create a new task",
+	Use:        "add <title>",
+	SuggestFor: []string{"create", "new"},
+	Short:      "Create a new task",
 	Long: `Add creates a new task markdown file with proper frontmatter.
 
 The title is used to generate both the task title and the filename slug.

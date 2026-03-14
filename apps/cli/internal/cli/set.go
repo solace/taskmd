@@ -39,7 +39,7 @@ var (
 
 var setCmd = &cobra.Command{
 	Use:        "set [task-id]",
-	SuggestFor: []string{"edit", "modify", "change"},
+	SuggestFor: []string{"edit", "modify", "change", "update"},
 	Short:      "Set a task's frontmatter fields",
 	Long: `Set modifies frontmatter fields (status, priority, effort, tags) of a task file.
 
@@ -58,40 +58,27 @@ Examples:
 	RunE: runSet,
 }
 
-// Deprecated: use "set" instead.
-var updateCmd = &cobra.Command{
-	Use:        "update [task-id]",
-	Short:      "Update a task's frontmatter fields (deprecated: use 'set')",
-	Args:       cobra.MaximumNArgs(1),
-	RunE:       runSet,
-	Hidden:     true,
-	Deprecated: "use 'set' instead",
-}
-
 func init() {
 	rootCmd.AddCommand(setCmd)
-	rootCmd.AddCommand(updateCmd)
 
-	for _, cmd := range []*cobra.Command{setCmd, updateCmd} {
-		cmd.Flags().StringVar(&setTaskID, "task-id", "", "task ID to update (required)")
-		cmd.Flags().StringVar(&setStatus, "status", "", "new status (pending, in-progress, completed, in-review, blocked, cancelled)")
-		cmd.Flags().StringVar(&setPriority, "priority", "", "new priority (low, medium, high, critical)")
-		cmd.Flags().StringVar(&setEffort, "effort", "", "new effort (small, medium, large)")
-		cmd.Flags().StringVar(&setType, "type", "", "work type (feature, bug, improvement, chore, docs)")
-		cmd.Flags().StringVar(&setOwner, "owner", "", "owner/assignee of the task")
-		cmd.Flags().StringVar(&setParent, "parent", "", "parent task ID (use empty string to clear)")
-		cmd.Flags().BoolVar(&setDone, "done", false, "mark task as completed (alias for --status completed)")
-		cmd.Flags().BoolVar(&setDryRun, "dry-run", false, "preview changes without writing to disk")
-		cmd.Flags().BoolVar(&setVerify, "verify", false, "run verification checks before completing a task")
-		cmd.Flags().StringArrayVar(&setAddTags, "add-tag", nil, "add a tag (repeatable)")
-		cmd.Flags().StringArrayVar(&setRemoveTags, "remove-tag", nil, "remove a tag (repeatable)")
-		cmd.Flags().StringArrayVar(&setAddPRs, "add-pr", nil, "add a PR URL (repeatable)")
-		cmd.Flags().StringArrayVar(&setRemovePRs, "remove-pr", nil, "remove a PR URL (repeatable)")
-		cmd.Flags().StringArrayVar(&setAddTouches, "add-touches", nil, "add a scope identifier to touches (repeatable)")
-		cmd.Flags().StringArrayVar(&setRemoveTouches, "remove-touches", nil, "remove a scope identifier from touches (repeatable)")
-		cmd.Flags().StringVar(&setDependsOn, "depends-on", "", "set dependencies (comma-separated IDs, e.g. 010,015)")
-		cmd.Flags().StringVar(&setPhase, "phase", "", "phase name (use empty string to clear)")
-	}
+	setCmd.Flags().StringVar(&setTaskID, "task-id", "", "task ID to update (required)")
+	setCmd.Flags().StringVar(&setStatus, "status", "", "new status (pending, in-progress, completed, in-review, blocked, cancelled)")
+	setCmd.Flags().StringVar(&setPriority, "priority", "", "new priority (low, medium, high, critical)")
+	setCmd.Flags().StringVar(&setEffort, "effort", "", "new effort (small, medium, large)")
+	setCmd.Flags().StringVar(&setType, "type", "", "work type (feature, bug, improvement, chore, docs)")
+	setCmd.Flags().StringVar(&setOwner, "owner", "", "owner/assignee of the task")
+	setCmd.Flags().StringVar(&setParent, "parent", "", "parent task ID (use empty string to clear)")
+	setCmd.Flags().BoolVar(&setDone, "done", false, "mark task as completed (alias for --status completed)")
+	setCmd.Flags().BoolVar(&setDryRun, "dry-run", false, "preview changes without writing to disk")
+	setCmd.Flags().BoolVar(&setVerify, "verify", false, "run verification checks before completing a task")
+	setCmd.Flags().StringArrayVar(&setAddTags, "add-tag", nil, "add a tag (repeatable)")
+	setCmd.Flags().StringArrayVar(&setRemoveTags, "remove-tag", nil, "remove a tag (repeatable)")
+	setCmd.Flags().StringArrayVar(&setAddPRs, "add-pr", nil, "add a PR URL (repeatable)")
+	setCmd.Flags().StringArrayVar(&setRemovePRs, "remove-pr", nil, "remove a PR URL (repeatable)")
+	setCmd.Flags().StringArrayVar(&setAddTouches, "add-touches", nil, "add a scope identifier to touches (repeatable)")
+	setCmd.Flags().StringArrayVar(&setRemoveTouches, "remove-touches", nil, "remove a scope identifier from touches (repeatable)")
+	setCmd.Flags().StringVar(&setDependsOn, "depends-on", "", "set dependencies (comma-separated IDs, e.g. 010,015)")
+	setCmd.Flags().StringVar(&setPhase, "phase", "", "phase name (use empty string to clear)")
 }
 
 func resolveSetTaskID(cmd *cobra.Command, args []string) (string, error) {

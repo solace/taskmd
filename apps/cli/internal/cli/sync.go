@@ -18,9 +18,10 @@ var (
 )
 
 var syncCmd = &cobra.Command{
-	Use:   "sync",
-	Short: "Sync tasks from external sources",
-	Long:  `Commands for syncing tasks with external sources (GitHub Issues, Jira, etc.).`,
+	Use:        "sync",
+	SuggestFor: []string{"pull", "fetch"},
+	Short:      "Sync tasks from external sources",
+	Long:       `Commands for syncing tasks with external sources (GitHub Issues, Jira, etc.).`,
 }
 
 var syncDownCmd = &cobra.Command{

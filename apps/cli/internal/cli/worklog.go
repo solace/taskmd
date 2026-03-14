@@ -17,8 +17,9 @@ var (
 )
 
 var worklogCmd = &cobra.Command{
-	Use:   "worklog [task-id]",
-	Short: "View or add worklog entries for a task",
+	Use:        "worklog [task-id]",
+	SuggestFor: []string{"journal", "notes"},
+	Short:      "View or add worklog entries for a task",
 	Long: `View or add worklog entries for a task.
 
 Examples:

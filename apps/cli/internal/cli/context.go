@@ -23,8 +23,9 @@ var (
 )
 
 var contextCmd = &cobra.Command{
-	Use:   "context",
-	Short: "Show file context for a task",
+	Use:        "context",
+	SuggestFor: []string{"ctx", "scope"},
+	Short:      "Show file context for a task",
 	Long: `Context resolves all relevant files for a task into a structured output.
 
 Files come from two sources:

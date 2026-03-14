@@ -34,7 +34,7 @@ var getStdinReader io.Reader = os.Stdin
 
 var getCmd = &cobra.Command{
 	Use:        "get <query>",
-	SuggestFor: []string{"view", "info", "detail", "details", "describe"},
+	SuggestFor: []string{"view", "info", "detail", "details", "describe", "show"},
 	Short:      "Get detailed information about a specific task",
 	Long: `Get displays detailed information about a specific task, identified by ID, title, or file path.
 
@@ -59,31 +59,14 @@ Examples:
 	RunE: runGet,
 }
 
-// Deprecated: use "get" instead.
-var showCmd = &cobra.Command{
-	Use:        "show <query>",
-	Short:      "Show detailed information about a specific task (deprecated: use 'get')",
-	Args:       cobra.ExactArgs(1),
-	RunE:       runGet,
-	Hidden:     true,
-	Deprecated: "use 'get' instead",
-}
-
 func init() {
 	rootCmd.AddCommand(getCmd)
-	rootCmd.AddCommand(showCmd)
 
 	getCmd.Flags().StringVar(&getFormat, "format", "text", "output format (text, json, yaml)")
 	getCmd.Flags().BoolVar(&getExact, "exact", false, "disable fuzzy matching, exact only")
 	getCmd.Flags().Float64Var(&getThreshold, "threshold", 0.6, "fuzzy match sensitivity (0.0-1.0)")
 	getCmd.Flags().BoolVar(&getShowContext, "context", false, "include context files in output")
 	getCmd.Flags().BoolVar(&getRawMarkdown, "raw-markdown", false, "display raw markdown without formatting")
-
-	showCmd.Flags().StringVar(&getFormat, "format", "text", "output format (text, json, yaml)")
-	showCmd.Flags().BoolVar(&getExact, "exact", false, "disable fuzzy matching, exact only")
-	showCmd.Flags().Float64Var(&getThreshold, "threshold", 0.6, "fuzzy match sensitivity (0.0-1.0)")
-	showCmd.Flags().BoolVar(&getShowContext, "context", false, "include context files in output")
-	showCmd.Flags().BoolVar(&getRawMarkdown, "raw-markdown", false, "display raw markdown without formatting")
 }
 
 func runGet(cmd *cobra.Command, args []string) error {

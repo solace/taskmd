@@ -24,9 +24,10 @@ var (
 )
 
 var todosCmd = &cobra.Command{
-	Use:   "todos",
-	Short: "Find TODO/FIXME comments in source code",
-	Long:  `Commands for scanning source code files to find marker comments like TODO, FIXME, HACK, and more.`,
+	Use:        "todos",
+	SuggestFor: []string{"fixme", "todo"},
+	Short:      "Find TODO/FIXME comments in source code",
+	Long:       `Commands for scanning source code files to find marker comments like TODO, FIXME, HACK, and more.`,
 }
 
 var todosListCmd = &cobra.Command{

@@ -32,8 +32,9 @@ var (
 )
 
 var archiveCmd = &cobra.Command{
-	Use:   "archive [task-id]",
-	Short: "Archive or delete completed/cancelled tasks",
+	Use:        "archive [task-id]",
+	SuggestFor: []string{"cleanup", "clean"},
+	Short:      "Archive or delete completed/cancelled tasks",
 	Long: `Archive moves task files into an archive/ subdirectory, keeping your
 main task list clean while preserving history. Use --delete to permanently
 remove tasks instead of archiving them.

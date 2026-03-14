@@ -25,8 +25,9 @@ var (
 var rmStdinReader io.Reader = os.Stdin
 
 var rmCmd = &cobra.Command{
-	Use:   "rm <task-id>",
-	Short: "Delete a task file permanently",
+	Use:        "rm <task-id>",
+	SuggestFor: []string{"delete", "remove"},
+	Short:      "Delete a task file permanently",
 	Long: `Remove permanently deletes a task file by ID.
 
 The command looks up the task, displays its details, and asks for confirmation

@@ -29,8 +29,9 @@ var (
 )
 
 var verifyCmd = &cobra.Command{
-	Use:   "verify [task-id]",
-	Short: "Run verification checks for a task",
+	Use:        "verify [task-id]",
+	SuggestFor: []string{"test", "check"},
+	Short:      "Run verification checks for a task",
 	Long: `Verify runs the acceptance checks defined in a task's verify field.
 
 The task is identified by a positional argument or --task-id (exact match only).

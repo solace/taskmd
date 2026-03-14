@@ -19,8 +19,9 @@ var (
 )
 
 var tracksCmd = &cobra.Command{
-	Use:   "tracks [path]",
-	Short: "Show parallel work tracks based on scope overlap",
+	Use:        "tracks [path]",
+	SuggestFor: []string{"lanes", "parallel"},
+	Short:      "Show parallel work tracks based on scope overlap",
 	Long: `Tracks assigns actionable tasks to parallel tracks based on the "touches"
 frontmatter field. Tasks sharing a scope are placed in separate tracks so they
 can be worked on without merge conflicts.

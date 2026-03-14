@@ -48,8 +48,9 @@ type FileChange struct {
 var taskIDFromFilenameRegex = regexp.MustCompile(`(?:^|/)(\w+)-`)
 
 var feedCmd = &cobra.Command{
-	Use:   "feed",
-	Short: "Show a chronological activity feed of task changes",
+	Use:        "feed",
+	SuggestFor: []string{"activity", "log", "history"},
+	Short:      "Show a chronological activity feed of task changes",
 	Long: `Show a chronological activity feed of recent changes to task files.
 
 Uses git log to detect task creation, modification, and renames,

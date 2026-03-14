@@ -27,8 +27,9 @@ var (
 var statusStdinReader io.Reader = os.Stdin
 
 var statusCmd = &cobra.Command{
-	Use:   "status [query]",
-	Short: "Show in-progress tasks or get metadata for a specific task",
+	Use:        "status [query]",
+	SuggestFor: []string{"progress"},
+	Short:      "Show in-progress tasks or get metadata for a specific task",
 	Long: `Without arguments, status shows all in-progress tasks.
 With a query argument, it displays the frontmatter metadata of a specific task
 (without body content, resolved dependency info, context files, or worklog data).

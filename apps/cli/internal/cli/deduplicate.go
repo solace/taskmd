@@ -33,8 +33,9 @@ var dedupIsTTY = func() bool {
 }
 
 var deduplicateCmd = &cobra.Command{
-	Use:   "deduplicate [path]",
-	Short: "Detect and resolve duplicate task IDs",
+	Use:        "deduplicate [path]",
+	SuggestFor: []string{"dedup"},
+	Short:      "Detect and resolve duplicate task IDs",
 	Long: `Deduplicate finds tasks with colliding IDs and reassigns new IDs to resolve conflicts.
 
 When multiple contributors create tasks on separate branches, IDs can collide after merge.
