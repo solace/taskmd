@@ -294,7 +294,7 @@ Use taskmd directly inside [Claude Code](https://claude.com/claude-code) with sl
 /taskmd:list-tasks --status pending  # List pending tasks
 /taskmd:add-task Fix login bug       # Create a new task
 /taskmd:complete-task 015      # Mark a task done
-/taskmd:validate               # Validate task files
+/taskmd:validate-tasks         # Validate task files
 ```
 
 Two plugins are available — **taskmd** provides slash command skills for interactive workflows, and **taskmd-mcp** provides an MCP server for direct tool access. You can install either or both.

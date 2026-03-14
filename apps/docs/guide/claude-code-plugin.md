@@ -54,7 +54,7 @@ claude plugin install taskmd-mcp@taskmd-marketplace --scope project
 | `/taskmd:add-task <description>` | Create a new task file |
 | `/taskmd:complete-task <ID>` | Mark a task as completed |
 | `/taskmd:list-tasks` | List tasks with optional filters |
-| `/taskmd:validate` | Validate task files for errors |
+| `/taskmd:validate-tasks` | Validate task files for errors |
 
 ## Usage
 
@@ -112,8 +112,8 @@ Claude will determine the next available ID, choose the appropriate subdirectory
 ### Validate task files
 
 ```
-/taskmd:validate
-/taskmd:validate --format json
+/taskmd:validate-tasks
+/taskmd:validate-tasks --format json
 ```
 
 ## Troubleshooting
