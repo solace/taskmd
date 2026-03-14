@@ -75,6 +75,10 @@ taskmd verify <id>                       # Run acceptance checks
 - A task with unmet dependencies should stay `pending` or `blocked`
 - Circular dependencies are invalid -- use `taskmd validate` to detect them
 
+### Phases
+
+- When introducing a new phase, add it to the `phases` list in `.taskmd.yaml` before assigning it to tasks
+
 ## Worklogs
 
 When worklogs are enabled (`worklogs: true` in `.taskmd.yaml`), record progress with:

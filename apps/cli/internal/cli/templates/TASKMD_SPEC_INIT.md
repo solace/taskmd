@@ -103,6 +103,8 @@ phases:
 | `description` | No | Description |
 | `due` | No | Target date (`YYYY-MM-DD`) |
 
+When introducing a new phase, add it to the `phases` list in `.taskmd.yaml` before assigning it to tasks.
+
 ### Other Settings
 
 | Key | Values | Description |
