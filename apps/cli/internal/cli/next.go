@@ -3,8 +3,10 @@ package cli
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -14,6 +16,8 @@ import (
 
 // Recommendation is re-exported from the shared package.
 type Recommendation = next.Recommendation
+
+const nextDefaultColumns = "rank,id,title,priority,effort,file,reason"
 
 var (
 	nextFormat       string
@@ -25,6 +29,7 @@ var (
 	nextExact        bool
 	nextPhase        string
 	nextStrictPhases bool
+	nextColumns      string
 )
 
 var nextCmd = &cobra.Command{
@@ -50,7 +55,8 @@ Examples:
   taskmd next --scope web/graph
   taskmd next --scope web/graph --exact
   taskmd next --phase v0.2
-  taskmd next --strict-phases`,
+  taskmd next --strict-phases
+  taskmd next --columns rank,id,title,reason`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runNext,
 }
@@ -67,6 +73,7 @@ func init() {
 	nextCmd.Flags().BoolVar(&nextExact, "exact", false, "disable dependency expansion for --scope (only direct matches)")
 	nextCmd.Flags().StringVar(&nextPhase, "phase", "", "filter by phase")
 	nextCmd.Flags().BoolVar(&nextStrictPhases, "strict-phases", false, "enforce strict phase ordering (earlier phases always rank first)")
+	nextCmd.Flags().StringVar(&nextColumns, "columns", nextDefaultColumns, "comma-separated columns for table output (e.g. rank,id,title,reason)")
 }
 
 func runNext(cmd *cobra.Command, args []string) error {
@@ -151,6 +158,12 @@ func outputNextYAML(recs []Recommendation) error {
 	return WriteYAML(os.Stdout, recs)
 }
 
+// validNextColumns lists all valid column names for the next command.
+var validNextColumns = []string{
+	"rank", "id", "title", "status", "priority", "effort", "phase",
+	"tags", "file", "deps", "reason", "score",
+}
+
 func outputNextTable(recs []Recommendation) error {
 	r := getRenderer()
 
@@ -167,6 +180,11 @@ func outputNextTable(recs []Recommendation) error {
 		return nil
 	}
 
+	columns, err := parseNextColumns(nextColumns)
+	if err != nil {
+		return err
+	}
+
 	label := "Recommended tasks:"
 	if nextScope != "" {
 		label = fmt.Sprintf("Recommended tasks (scope: %s):", nextScope)
@@ -181,25 +199,106 @@ func outputNextTable(recs []Recommendation) error {
 	fmt.Println()
 
 	tw := NewTableWriter()
-	tw.AddHeader([]string{"#", "ID", "Title", "Priority", "Effort", "File", "Reason"})
+	headers := make([]string, len(columns))
+	for i, col := range columns {
+		headers[i] = nextColumnDisplayName(col)
+	}
+	tw.AddHeader(headers)
 	tw.AddSeparator()
 
 	for _, rec := range recs {
-		rank := fmt.Sprintf("%d", rec.Rank)
-		reason := strings.Join(rec.Reasons, ", ")
-		plain := []string{rank, rec.ID, rec.Title, rec.Priority, rec.Effort, rec.FilePath, reason}
-		colored := []string{
-			rank,
-			formatTaskID(rec.ID, r),
-			rec.Title,
-			formatPriority(rec.Priority, r),
-			formatEffort(rec.Effort, r),
-			formatDim(rec.FilePath, r),
-			reason,
+		plain := make([]string, len(columns))
+		colored := make([]string, len(columns))
+		for i, col := range columns {
+			plain[i] = getNextColumnValue(&rec, col)
+			colored[i] = colorizeNextColumn(&rec, col, r)
 		}
 		tw.AddRow(plain, colored)
 	}
 
 	tw.Flush(os.Stdout)
 	return nil
+}
+
+// parseNextColumns splits the columns string and validates each column name.
+func parseNextColumns(columnsStr string) ([]string, error) {
+	parts := strings.Split(columnsStr, ",")
+	columns := make([]string, 0, len(parts))
+	for _, col := range parts {
+		col = strings.ToLower(strings.TrimSpace(col))
+		if col == "" {
+			continue
+		}
+		if !slices.Contains(validNextColumns, col) {
+			return nil, invalidValueError("column", col, validNextColumns)
+		}
+		columns = append(columns, col)
+	}
+	if len(columns) == 0 {
+		return nil, fmt.Errorf("no valid columns specified")
+	}
+	return columns, nil
+}
+
+// getNextColumnValue extracts the value for a column from a Recommendation.
+func getNextColumnValue(rec *Recommendation, column string) string {
+	switch column {
+	case "rank":
+		return fmt.Sprintf("%d", rec.Rank)
+	case "id":
+		return rec.ID
+	case "title":
+		return rec.Title
+	case "status":
+		return rec.Status
+	case "priority":
+		return rec.Priority
+	case "effort":
+		return rec.Effort
+	case "file":
+		return rec.FilePath
+	case "reason":
+		return strings.Join(rec.Reasons, ", ")
+	case "score":
+		return fmt.Sprintf("%d", rec.Score)
+	case "phase", "tags", "deps":
+		return ""
+	default:
+		return ""
+	}
+}
+
+// nextColumnDisplayName returns the display header for a column.
+// Special columns get custom names; others are title-cased.
+func nextColumnDisplayName(col string) string {
+	switch col {
+	case "rank":
+		return "#"
+	case "id":
+		return "ID"
+	case "deps":
+		return "Deps"
+	default:
+		if len(col) == 0 {
+			return col
+		}
+		return strings.ToUpper(col[:1]) + col[1:]
+	}
+}
+
+// colorizeNextColumn returns the column value with color formatting applied.
+func colorizeNextColumn(rec *Recommendation, column string, r *lipgloss.Renderer) string {
+	value := getNextColumnValue(rec, column)
+	switch column {
+	case "id":
+		return formatTaskID(value, r)
+	case "priority":
+		return formatPriority(value, r)
+	case "effort":
+		return formatEffort(value, r)
+	case "file":
+		return formatDim(value, r)
+	default:
+		return value
+	}
 }

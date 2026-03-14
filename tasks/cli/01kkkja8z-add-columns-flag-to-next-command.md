@@ -1,7 +1,7 @@
 ---
 title: "Add --columns flag to next command"
 id: "01kkkja8z"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["cli"]
@@ -16,15 +16,15 @@ Add a `--columns` flag to the `next` command to allow users to customize which c
 
 ## Tasks
 
-- [ ] Add `--columns` string flag to the `next` command in `apps/cli/internal/cli/next.go` with a sensible default (e.g. `rank,id,title,priority,effort,file,reason`)
-- [ ] Update `outputNextTable` to use the columns flag instead of hardcoded headers, following the pattern in `list.go:outputTable`
-- [ ] Support next-specific columns: `rank` (the `#` column), `reason`, `score` — in addition to standard task columns (`id`, `title`, `priority`, `effort`, `status`, `phase`, `tags`, `file`, `deps`, etc.)
-- [ ] Add unit tests in `next_test.go` covering:
-  - [ ] Default columns match current behavior
-  - [ ] Custom column selection works (e.g. `--columns id,title,reason`)
-  - [ ] Invalid column names produce a clear error
-  - [ ] Flag only affects table format (json/yaml unaffected)
-- [ ] Update command help text with `--columns` usage example
+- [x] Add `--columns` string flag to the `next` command in `apps/cli/internal/cli/next.go` with a sensible default (e.g. `rank,id,title,priority,effort,file,reason`)
+- [x] Update `outputNextTable` to use the columns flag instead of hardcoded headers, following the pattern in `list.go:outputTable`
+- [x] Support next-specific columns: `rank` (the `#` column), `reason`, `score` — in addition to standard task columns (`id`, `title`, `priority`, `effort`, `status`, `phase`, `tags`, `file`, `deps`, etc.)
+- [x] Add unit tests in `next_test.go` covering:
+  - [x] Default columns match current behavior
+  - [x] Custom column selection works (e.g. `--columns id,title,reason`)
+  - [x] Invalid column names produce a clear error
+  - [x] Flag only affects table format (json/yaml unaffected)
+- [x] Update command help text with `--columns` usage example
 
 ## Acceptance Criteria
 

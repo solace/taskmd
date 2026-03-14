@@ -176,6 +176,7 @@ func resetNextFlags() {
 	nextExact = false
 	nextPhase = ""
 	nextStrictPhases = false
+	nextColumns = nextDefaultColumns
 }
 
 func TestNext_BasicRanking(t *testing.T) {
@@ -2265,5 +2266,197 @@ func TestNext_StrictPhases_WithPhaseFilter(t *testing.T) {
 	// Both are v0.2, so normal scoring: 003 (medium) before 001 (low)
 	if recs[0].ID != "003" {
 		t.Errorf("Expected 003 first within filtered v0.2, got %s", recs[0].ID)
+	}
+}
+
+func TestNext_Columns_DefaultMatchesLegacy(t *testing.T) {
+	tmpDir := createNextTestTaskFiles(t)
+
+	resetNextFlags()
+	nextLimit = 3
+
+	output, err := captureNextOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runNext failed: %v", err)
+	}
+
+	// Default columns should produce headers: #, ID, Title, Priority, Effort, File, Reason
+	for _, col := range []string{"#", "ID", "Title", "Priority", "Effort", "File", "Reason"} {
+		if !strings.Contains(output, col) {
+			t.Errorf("Default output missing expected column header %q", col)
+		}
+	}
+}
+
+func TestNext_Columns_CustomSelection(t *testing.T) {
+	tmpDir := createNextTestTaskFiles(t)
+
+	resetNextFlags()
+	nextColumns = "id,title,reason"
+	nextLimit = 3
+
+	output, err := captureNextOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runNext failed: %v", err)
+	}
+
+	lower := strings.ToLower(output)
+	// Selected columns should be present
+	for _, col := range []string{"id", "title", "reason"} {
+		if !strings.Contains(lower, col) {
+			t.Errorf("Custom output missing expected column %q", col)
+		}
+	}
+
+	// Non-selected columns should not appear as headers
+	// Check that "priority" and "effort" don't appear as column headers
+	// (they could appear in data, but we check the header line)
+	lines := strings.Split(output, "\n")
+	if len(lines) > 2 {
+		headerLine := strings.ToLower(lines[2]) // after label and blank line
+		if strings.Contains(headerLine, "priority") {
+			t.Errorf("Custom output should not contain 'priority' column header")
+		}
+		if strings.Contains(headerLine, "effort") {
+			t.Errorf("Custom output should not contain 'effort' column header")
+		}
+	}
+}
+
+func TestNext_Columns_ScoreColumn(t *testing.T) {
+	tmpDir := createNextTestTaskFiles(t)
+
+	resetNextFlags()
+	nextColumns = "rank,id,score"
+	nextLimit = 3
+
+	output, err := captureNextOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runNext failed: %v", err)
+	}
+
+	if !strings.Contains(strings.ToLower(output), "score") {
+		t.Error("Output should contain 'score' column")
+	}
+}
+
+func TestNext_Columns_InvalidColumn(t *testing.T) {
+	tmpDir := createNextTestTaskFiles(t)
+
+	resetNextFlags()
+	nextColumns = "id,title,bogus"
+	nextLimit = 3
+
+	_, err := captureNextOutput(t, []string{tmpDir})
+	if err == nil {
+		t.Fatal("Expected error for invalid column name, got nil")
+	}
+	if !strings.Contains(err.Error(), "bogus") {
+		t.Errorf("Error should mention invalid column name 'bogus', got: %v", err)
+	}
+}
+
+func TestNext_Columns_JSONUnaffected(t *testing.T) {
+	tmpDir := createNextTestTaskFiles(t)
+
+	resetNextFlags()
+	nextFormat = "json"
+	nextColumns = "id,title"
+	nextLimit = 3
+
+	output, err := captureNextOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runNext failed: %v", err)
+	}
+
+	// JSON output should contain all fields regardless of --columns
+	var recs []Recommendation
+	if err := json.Unmarshal([]byte(output), &recs); err != nil {
+		t.Fatalf("Failed to parse JSON: %v", err)
+	}
+
+	if len(recs) == 0 {
+		t.Fatal("Expected recommendations in JSON output")
+	}
+
+	// JSON should still have fields like Score and Priority
+	if recs[0].Score == 0 && recs[0].Priority == "" {
+		t.Error("JSON output should contain all fields regardless of --columns flag")
+	}
+}
+
+func TestNext_Columns_CaseInsensitive(t *testing.T) {
+	tmpDir := createNextTestTaskFiles(t)
+
+	resetNextFlags()
+	nextColumns = "ID, Title, Reason"
+	nextLimit = 3
+
+	output, err := captureNextOutput(t, []string{tmpDir})
+	if err != nil {
+		t.Fatalf("runNext failed: %v", err)
+	}
+
+	lower := strings.ToLower(output)
+	for _, col := range []string{"id", "title", "reason"} {
+		if !strings.Contains(lower, col) {
+			t.Errorf("Case-insensitive columns missing %q in output", col)
+		}
+	}
+}
+
+func TestParseNextColumns(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    []string
+		wantErr bool
+	}{
+		{
+			name:  "default columns",
+			input: "rank,id,title,priority,effort,file,reason",
+			want:  []string{"rank", "id", "title", "priority", "effort", "file", "reason"},
+		},
+		{
+			name:  "case insensitive with whitespace",
+			input: " ID , Title , Score ",
+			want:  []string{"id", "title", "score"},
+		},
+		{
+			name:    "invalid column",
+			input:   "id,invalid",
+			wantErr: true,
+		},
+		{
+			name:    "empty string",
+			input:   "",
+			wantErr: true,
+		},
+		{
+			name:  "single column",
+			input: "id",
+			want:  []string{"id"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseNextColumns(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseNextColumns(%q) error = %v, wantErr %v", tt.input, err, tt.wantErr)
+				return
+			}
+			if !tt.wantErr {
+				if len(got) != len(tt.want) {
+					t.Errorf("parseNextColumns(%q) = %v, want %v", tt.input, got, tt.want)
+					return
+				}
+				for i := range got {
+					if got[i] != tt.want[i] {
+						t.Errorf("parseNextColumns(%q)[%d] = %q, want %q", tt.input, i, got[i], tt.want[i])
+					}
+				}
+			}
+		})
 	}
 }
