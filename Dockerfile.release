@@ -1,0 +1,29 @@
+# Lightweight Dockerfile for CI releases.
+# Uses pre-built binaries instead of compiling from source,
+# avoiding slow QEMU emulation for cross-platform builds.
+FROM alpine:3.20
+
+ARG VERSION=dev
+ARG TARGETARCH
+
+LABEL org.opencontainers.image.title="taskmd" \
+      org.opencontainers.image.description="Markdown-based task management CLI and web dashboard" \
+      org.opencontainers.image.url="https://github.com/driangle/taskmd" \
+      org.opencontainers.image.source="https://github.com/driangle/taskmd" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.version="${VERSION}"
+
+RUN apk add --no-cache ca-certificates tini
+
+# Run as non-root user
+RUN adduser -D -h /home/taskmd taskmd
+USER taskmd
+
+COPY taskmd-linux-${TARGETARCH} /usr/local/bin/taskmd
+
+WORKDIR /tasks
+
+EXPOSE 8080
+
+ENTRYPOINT ["tini", "--"]
+CMD ["taskmd", "web", "start"]

@@ -278,7 +278,22 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: |
+          echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Download pre-built release binaries
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p docker-context
+          cd docker-context
+          gh release download ${{ steps.version.outputs.tag }} \
+            --pattern "taskmd-${{ steps.version.outputs.tag }}-linux-amd64.tar.gz" \
+            --pattern "taskmd-${{ steps.version.outputs.tag }}-linux-arm64.tar.gz"
+          tar xzf taskmd-${{ steps.version.outputs.tag }}-linux-amd64.tar.gz
+          tar xzf taskmd-${{ steps.version.outputs.tag }}-linux-arm64.tar.gz
+          ls -la
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -307,17 +322,14 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: ./docker-context
+          file: ./Dockerfile.release
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VERSION=${{ steps.version.outputs.version }}
-            GIT_COMMIT=${{ github.sha }}
-            BUILD_DATE=${{ github.event.repository.updated_at }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Set package to public
         env:
