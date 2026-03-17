@@ -371,7 +371,7 @@ func (v *Validator) ValidateConfig(config *ConfigData) *ValidationResult {
 	v.checkUnknownConfigKeys(config, result)
 	v.checkWorkflowValue(config, result)
 	v.checkIDConfig(config, result)
-	v.checkDuplicatePhases(config, result)
+	v.checkPhaseConfig(config, result)
 
 	return result
 }
@@ -412,8 +412,8 @@ func (v *Validator) checkIDConfig(config *ConfigData, result *ValidationResult) 
 	}
 }
 
-// checkDuplicatePhases warns on duplicate phase id or name values.
-func (v *Validator) checkDuplicatePhases(config *ConfigData, result *ValidationResult) {
+// checkPhaseConfig validates phase entries for structural issues and duplicates.
+func (v *Validator) checkPhaseConfig(config *ConfigData, result *ValidationResult) {
 	if len(config.Phases) == 0 {
 		return
 	}
@@ -421,7 +421,23 @@ func (v *Validator) checkDuplicatePhases(config *ConfigData, result *ValidationR
 	seenIDs := make(map[string]bool)
 	seenNames := make(map[string]bool)
 
-	for _, phase := range config.Phases {
+	for i, phase := range config.Phases {
+		// Structural checks
+		if phase.Name == "" {
+			result.AddIssue(LevelError, "", config.ConfigPath,
+				fmt.Sprintf("phase at index %d is missing required field: name", i))
+		}
+
+		if phase.ID == "" {
+			label := phase.Name
+			if label == "" {
+				label = fmt.Sprintf("index %d", i)
+			}
+			result.AddIssue(LevelWarning, "", config.ConfigPath,
+				fmt.Sprintf("phase '%s' is missing field: id (falling back to name)", label))
+		}
+
+		// Duplicate checks
 		if phase.ID != "" {
 			if seenIDs[phase.ID] {
 				result.AddIssue(LevelWarning, "", config.ConfigPath,

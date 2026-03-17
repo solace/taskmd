@@ -213,7 +213,9 @@ func validateConfig(v *validator.Validator, validationResult *validator.Validati
 			if key == "" {
 				key = m.Name // backwards compat: fall back to name if no id
 			}
-			knownPhases[key] = true
+			if key != "" {
+				knownPhases[key] = true
+			}
 		}
 		mergeValidationResults(validationResult, v.ValidatePhasesAgainstConfig(tasks, knownPhases))
 	}
@@ -317,14 +319,6 @@ func parsePhaseEntry(m map[string]any) (validator.PhaseConfig, bool) {
 	}
 	if name, ok := m["name"].(string); ok {
 		mc.Name = name
-	}
-	if mc.ID == "" {
-		label := mc.Name
-		if label == "" {
-			label = "(unnamed)"
-		}
-		fmt.Fprintf(os.Stderr, "Warning: phase %q is missing \"id\" field and will be skipped\n", label)
-		return mc, false
 	}
 	if desc, ok := m["description"].(string); ok {
 		mc.Description = desc

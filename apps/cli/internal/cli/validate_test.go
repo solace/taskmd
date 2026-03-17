@@ -926,7 +926,7 @@ func TestParsePhasesConfig_IDFieldParsed(t *testing.T) {
 	}
 }
 
-func TestParsePhasesConfig_NoID_SkippedWithWarning(t *testing.T) {
+func TestParsePhasesConfig_NoID_StillIncluded(t *testing.T) {
 	raw := []any{
 		map[string]any{
 			"name": "Legacy Phase",
@@ -934,8 +934,14 @@ func TestParsePhasesConfig_NoID_SkippedWithWarning(t *testing.T) {
 	}
 
 	phases := parsePhasesConfig(raw)
-	if len(phases) != 0 {
-		t.Fatalf("expected 0 phases (no id → skipped), got %d", len(phases))
+	if len(phases) != 1 {
+		t.Fatalf("expected 1 phase (no id but still included for validation), got %d", len(phases))
+	}
+	if phases[0].Name != "Legacy Phase" {
+		t.Errorf("Name = %q, want %q", phases[0].Name, "Legacy Phase")
+	}
+	if phases[0].ID != "" {
+		t.Errorf("ID = %q, want empty", phases[0].ID)
 	}
 }
 

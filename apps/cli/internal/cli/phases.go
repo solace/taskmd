@@ -72,7 +72,8 @@ func runPhases(cmd *cobra.Command, args []string) error {
 		fmt.Fprintln(os.Stderr)
 	}
 
-	phases := parsePhasesConfig(viper.Get("phases"))
+	allPhases := parsePhasesConfig(viper.Get("phases"))
+	phases := filterValidPhases(allPhases)
 	if len(phases) == 0 {
 		fmt.Fprintln(os.Stderr, "No phases configured. Add phases to your .taskmd.yaml file:")
 		fmt.Fprintln(os.Stderr, "")
@@ -96,6 +97,23 @@ func runPhases(cmd *cobra.Command, args []string) error {
 	default:
 		return ValidateFormat(phasesFormat, []string{"table", "json", "yaml"})
 	}
+}
+
+// filterValidPhases returns only phases that have an id, warning about those that don't.
+func filterValidPhases(phases []validator.PhaseConfig) []validator.PhaseConfig {
+	valid := make([]validator.PhaseConfig, 0, len(phases))
+	for _, p := range phases {
+		if p.ID == "" {
+			label := p.Name
+			if label == "" {
+				label = "(unnamed)"
+			}
+			fmt.Fprintf(os.Stderr, "Warning: phase %q is missing \"id\" field and will be skipped\n", label)
+			continue
+		}
+		valid = append(valid, p)
+	}
+	return valid
 }
 
 func computePhaseSummaries(phases []validator.PhaseConfig, tasks []*model.Task) []PhaseSummary {

@@ -1396,6 +1396,107 @@ func TestValidatePhases_EmptyPhaseSkipped(t *testing.T) {
 	}
 }
 
+func TestValidateConfig_PhaseMissingName(t *testing.T) {
+	v := NewValidator(false)
+	config := &ConfigData{
+		Phases: []PhaseConfig{
+			{ID: "alpha"},
+		},
+		TopKeys:    []string{"phases"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	if result.Errors != 1 {
+		t.Errorf("Expected 1 error for missing name, got %d", result.Errors)
+		for _, issue := range result.Issues {
+			t.Logf("  Issue: [%s] %s", issue.Level, issue.Message)
+		}
+	}
+
+	found := false
+	for _, issue := range result.Issues {
+		if issue.Level == LevelError && issue.Message == "phase at index 0 is missing required field: name" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Expected error about missing name field")
+	}
+}
+
+func TestValidateConfig_PhaseMissingID(t *testing.T) {
+	v := NewValidator(false)
+	config := &ConfigData{
+		Phases: []PhaseConfig{
+			{Name: "Alpha Phase"},
+		},
+		TopKeys:    []string{"phases"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	if result.Warnings != 1 {
+		t.Errorf("Expected 1 warning for missing id, got %d", result.Warnings)
+		for _, issue := range result.Issues {
+			t.Logf("  Issue: [%s] %s", issue.Level, issue.Message)
+		}
+	}
+
+	found := false
+	for _, issue := range result.Issues {
+		if issue.Level == LevelWarning && issue.Message == "phase 'Alpha Phase' is missing field: id (falling back to name)" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("Expected warning about missing id field")
+	}
+}
+
+func TestValidateConfig_PhaseMissingBothIDAndName(t *testing.T) {
+	v := NewValidator(false)
+	config := &ConfigData{
+		Phases: []PhaseConfig{
+			{},
+		},
+		TopKeys:    []string{"phases"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	if result.Errors != 1 {
+		t.Errorf("Expected 1 error for missing name, got %d", result.Errors)
+	}
+	if result.Warnings != 1 {
+		t.Errorf("Expected 1 warning for missing id, got %d", result.Warnings)
+	}
+}
+
+func TestValidateConfig_PhaseValidStructure(t *testing.T) {
+	v := NewValidator(false)
+	config := &ConfigData{
+		Phases: []PhaseConfig{
+			{ID: "alpha", Name: "Alpha"},
+			{ID: "beta", Name: "Beta"},
+		},
+		TopKeys:    []string{"phases"},
+		ConfigPath: ".taskmd.yaml",
+	}
+
+	result := v.ValidateConfig(config)
+
+	if result.Errors != 0 || result.Warnings != 0 {
+		t.Errorf("Expected no issues for valid phases, got %d errors, %d warnings", result.Errors, result.Warnings)
+		for _, issue := range result.Issues {
+			t.Logf("  Issue: [%s] %s", issue.Level, issue.Message)
+		}
+	}
+}
+
 func TestValidateConfig_PhasesIsKnownKey(t *testing.T) {
 	v := NewValidator(false)
 	config := &ConfigData{
