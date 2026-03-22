@@ -226,6 +226,11 @@ func resolveTaskDir() string {
 		return taskDir
 	}
 
+	// No local config found — check for default_project in global config
+	if dir := resolveDefaultProject(); dir != "" {
+		return dir
+	}
+
 	return "."
 }
 
@@ -308,6 +313,22 @@ func resolveProjectTaskDir(projectPath string) (string, error) {
 	}
 
 	return projectPath, nil
+}
+
+// resolveDefaultProject checks the global config for a default_project setting
+// and resolves it to a task directory. Returns empty string if not set or invalid.
+func resolveDefaultProject() string {
+	defaultID := LoadDefaultProject()
+	if defaultID == "" {
+		return ""
+	}
+
+	dir, err := resolveProjectDir(defaultID)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: default_project %q: %v\n", defaultID, err)
+		return ""
+	}
+	return dir
 }
 
 // resolveIDConfig returns the ID generation config with defaults applied.

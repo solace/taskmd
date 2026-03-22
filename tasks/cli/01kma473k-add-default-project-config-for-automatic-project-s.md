@@ -1,7 +1,7 @@
 ---
 title: "Add default_project config for automatic project scoping"
 id: "01kma473k"
-status: pending
+status: completed
 priority: low
 type: feature
 tags: ["global-registry", "config"]
@@ -17,11 +17,11 @@ Add a `default_project` key to `~/.taskmd.yaml` that automatically scopes comman
 
 ## Tasks
 
-- [ ] Read `default_project` from `~/.taskmd.yaml` in `LoadGlobalRegistry()` (or a sibling function)
-- [ ] During config resolution, when no local `.taskmd.yaml` is found and no `--project` flag is set, check for `default_project`
-- [ ] If set, resolve it against the global registry and use that project's config as if `--project` was passed
-- [ ] If the default project id is not found in the registry, warn and fall back to normal behavior
-- [ ] Add tests for default project resolution and fallback
+- [x] Read `default_project` from `~/.taskmd.yaml` in `LoadGlobalRegistry()` (or a sibling function)
+- [x] During config resolution, when no local `.taskmd.yaml` is found and no `--project` flag is set, check for `default_project`
+- [x] If set, resolve it against the global registry and use that project's config as if `--project` was passed
+- [x] If the default project id is not found in the registry, warn and fall back to normal behavior
+- [x] Add tests for default project resolution and fallback
 
 ## Acceptance Criteria
 

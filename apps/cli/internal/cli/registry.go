@@ -19,7 +19,8 @@ type GlobalProjectEntry struct {
 
 // globalConfig is the minimal YAML shape for reading the projects key.
 type globalConfig struct {
-	Projects []globalProjectYAML `yaml:"projects"`
+	Projects       []globalProjectYAML `yaml:"projects"`
+	DefaultProject string              `yaml:"default_project"`
 }
 
 type globalProjectYAML struct {
@@ -55,6 +56,27 @@ func LoadGlobalRegistry() ([]GlobalProjectEntry, error) {
 	}
 
 	return parseProjectEntries(cfg.Projects, filepath.Dir(cfgPath))
+}
+
+// LoadDefaultProject reads the default_project key from the global config.
+// Returns empty string if not set or if the config file doesn't exist.
+func LoadDefaultProject() string {
+	cfgPath, err := globalConfigPath()
+	if err != nil {
+		return ""
+	}
+
+	data, err := os.ReadFile(cfgPath)
+	if err != nil {
+		return ""
+	}
+
+	var cfg globalConfig
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return ""
+	}
+
+	return cfg.DefaultProject
 }
 
 // parseProjectEntries converts raw YAML entries into validated GlobalProjectEntry values.
