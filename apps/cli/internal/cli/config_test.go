@@ -21,6 +21,7 @@ func resetFlags() {
 	quiet = false
 	verbose = false
 	taskDir = "."
+	projectFlag = ""
 	webPort = 8080
 	webDev = false
 	webOpen = false

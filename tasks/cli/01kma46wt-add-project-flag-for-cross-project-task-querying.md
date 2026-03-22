@@ -1,7 +1,7 @@
 ---
 title: "Add --project flag for cross-project task querying"
 id: "01kma46wt"
-status: pending
+status: completed
 priority: high
 type: feature
 tags: ["global-registry", "cli-command"]

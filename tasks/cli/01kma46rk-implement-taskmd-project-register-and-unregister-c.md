@@ -1,7 +1,7 @@
 ---
 title: "Implement taskmd project register and unregister commands"
 id: "01kma46rk"
-status: pending
+status: completed
 priority: high
 type: feature
 tags: ["global-registry", "cli-command"]

@@ -20,13 +20,14 @@ var (
 	GitDirty  = ""
 
 	// Global flags
-	cfgFile string
-	stdin   bool
-	quiet   bool
-	verbose bool
-	debug   bool
-	noColor bool
-	taskDir string
+	cfgFile     string
+	stdin       bool
+	quiet       bool
+	verbose     bool
+	debug       bool
+	noColor     bool
+	taskDir     string
+	projectFlag string
 )
 
 // rootCmd represents the base command
@@ -83,6 +84,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug output (prints to stderr)")
 	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
 	rootCmd.PersistentFlags().StringVarP(&taskDir, "task-dir", "d", ".", "task directory to scan")
+
+	rootCmd.PersistentFlags().StringVar(&projectFlag, "project", "", "operate on a registered project by id")
 
 	// Deprecated alias: --dir still works but is hidden
 	rootCmd.PersistentFlags().StringVar(&taskDir, "dir", "", "task directory (deprecated: use --task-dir)")
@@ -184,6 +187,16 @@ func resolveRelativeToConfig(dir string) string {
 
 // resolveTaskDir determines the task directory using proper precedence.
 func resolveTaskDir() string {
+	// --project flag takes highest precedence
+	if projectFlag != "" {
+		dir, err := resolveProjectDir(projectFlag)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		return dir
+	}
+
 	// Check if --task-dir or --dir was explicitly passed on the CLI
 	taskDirFlag := rootCmd.PersistentFlags().Lookup("task-dir")
 	dirFlag := rootCmd.PersistentFlags().Lookup("dir")
@@ -241,6 +254,57 @@ func ResolveScanDir(args []string) string {
 		return args[0]
 	}
 	return GetGlobalFlags().TaskDir
+}
+
+// resolveProjectDir looks up a project in the global registry and returns its task directory.
+// It also reloads viper config from the project's .taskmd.yaml.
+func resolveProjectDir(projectID string) (string, error) {
+	entries, err := LoadGlobalRegistry()
+	if err != nil {
+		return "", fmt.Errorf("load global registry: %w", err)
+	}
+
+	entry, found := findProjectEntry(entries, projectID)
+	if !found {
+		return "", fmt.Errorf("project %q not found in global registry", projectID)
+	}
+
+	info, err := os.Stat(entry.Path)
+	if err != nil || !info.IsDir() {
+		return "", fmt.Errorf("project %q path does not exist: %s", projectID, entry.Path)
+	}
+
+	return resolveProjectTaskDir(entry.Path)
+}
+
+// findProjectEntry searches for a project by ID in the registry entries.
+func findProjectEntry(entries []GlobalProjectEntry, id string) (GlobalProjectEntry, bool) {
+	for _, e := range entries {
+		if e.ID == id {
+			return e, true
+		}
+	}
+	return GlobalProjectEntry{}, false
+}
+
+// resolveProjectTaskDir loads the project's .taskmd.yaml and returns the task directory.
+func resolveProjectTaskDir(projectPath string) (string, error) {
+	projectConfig := filepath.Join(projectPath, ".taskmd.yaml")
+	if _, err := os.Stat(projectConfig); err == nil {
+		viper.SetConfigFile(projectConfig)
+		if err := viper.ReadInConfig(); err != nil {
+			return "", fmt.Errorf("read project config: %w", err)
+		}
+	}
+
+	if viper.InConfig("task-dir") {
+		return resolveRelativeToConfig(viper.GetString("task-dir")), nil
+	}
+	if viper.InConfig("dir") {
+		return resolveRelativeToConfig(viper.GetString("dir")), nil
+	}
+
+	return projectPath, nil
 }
 
 // resolveIDConfig returns the ID generation config with defaults applied.

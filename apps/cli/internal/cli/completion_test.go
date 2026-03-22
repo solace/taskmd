@@ -1,6 +1,8 @@
 package cli
 
 import (
+	"bytes"
+	"io"
 	"os"
 	"testing"
 )
@@ -18,20 +20,26 @@ func TestCompletion_AllShells(t *testing.T) {
 			}
 			os.Stdout = w
 
+			// Drain the pipe in a goroutine to avoid blocking on large output.
+			var buf bytes.Buffer
+			done := make(chan struct{})
+			go func() {
+				io.Copy(&buf, r)
+				close(done)
+			}()
+
 			err = runCompletion(completionCmd, []string{shell})
 
 			w.Close()
 			os.Stdout = oldStdout
+			<-done
+			r.Close()
 
 			if err != nil {
 				t.Fatalf("runCompletion(%q) returned error: %v", shell, err)
 			}
 
-			buf := make([]byte, 1024)
-			n, _ := r.Read(buf)
-			r.Close()
-
-			if n == 0 {
+			if buf.Len() == 0 {
 				t.Errorf("runCompletion(%q) produced no output", shell)
 			}
 		})

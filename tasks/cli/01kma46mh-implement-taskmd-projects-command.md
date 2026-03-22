@@ -1,7 +1,7 @@
 ---
 title: "Implement taskmd projects command"
 id: "01kma46mh"
-status: pending
+status: completed
 priority: high
 type: feature
 tags: ["global-registry", "cli-command"]
