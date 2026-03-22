@@ -1,7 +1,7 @@
 ---
 title: "Add --all-projects flag for aggregate task views"
 id: "01kma4701"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["global-registry", "cli-command"]
@@ -17,15 +17,15 @@ Add an `--all-projects` flag to `list` and `next` that scans all registered proj
 
 ## Tasks
 
-- [ ] Add `--all-projects` boolean flag to `list` and `next` commands
-- [ ] When set, iterate over all entries from `LoadGlobalRegistry()`, scan each project independently
-- [ ] Add a `PROJECT` column to table output showing which project each task belongs to
-- [ ] Qualify task IDs as `<project-id>:<task-id>` in display output
-- [ ] In JSON/YAML output, include a `project` field on each task object
-- [ ] For `next`, rank across all projects using the same ranking algorithm, include project context in output
-- [ ] Handle unreachable projects gracefully (warn and skip)
-- [ ] Ensure `--all-projects` and `--project` are mutually exclusive (error if both set)
-- [ ] Add tests with multiple temp project directories
+- [x] Add `--all-projects` boolean flag to `list` and `next` commands
+- [x] When set, iterate over all entries from `LoadGlobalRegistry()`, scan each project independently
+- [x] Add a `PROJECT` column to table output showing which project each task belongs to
+- [x] Qualify task IDs as `<project-id>:<task-id>` in display output
+- [x] In JSON/YAML output, include a `project` field on each task object
+- [x] For `next`, rank across all projects using the same ranking algorithm, include project context in output
+- [x] Handle unreachable projects gracefully (warn and skip)
+- [x] Ensure `--all-projects` and `--project` are mutually exclusive (error if both set)
+- [x] Add tests with multiple temp project directories
 
 ## Acceptance Criteria
 

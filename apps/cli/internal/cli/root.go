@@ -20,14 +20,15 @@ var (
 	GitDirty  = ""
 
 	// Global flags
-	cfgFile     string
-	stdin       bool
-	quiet       bool
-	verbose     bool
-	debug       bool
-	noColor     bool
-	taskDir     string
-	projectFlag string
+	cfgFile         string
+	stdin           bool
+	quiet           bool
+	verbose         bool
+	debug           bool
+	noColor         bool
+	taskDir         string
+	projectFlag     string
+	allProjectsFlag bool
 )
 
 // rootCmd represents the base command
@@ -86,6 +87,8 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&taskDir, "task-dir", "d", ".", "task directory to scan")
 
 	rootCmd.PersistentFlags().StringVar(&projectFlag, "project", "", "operate on a registered project by id")
+	rootCmd.PersistentFlags().BoolVar(&allProjectsFlag, "all-projects", false, "aggregate tasks from all registered projects")
+	rootCmd.MarkFlagsMutuallyExclusive("project", "all-projects")
 
 	// Deprecated alias: --dir still works but is hidden
 	rootCmd.PersistentFlags().StringVar(&taskDir, "dir", "", "task directory (deprecated: use --task-dir)")

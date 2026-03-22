@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -77,6 +78,10 @@ func init() {
 }
 
 func runNext(cmd *cobra.Command, args []string) error {
+	if allProjectsFlag {
+		return runNextAllProjects()
+	}
+
 	flags := GetGlobalFlags()
 	scanDir := ResolveScanDir(args)
 
@@ -126,6 +131,137 @@ func runNext(cmd *cobra.Command, args []string) error {
 	}
 }
 
+// ProjectRecommendation wraps a recommendation with project context.
+type ProjectRecommendation struct {
+	ProjectID string `json:"project" yaml:"project"`
+	Recommendation
+}
+
+func runNextAllProjects() error {
+	allRecs, err := collectAllProjectRecs()
+	if err != nil {
+		return err
+	}
+
+	// Sort by score descending, re-assign ranks
+	sort.Slice(allRecs, func(i, j int) bool {
+		return allRecs[i].Score > allRecs[j].Score
+	})
+	if nextLimit > 0 && nextLimit < len(allRecs) {
+		allRecs = allRecs[:nextLimit]
+	}
+	for i := range allRecs {
+		allRecs[i].Rank = i + 1
+	}
+
+	switch nextFormat {
+	case "json":
+		return WriteJSON(os.Stdout, allRecs)
+	case "yaml":
+		return WriteYAML(os.Stdout, allRecs)
+	case "table":
+		return outputNextAllProjectsTable(allRecs)
+	default:
+		return ValidateFormat(nextFormat, []string{"table", "json", "yaml"})
+	}
+}
+
+// collectAllProjectRecs gathers recommendations from every registered project.
+func collectAllProjectRecs() ([]ProjectRecommendation, error) {
+	entries, err := LoadGlobalRegistry()
+	if err != nil {
+		return nil, fmt.Errorf("load global registry: %w", err)
+	}
+	if len(entries) == 0 {
+		return nil, fmt.Errorf("no projects registered in global registry")
+	}
+
+	var allRecs []ProjectRecommendation
+	for _, entry := range entries {
+		recs, recErr := recommendForProject(entry)
+		if recErr != nil {
+			fmt.Fprintf(os.Stderr, "Warning: skipping project %q: %v\n", entry.ID, recErr)
+			continue
+		}
+		for _, rec := range recs {
+			allRecs = append(allRecs, ProjectRecommendation{ProjectID: entry.ID, Recommendation: rec})
+		}
+	}
+	return allRecs, nil
+}
+
+// recommendForProject scans a project and returns recommendations.
+func recommendForProject(entry GlobalProjectEntry) ([]Recommendation, error) {
+	tasks, err := scanProjectTasks(entry)
+	if err != nil {
+		return nil, err
+	}
+	return next.Recommend(tasks, next.Options{
+		Limit:        0, // get all, we'll limit after merging
+		Filters:      nextFilters,
+		QuickWins:    nextQuickWins,
+		Critical:     nextCritical,
+		Scope:        nextScope,
+		ScopeExact:   nextExact,
+		Phase:        nextPhase,
+		StrictPhases: nextStrictPhases,
+	})
+}
+
+func outputNextAllProjectsTable(recs []ProjectRecommendation) error {
+	if len(recs) == 0 {
+		fmt.Println("No actionable tasks found across projects.")
+		return nil
+	}
+
+	columns, err := parseNextColumns(nextColumns)
+	if err != nil {
+		return err
+	}
+	columns = injectProjectColumn(columns)
+
+	r := getRenderer()
+	fmt.Println(formatLabel("Recommended tasks (all projects):", r))
+	fmt.Println()
+
+	tw := NewTableWriter()
+	headers := make([]string, len(columns))
+	for i, col := range columns {
+		headers[i] = nextColumnDisplayName(col)
+	}
+	tw.AddHeader(headers)
+	tw.AddSeparator()
+
+	for _, rec := range recs {
+		plain, colored := projectRecRow(rec, columns, r)
+		tw.AddRow(plain, colored)
+	}
+
+	tw.Flush(os.Stdout)
+	return nil
+}
+
+// projectRecRow builds plain and colored column values for a project recommendation.
+func projectRecRow(rec ProjectRecommendation, columns []string, r *lipgloss.Renderer) ([]string, []string) {
+	plain := make([]string, len(columns))
+	colored := make([]string, len(columns))
+	for i, col := range columns {
+		switch col {
+		case "project":
+			plain[i] = rec.ProjectID
+			colored[i] = rec.ProjectID
+		case "id":
+			qualID := rec.ProjectID + ":" + rec.ID
+			plain[i] = qualID
+			colored[i] = formatTaskID(qualID, r)
+		default:
+			plain[i] = getNextColumnValue(&rec.Recommendation, col)
+			colored[i] = colorizeNextColumn(&rec.Recommendation, col, r)
+		}
+	}
+	return plain, colored
+}
+
 // loadPhaseOrder reads phase identifiers from the viper config, preserving order.
 // It uses the phase id when present, falling back to name for backwards compatibility.
 func loadPhaseOrder() []string {
@@ -161,7 +297,7 @@ func outputNextYAML(recs []Recommendation) error {
 // validNextColumns lists all valid column names for the next command.
 var validNextColumns = []string{
 	"rank", "id", "title", "status", "priority", "effort", "phase",
-	"tags", "file", "deps", "reason", "score",
+	"tags", "file", "deps", "reason", "score", "project",
 }
 
 func outputNextTable(recs []Recommendation) error {
@@ -278,6 +414,8 @@ func nextColumnDisplayName(col string) string {
 		return "ID"
 	case "deps":
 		return "Deps"
+	case "project":
+		return "Project"
 	default:
 		if len(col) == 0 {
 			return col

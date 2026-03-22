@@ -66,6 +66,10 @@ func init() {
 }
 
 func runList(cmd *cobra.Command, args []string) error {
+	if allProjectsFlag {
+		return runListAllProjects()
+	}
+
 	flags := GetGlobalFlags()
 
 	scanDir := ResolveScanDir(args)
@@ -103,6 +107,112 @@ func runList(cmd *cobra.Command, args []string) error {
 	default:
 		return ValidateFormat(listFormat, []string{"table", "json", "yaml"})
 	}
+}
+
+func runListAllProjects() error {
+	ptasks, err := scanAllProjects()
+	if err != nil {
+		return err
+	}
+
+	// Extract plain tasks for filtering/sorting
+	tasks := make([]*model.Task, len(ptasks))
+	for i, pt := range ptasks {
+		tasks[i] = pt.Task
+	}
+
+	tasks, err = applyListFiltersAndSort(tasks)
+	if err != nil {
+		return err
+	}
+
+	// Rebuild project task index after filtering
+	taskIndex := make(map[*model.Task]*ProjectTask, len(ptasks))
+	for _, pt := range ptasks {
+		taskIndex[pt.Task] = pt
+	}
+
+	filtered := make([]*ProjectTask, 0, len(tasks))
+	for _, t := range tasks {
+		if pt, ok := taskIndex[t]; ok {
+			filtered = append(filtered, pt)
+		}
+	}
+
+	switch listFormat {
+	case "json":
+		return outputProjectJSON(filtered)
+	case "yaml":
+		return outputProjectYAML(filtered)
+	case "table":
+		return outputProjectTable(filtered, listColumns)
+	default:
+		return ValidateFormat(listFormat, []string{"table", "json", "yaml"})
+	}
+}
+
+// projectTaskOutput is the JSON/YAML representation for --all-projects output.
+type projectTaskOutput struct {
+	Project string `json:"project" yaml:"project"`
+	*model.Task
+}
+
+func outputProjectJSON(ptasks []*ProjectTask) error {
+	out := make([]projectTaskOutput, len(ptasks))
+	for i, pt := range ptasks {
+		out[i] = projectTaskOutput{Project: pt.ProjectID, Task: pt.Task}
+	}
+	if len(out) == 0 {
+		return WriteJSON(os.Stdout, []projectTaskOutput{})
+	}
+	return WriteJSON(os.Stdout, out)
+}
+
+func outputProjectYAML(ptasks []*ProjectTask) error {
+	out := make([]projectTaskOutput, len(ptasks))
+	for i, pt := range ptasks {
+		out[i] = projectTaskOutput{Project: pt.ProjectID, Task: pt.Task}
+	}
+	return WriteYAML(os.Stdout, out)
+}
+
+func outputProjectTable(ptasks []*ProjectTask, columnsStr string) error {
+	if len(ptasks) == 0 {
+		fmt.Println("No tasks found")
+		return nil
+	}
+
+	columns := strings.Split(columnsStr, ",")
+	for i, col := range columns {
+		columns[i] = strings.TrimSpace(col)
+	}
+	columns = injectProjectColumn(columns)
+
+	r := getRenderer()
+	tw := NewTableWriter()
+	tw.AddHeader(columns)
+	tw.AddSeparator()
+
+	for _, pt := range ptasks {
+		plain := make([]string, len(columns))
+		colored := make([]string, len(columns))
+		for i, col := range columns {
+			if col == "project" {
+				plain[i] = pt.ProjectID
+				colored[i] = pt.ProjectID
+			} else if col == "id" {
+				plain[i] = pt.QualifiedID()
+				colored[i] = formatTaskID(pt.QualifiedID(), r)
+			} else {
+				plain[i] = getColumnValue(pt.Task, col)
+				colored[i] = colorizeColumn(pt.Task, col, r)
+			}
+		}
+		tw.AddRow(plain, colored)
+	}
+
+	tw.Flush(os.Stdout)
+	return nil
 }
 
 // applyListFiltersAndSort applies all list filters, sorting, and limit.
