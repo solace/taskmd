@@ -1,7 +1,9 @@
 package web
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"net"
@@ -27,14 +29,22 @@ type Config struct {
 	ReadOnly bool
 	Version  string
 	Phases   []PhaseInfo
+
+	// ListProjects returns registered projects from the global registry.
+	// Nil means multi-project support is disabled.
+	ListProjects func() ([]ProjectEntry, error)
+	// ResolveProject resolves a project ID to its scan directory and phases.
+	// Nil means multi-project support is disabled.
+	ResolveProject ProjectResolverFunc
 }
 
 // Server is the taskmd web server.
 type Server struct {
-	config  Config
-	dp      *DataProvider
-	broker  *SSEBroker
-	watcher *watcher.Watcher
+	config   Config
+	dp       *DataProvider
+	broker   *SSEBroker
+	watcher  *watcher.Watcher
+	resolver *ProjectResolver
 }
 
 // NewServer creates a new web server.
@@ -47,11 +57,17 @@ func NewServer(cfg Config) *Server {
 		broker.Broadcast()
 	}, 200*time.Millisecond)
 
+	var resolver *ProjectResolver
+	if cfg.ResolveProject != nil {
+		resolver = NewProjectResolver(cfg.ResolveProject, cfg.Verbose)
+	}
+
 	return &Server{
-		config:  cfg,
-		dp:      dp,
-		broker:  broker,
-		watcher: w,
+		config:   cfg,
+		dp:       dp,
+		broker:   broker,
+		watcher:  w,
+		resolver: resolver,
 	}
 }
 
@@ -60,6 +76,7 @@ func (s *Server) Start(ctx context.Context) error {
 	mux := http.NewServeMux()
 
 	// API routes
+	mux.HandleFunc("GET /api/projects", handleProjects(s.config.ListProjects))
 	mux.HandleFunc("GET /api/config", handleConfig(s.config))
 	mux.HandleFunc("GET /api/search", handleSearch(s.dp))
 	mux.HandleFunc("GET /api/tasks", handleTasks(s.dp))
@@ -79,6 +96,7 @@ func (s *Server) Start(ctx context.Context) error {
 	s.mountStatic(mux)
 
 	var handler http.Handler = mux
+	handler = projectMiddleware(s.resolver, handler)
 	if s.config.Dev {
 		handler = corsMiddleware(handler)
 	}
@@ -146,6 +164,9 @@ func (s *Server) mountStatic(mux *http.ServeMux) {
 
 	fileServer := http.FileServer(http.FS(staticFS))
 
+	// Pre-render index.html with injected config to avoid layout shift
+	indexHTML := s.buildIndexHTML(staticFS)
+
 	mux.HandleFunc("/{path...}", func(w http.ResponseWriter, r *http.Request) {
 		if len(r.URL.Path) >= 4 && r.URL.Path[:4] == "/api" {
 			http.NotFound(w, r)
@@ -157,17 +178,46 @@ func (s *Server) mountStatic(mux *http.ServeMux) {
 			path = "/index.html"
 		}
 
-		f, err := staticFS.Open(path[1:])
-		if err == nil {
-			f.Close()
-			fileServer.ServeHTTP(w, r)
-			return
+		// Serve static assets normally
+		if path != "/index.html" {
+			f, err := staticFS.Open(path[1:])
+			if err == nil {
+				f.Close()
+				fileServer.ServeHTTP(w, r)
+				return
+			}
 		}
 
-		// SPA fallback
-		r.URL.Path = "/"
-		fileServer.ServeHTTP(w, r)
+		// SPA fallback: serve index.html with injected config
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(indexHTML)
 	})
+}
+
+// buildIndexHTML reads index.html and injects the initial config as a script tag.
+func (s *Server) buildIndexHTML(staticFS fs.FS) []byte {
+	raw, err := fs.ReadFile(staticFS, "index.html")
+	if err != nil {
+		return []byte("<!-- failed to read index.html -->")
+	}
+
+	phases := s.config.Phases
+	if phases == nil {
+		phases = []PhaseInfo{}
+	}
+	cfg := ConfigResponse{
+		ReadOnly: s.config.ReadOnly,
+		Version:  s.config.Version,
+		Phases:   phases,
+	}
+	cfgJSON, err := json.Marshal(cfg)
+	if err != nil {
+		return raw
+	}
+
+	// Inject right before </head>
+	script := fmt.Sprintf(`<script>window.__TASKMD_CONFIG__=%s;</script>`, cfgJSON)
+	return bytes.Replace(raw, []byte("</head>"), []byte(script+"</head>"), 1)
 }
 
 func (s *Server) mountFallback(mux *http.ServeMux) {

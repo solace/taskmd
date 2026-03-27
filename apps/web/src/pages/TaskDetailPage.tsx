@@ -6,6 +6,7 @@ import rehypeRaw from "rehype-raw";
 import { useTaskDetail } from "../hooks/use-task-detail.ts";
 import { useWorklog } from "../hooks/use-worklog.ts";
 import { useConfig } from "../hooks/use-config.ts";
+import { useProject } from "../hooks/use-project.ts";
 import { updateTask, ApiRequestError } from "../api/client.ts";
 import type { TaskUpdateRequest } from "../api/types.ts";
 import { TaskEditForm } from "../components/tasks/TaskEditForm.tsx";
@@ -15,9 +16,10 @@ import { StatusBadge, PhaseBadge } from "../components/tasks/TaskTable/Badges.ts
 
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: task, error, isLoading, mutate } = useTaskDetail(id);
-  const { data: worklogEntries } = useWorklog(id);
-  const { readonly } = useConfig();
+  const { project } = useProject();
+  const { data: task, error, isLoading, mutate } = useTaskDetail(id, project);
+  const { data: worklogEntries } = useWorklog(id, project);
+  const { readonly } = useConfig(project);
   const [isEditing, setIsEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 

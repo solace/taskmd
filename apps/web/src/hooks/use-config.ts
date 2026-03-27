@@ -13,9 +13,24 @@ interface AppConfig {
   phases: PhaseInfo[];
 }
 
-export function useConfig() {
-  const { data } = useSWR<AppConfig>("/api/config", fetcher, {
+declare global {
+  interface Window {
+    __TASKMD_CONFIG__?: AppConfig;
+  }
+}
+
+// Read config injected by the Go server into the HTML at build time.
+// Available immediately on first render — no async fetch needed for the default config.
+const injectedConfig: AppConfig | undefined = window.__TASKMD_CONFIG__;
+
+export function useConfig(project?: string | null) {
+  const params = new URLSearchParams();
+  if (project) params.set("project", project);
+  const qs = params.toString();
+  const isDefault = !project;
+  const { data } = useSWR<AppConfig>(`/api/config${qs ? `?${qs}` : ""}`, fetcher, {
     revalidateOnFocus: false,
+    fallbackData: isDefault ? injectedConfig : undefined,
   });
   return {
     readonly: data?.readonly ?? false,

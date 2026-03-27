@@ -2,17 +2,20 @@ import { useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useConfig } from "../../hooks/use-config.ts";
+import { useProject } from "../../hooks/use-project.ts";
 import { useTheme } from "../../hooks/use-theme.ts";
 import { SearchDialog } from "../search/SearchDialog.tsx";
 import { DesktopNav, MobileMenu } from "./NavTabs.tsx";
 import { PhaseSelector } from "./PhaseSelector.tsx";
+import { ProjectSelector } from "./ProjectSelector.tsx";
 
 interface ShellProps {
   children: ReactNode;
 }
 
 export function Shell({ children }: ShellProps) {
-  const { readonly, version } = useConfig();
+  const { project } = useProject();
+  const { readonly, version } = useConfig(project);
   const { theme, toggle } = useTheme();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -139,7 +142,8 @@ export function Shell({ children }: ShellProps) {
       </a>
       <header className="bg-white border-b border-gray-200 dark:bg-gray-800 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14">
+          {/* Row 1: Branding + selectors + utilities */}
+          <div className="flex items-center justify-between h-12">
             <div className="flex items-center gap-2">
               <Link
                 to="/tasks"
@@ -157,10 +161,10 @@ export function Shell({ children }: ShellProps) {
                   Read Only
                 </span>
               )}
+              <ProjectSelector />
               <PhaseSelector />
             </div>
             <div className="flex items-center gap-1">
-              <DesktopNav onSearchOpen={() => setSearchOpen(true)} />
               {/* Theme toggle - always visible */}
               <button
                 onClick={toggle}
@@ -194,6 +198,10 @@ export function Shell({ children }: ShellProps) {
                 )}
               </button>
             </div>
+          </div>
+          {/* Row 2: Navigation */}
+          <div className="hidden md:flex items-center h-10 mb-1">
+            <DesktopNav onSearchOpen={() => setSearchOpen(true)} />
           </div>
         </div>
         {menuOpen && <MobileMenu />}

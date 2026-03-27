@@ -1280,3 +1280,258 @@ func TestHandleSearch_CaseInsensitive(t *testing.T) {
 		t.Fatalf("expected 2 results for case-insensitive search, got %d", len(results))
 	}
 }
+
+// --- Project-aware endpoint tests ---
+
+func createProjectTaskDir(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	task := `---
+id: "P01"
+title: "Project Task"
+status: pending
+priority: low
+---
+# Project Task
+`
+	os.WriteFile(filepath.Join(dir, "P01-project-task.md"), []byte(task), 0644)
+	return dir
+}
+
+// setupProjectMiddleware wraps a handler with the project middleware using the given resolver.
+func setupProjectMiddleware(resolver *ProjectResolver, handler http.Handler) http.Handler {
+	return projectMiddleware(resolver, handler)
+}
+
+func TestHandleProjects_ReturnsList(t *testing.T) {
+	projects := []ProjectEntry{
+		{ID: "alpha", Name: "Alpha", Path: "/tmp/alpha"},
+		{ID: "beta", Name: "Beta", Path: "/tmp/beta"},
+	}
+	listFn := func() ([]ProjectEntry, error) { return projects, nil }
+
+	req := httptest.NewRequest(http.MethodGet, "/api/projects", nil)
+	rec := httptest.NewRecorder()
+
+	handleProjects(listFn)(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var result []ProjectEntry
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(result) != 2 {
+		t.Fatalf("expected 2 projects, got %d", len(result))
+	}
+	if result[0].ID != "alpha" || result[1].ID != "beta" {
+		t.Fatalf("unexpected project IDs: %v", result)
+	}
+}
+
+func TestHandleProjects_NilLoader(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/api/projects", nil)
+	rec := httptest.NewRecorder()
+
+	handleProjects(nil)(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var result []ProjectEntry
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(result) != 0 {
+		t.Fatalf("expected empty list, got %d", len(result))
+	}
+}
+
+func TestHandleTasks_WithProject(t *testing.T) {
+	defaultDir := createTestTaskDir(t)
+	projectDir := createProjectTaskDir(t)
+
+	defaultDP := NewDataProvider(defaultDir, false)
+	resolver := NewProjectResolver(func(id string) (string, []PhaseInfo, error) {
+		if id == "proj-a" {
+			return projectDir, nil, nil
+		}
+		return "", nil, ErrProjectNotFound
+	}, false)
+
+	handler := setupProjectMiddleware(resolver, handleTasks(defaultDP))
+
+	// With ?project=proj-a, should return project tasks.
+	req := httptest.NewRequest(http.MethodGet, "/api/tasks?project=proj-a", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var tasks []map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &tasks); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(tasks) != 1 {
+		t.Fatalf("expected 1 project task, got %d", len(tasks))
+	}
+	if tasks[0]["id"] != "P01" {
+		t.Fatalf("expected task id P01, got %v", tasks[0]["id"])
+	}
+}
+
+func TestHandleTasks_WithoutProject_ReturnsDefault(t *testing.T) {
+	defaultDir := createTestTaskDir(t)
+	defaultDP := NewDataProvider(defaultDir, false)
+	resolver := NewProjectResolver(func(_ string) (string, []PhaseInfo, error) {
+		return "", nil, ErrProjectNotFound
+	}, false)
+
+	handler := setupProjectMiddleware(resolver, handleTasks(defaultDP))
+
+	// Without ?project=, should return default tasks.
+	req := httptest.NewRequest(http.MethodGet, "/api/tasks", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var tasks []map[string]any
+	if err := json.Unmarshal(rec.Body.Bytes(), &tasks); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(tasks) != 2 {
+		t.Fatalf("expected 2 default tasks, got %d", len(tasks))
+	}
+}
+
+func TestProjectNotFound_Returns404(t *testing.T) {
+	defaultDir := createTestTaskDir(t)
+	defaultDP := NewDataProvider(defaultDir, false)
+	resolver := NewProjectResolver(func(_ string) (string, []PhaseInfo, error) {
+		return "", nil, ErrProjectNotFound
+	}, false)
+
+	handler := setupProjectMiddleware(resolver, handleTasks(defaultDP))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/tasks?project=nonexistent", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var errResp ErrorResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &errResp); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if !strings.Contains(errResp.Error, "nonexistent") {
+		t.Fatalf("expected error to mention project id, got %q", errResp.Error)
+	}
+}
+
+func TestHandleConfig_WithProject(t *testing.T) {
+	defaultPhases := []PhaseInfo{{ID: "default-phase", Name: "Default Phase"}}
+	projectPhases := []PhaseInfo{{ID: "proj-phase", Name: "Project Phase"}}
+
+	projectDir := createProjectTaskDir(t)
+	resolver := NewProjectResolver(func(id string) (string, []PhaseInfo, error) {
+		if id == "proj-a" {
+			return projectDir, projectPhases, nil
+		}
+		return "", nil, ErrProjectNotFound
+	}, false)
+
+	cfg := Config{ReadOnly: false, Version: "test", Phases: defaultPhases}
+	handler := setupProjectMiddleware(resolver, handleConfig(cfg))
+
+	// With ?project=proj-a, should return project phases.
+	req := httptest.NewRequest(http.MethodGet, "/api/config?project=proj-a", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var result ConfigResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(result.Phases) != 1 || result.Phases[0].ID != "proj-phase" {
+		t.Fatalf("expected project phases, got %v", result.Phases)
+	}
+}
+
+func TestHandleConfig_WithoutProject_ReturnsDefault(t *testing.T) {
+	defaultPhases := []PhaseInfo{{ID: "default-phase", Name: "Default Phase"}}
+	cfg := Config{ReadOnly: false, Version: "test", Phases: defaultPhases}
+
+	handler := setupProjectMiddleware(nil, handleConfig(cfg))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/config", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rec.Code)
+	}
+
+	var result ConfigResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	if len(result.Phases) != 1 || result.Phases[0].ID != "default-phase" {
+		t.Fatalf("expected default phases, got %v", result.Phases)
+	}
+}
+
+func TestHandleBoard_WithProject(t *testing.T) {
+	projectDir := createProjectTaskDir(t)
+	defaultDir := createTestTaskDir(t)
+
+	defaultDP := NewDataProvider(defaultDir, false)
+	defaultPhases := []PhaseInfo{{ID: "default-phase"}}
+
+	resolver := NewProjectResolver(func(id string) (string, []PhaseInfo, error) {
+		if id == "proj-a" {
+			return projectDir, []PhaseInfo{{ID: "proj-phase"}}, nil
+		}
+		return "", nil, ErrProjectNotFound
+	}, false)
+
+	handler := setupProjectMiddleware(resolver, handleBoard(defaultDP, defaultPhases))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/board?project=proj-a", nil)
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var result []board.JSONGroup
+	if err := json.Unmarshal(rec.Body.Bytes(), &result); err != nil {
+		t.Fatalf("invalid JSON: %v", err)
+	}
+	// Should contain project task P01, not default tasks 001/002.
+	found := false
+	for _, g := range result {
+		for _, task := range g.Tasks {
+			if task.ID == "P01" {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Fatal("expected project task P01 in board response")
+	}
+}

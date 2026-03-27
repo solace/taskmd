@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { ReactFlowProvider } from "@xyflow/react";
 import { useGraph } from "../hooks/use-graph.ts";
 import { usePhase } from "../hooks/use-phase.tsx";
+import { useProject } from "../hooks/use-project.ts";
 import { GraphView } from "../components/graph/GraphView.tsx";
 import { GraphFilters } from "../components/graph/GraphFilters.tsx";
 import { GraphStats } from "../components/graph/GraphStats.tsx";
@@ -21,7 +22,8 @@ const savedState = {
 
 export function GraphPage() {
   const { phase } = usePhase();
-  const { data, error, isLoading, mutate } = useGraph(phase);
+  const { project } = useProject();
+  const { data, error, isLoading, mutate } = useGraph(phase, project);
   const [selectedStatuses, setSelectedStatuses] = useState<Set<string>>(savedState.statuses);
   const [searchQuery, setSearchQuery] = useState("");
 

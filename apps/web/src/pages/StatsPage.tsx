@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useStats } from "../hooks/use-stats.ts";
 import { useTasks } from "../hooks/use-tasks.ts";
 import { usePhase } from "../hooks/use-phase.tsx";
+import { useProject } from "../hooks/use-project.ts";
 import { useConfig } from "../hooks/use-config.ts";
 import { StatsView } from "../components/stats/StatsView.tsx";
 import { LoadingState } from "../components/shared/LoadingState.tsx";
@@ -10,9 +11,10 @@ import type { PhaseProgress } from "../components/stats/PhaseProgressBar.tsx";
 
 export function StatsPage() {
   const { phase } = usePhase();
-  const { data, error, isLoading, mutate } = useStats(phase);
-  const { data: tasks } = useTasks(phase);
-  const { phases: configuredPhases } = useConfig();
+  const { project } = useProject();
+  const { data, error, isLoading, mutate } = useStats(phase, project);
+  const { data: tasks } = useTasks(phase, project);
+  const { phases: configuredPhases } = useConfig(project);
 
   const phaseProgress = useMemo<PhaseProgress[] | undefined>(() => {
     if (configuredPhases.length === 0) return undefined;

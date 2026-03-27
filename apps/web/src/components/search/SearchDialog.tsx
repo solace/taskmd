@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useProject } from "../../hooks/use-project.ts";
 import { useSearch } from "../../hooks/use-search.ts";
 import { STATUS_COLORS } from "../tasks/TaskTable/constants.ts";
 import { Highlight } from "../shared/Highlight.tsx";
@@ -24,7 +25,8 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
   }
   prevOpenRef.current = open;
 
-  const { data: results } = useSearch(query);
+  const { project } = useProject();
+  const { data: results } = useSearch(query, project);
 
   useEffect(() => {
     if (open) {

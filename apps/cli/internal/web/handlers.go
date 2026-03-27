@@ -26,16 +26,38 @@ type ConfigResponse struct {
 	Phases   []PhaseInfo `json:"phases"`
 }
 
+func handleProjects(listFn func() ([]ProjectEntry, error)) http.HandlerFunc {
+	return func(w http.ResponseWriter, _ *http.Request) {
+		if listFn == nil {
+			writeJSON(w, []ProjectEntry{})
+			return
+		}
+		projects, err := listFn()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if projects == nil {
+			projects = []ProjectEntry{}
+		}
+		writeJSON(w, projects)
+	}
+}
+
 func handleConfig(cfg Config) http.HandlerFunc {
 	phases := cfg.Phases
 	if phases == nil {
 		phases = []PhaseInfo{}
 	}
-	return func(w http.ResponseWriter, _ *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		p := effectivePhases(r, phases)
+		if p == nil {
+			p = []PhaseInfo{}
+		}
 		writeJSON(w, ConfigResponse{
 			ReadOnly: cfg.ReadOnly,
 			Version:  cfg.Version,
-			Phases:   phases,
+			Phases:   p,
 		})
 	}
 }
@@ -79,6 +101,7 @@ type TaskDetail struct {
 
 func handleSearch(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
 		q := r.URL.Query().Get("q")
 		if q == "" {
 			http.Error(w, "query parameter 'q' is required", http.StatusBadRequest)
@@ -102,6 +125,7 @@ func handleSearch(dp *DataProvider) http.HandlerFunc {
 
 func handleTasks(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
 		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -113,6 +137,7 @@ func handleTasks(dp *DataProvider) http.HandlerFunc {
 
 func handleTaskByID(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
 		taskID := r.PathValue("id")
 		if taskID == "" {
 			http.Error(w, "task ID is required", http.StatusBadRequest)
@@ -160,6 +185,8 @@ func handleTaskByID(dp *DataProvider) http.HandlerFunc {
 
 func handleBoard(dp *DataProvider, phases []PhaseInfo) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
+		phases := effectivePhases(r, phases)
 		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -191,6 +218,7 @@ func handleBoard(dp *DataProvider, phases []PhaseInfo) http.HandlerFunc {
 
 func handleGraph(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
 		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -204,6 +232,7 @@ func handleGraph(dp *DataProvider) http.HandlerFunc {
 
 func handleGraphMermaid(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
 		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -218,6 +247,7 @@ func handleGraphMermaid(dp *DataProvider) http.HandlerFunc {
 
 func handleStats(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
 		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -231,6 +261,7 @@ func handleStats(dp *DataProvider) http.HandlerFunc {
 
 func handleNext(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
 		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -268,6 +299,7 @@ func handleNext(dp *DataProvider) http.HandlerFunc {
 
 func handleTracks(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
 		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -305,6 +337,7 @@ func handleTracks(dp *DataProvider) http.HandlerFunc {
 
 func handleValidate(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
 		tasks, err := getFilteredTasks(dp, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -353,6 +386,7 @@ func findTaskByID(tasks []*model.Task, id string) *model.Task {
 
 func handleUpdateTask(dp *DataProvider, readonly bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
 		if readonly {
 			writeError(w, http.StatusForbidden, "server is in read-only mode", nil)
 			return
@@ -448,6 +482,7 @@ type WorklogEntryJSON struct {
 
 func handleWorklog(dp *DataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		dp := effectiveDP(r, dp)
 		taskID := r.PathValue("id")
 		if taskID == "" {
 			http.Error(w, "task ID is required", http.StatusBadRequest)

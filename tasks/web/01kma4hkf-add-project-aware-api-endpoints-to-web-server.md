@@ -1,7 +1,7 @@
 ---
 title: "Add project-aware API endpoints to web server"
 id: "01kma4hkf"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["global-registry", "web", "api"]
@@ -17,13 +17,13 @@ Extend the web server so the frontend can discover registered projects and switc
 
 ## Tasks
 
-- [ ] Add `GET /api/projects` endpoint that calls `LoadGlobalRegistry()` and returns the list of registered projects (id, name, path)
-- [ ] Accept an optional `?project=<id>` query parameter on all task-related endpoints (`/api/tasks`, `/api/board`, `/api/graph`, `/api/stats`, `/api/next`, `/api/tracks`, `/api/validate`, `/api/search`)
-- [ ] When `?project=<id>` is set, resolve the project's path from the registry, load its `.taskmd.yaml`, and create a scanner rooted at that project's task directory
-- [ ] When `?project=` is omitted, use the current scan directory (existing behavior, backwards-compatible)
-- [ ] Include the project's phases in `/api/config?project=<id>` response so the frontend can show project-specific phases
-- [ ] Return appropriate errors: 404 if project id not found, 500 if project path is unreachable
-- [ ] Add handler tests with mock registry entries pointing to temp project directories
+- [x] Add `GET /api/projects` endpoint that calls `LoadGlobalRegistry()` and returns the list of registered projects (id, name, path)
+- [x] Accept an optional `?project=<id>` query parameter on all task-related endpoints (`/api/tasks`, `/api/board`, `/api/graph`, `/api/stats`, `/api/next`, `/api/tracks`, `/api/validate`, `/api/search`)
+- [x] When `?project=<id>` is set, resolve the project's path from the registry, load its `.taskmd.yaml`, and create a scanner rooted at that project's task directory
+- [x] When `?project=` is omitted, use the current scan directory (existing behavior, backwards-compatible)
+- [x] Include the project's phases in `/api/config?project=<id>` response so the frontend can show project-specific phases
+- [x] Return appropriate errors: 404 if project id not found, 500 if project path is unreachable
+- [x] Add handler tests with mock registry entries pointing to temp project directories
 
 ## Acceptance Criteria
 

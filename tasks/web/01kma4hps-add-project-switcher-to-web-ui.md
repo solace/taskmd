@@ -1,7 +1,7 @@
 ---
 title: "Add project switcher to web UI"
 id: "01kma4hps"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["global-registry", "web", "frontend"]
@@ -17,14 +17,14 @@ Add a project selector dropdown to the Shell header that lets users switch betwe
 
 ## Tasks
 
-- [ ] Add `useProjects()` SWR hook that fetches `GET /api/projects`
-- [ ] Add `useProject()` hook that manages the selected project via URL search param (`?project=<id>`), similar to `usePhase()`
-- [ ] Add project selector dropdown in Shell header (before or alongside the phase selector)
-- [ ] Pass the selected project id to all data-fetching hooks (`useTasks`, `useBoard`, `useGraph`, `useStats`, `useNext`, `useTracks`, `useValidate`, `useSearch`) as a `?project=` query parameter
-- [ ] When a project is selected, re-fetch `/api/config?project=<id>` to update available phases for that project
-- [ ] Show "(local)" or the current directory name when no project is selected (default/current behavior)
-- [ ] Persist selected project in URL so it survives page refreshes and is shareable
-- [ ] Handle edge cases: registry is empty (hide selector), selected project becomes unavailable (clear selection with warning)
+- [x] Add `useProjects()` SWR hook that fetches `GET /api/projects`
+- [x] Add `useProject()` hook that manages the selected project via URL search param (`?project=<id>`), similar to `usePhase()`
+- [x] Add project selector dropdown in Shell header (before or alongside the phase selector)
+- [x] Pass the selected project id to all data-fetching hooks (`useTasks`, `useBoard`, `useGraph`, `useStats`, `useNext`, `useTracks`, `useValidate`, `useSearch`) as a `?project=` query parameter
+- [x] When a project is selected, re-fetch `/api/config?project=<id>` to update available phases for that project
+- [x] Show "(local)" or the current directory name when no project is selected (default/current behavior)
+- [x] Persist selected project in URL so it survives page refreshes and is shareable
+- [x] Handle edge cases: registry is empty (hide selector), selected project becomes unavailable (clear selection with warning)
 
 ## Acceptance Criteria
 

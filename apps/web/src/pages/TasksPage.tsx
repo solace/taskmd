@@ -1,6 +1,7 @@
 import { useSearchParams } from "react-router-dom";
 import { useTasks } from "../hooks/use-tasks.ts";
 import { usePhase } from "../hooks/use-phase.tsx";
+import { useProject } from "../hooks/use-project.ts";
 import { TaskTable } from "../components/tasks/TaskTable.tsx";
 import { LoadingState } from "../components/shared/LoadingState.tsx";
 import { ErrorState } from "../components/shared/ErrorState.tsx";
@@ -8,7 +9,8 @@ import { ErrorState } from "../components/shared/ErrorState.tsx";
 export function TasksPage() {
   const [searchParams] = useSearchParams();
   const { phase } = usePhase();
-  const { data, error, isLoading, mutate } = useTasks(phase);
+  const { project } = useProject();
+  const { data, error, isLoading, mutate } = useTasks(phase, project);
 
   if (isLoading) return <LoadingState variant="table" />;
   if (error) return <ErrorState error={error} onRetry={() => mutate()} />;

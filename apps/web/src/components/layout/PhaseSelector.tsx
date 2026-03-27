@@ -1,12 +1,14 @@
 import { useMemo } from "react";
 import { useConfig, type PhaseInfo } from "../../hooks/use-config.ts";
 import { usePhase } from "../../hooks/use-phase.tsx";
+import { useProject } from "../../hooks/use-project.ts";
 import { useTasks } from "../../hooks/use-tasks.ts";
 
 export function PhaseSelector() {
-  const { phases } = useConfig();
+  const { project } = useProject();
+  const { phases } = useConfig(project);
   const { phase, setPhase } = usePhase();
-  const { data: tasks } = useTasks();
+  const { data: tasks } = useTasks(undefined, project);
 
   const phaseCounts = useMemo(() => {
     if (!tasks) return new Map<string, number>();

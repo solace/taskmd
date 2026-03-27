@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useBoard } from "../hooks/use-board.ts";
 import { usePhase } from "../hooks/use-phase.tsx";
+import { useProject } from "../hooks/use-project.ts";
 import { useConfig } from "../hooks/use-config.ts";
 import { updateTask } from "../api/client.ts";
 import { BoardView } from "../components/board/BoardView.tsx";
@@ -23,14 +24,15 @@ const groupByToField: Record<string, string> = {
 export function BoardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { phase } = usePhase();
-  const { readonly, phases } = useConfig();
+  const { project } = useProject();
+  const { readonly, phases } = useConfig(project);
   const groupByOptions = useMemo(
     () => phases.length > 0 ? [...baseGroupByOptions, "phase"] : baseGroupByOptions,
     [phases],
   );
   const rawGroupBy = searchParams.get("groupBy") ?? "status";
   const groupBy = groupByOptions.includes(rawGroupBy) ? rawGroupBy : "status";
-  const { data, error, isLoading, mutate } = useBoard(groupBy, phase);
+  const { data, error, isLoading, mutate } = useBoard(groupBy, phase, project);
   const [moveError, setMoveError] = useState<string | null>(null);
   const [moving, setMoving] = useState(false);
 

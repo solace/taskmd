@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { STATUSES, PRIORITIES, EFFORTS, TYPES, STATUS_COLORS, PRIORITY_COLORS, EFFORT_COLORS, TYPE_COLORS, getPhaseColor } from "./constants.ts";
 
 const INACTIVE_STYLE = "bg-gray-50 border border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-500 dark:bg-gray-800/50 dark:border-gray-700 dark:text-gray-500 dark:hover:bg-gray-700 dark:hover:text-gray-400";
@@ -89,6 +90,8 @@ export function FilterBar({
   onClearFilters,
   hasActiveFilters,
 }: FilterBarProps) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
   return (
     <div className="mb-4 space-y-3">
       <div className="flex items-center gap-3 flex-wrap">
@@ -99,6 +102,24 @@ export function FilterBar({
           placeholder="Filter tasks..."
           className="px-3 py-2 border border-gray-300 rounded-md text-sm w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
         />
+        <button
+          onClick={() => setFiltersOpen((o) => !o)}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <svg
+            className={`w-3.5 h-3.5 transition-transform duration-150 ${filtersOpen ? "rotate-90" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+          Filters
+          {hasActiveFilters && (
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+          )}
+        </button>
         {hasActiveFilters && (
           <button
             onClick={onClearFilters}
@@ -109,61 +130,65 @@ export function FilterBar({
         )}
       </div>
 
-      <FilterRow
-        label="Status"
-        items={STATUSES}
-        selected={selectedStatuses}
-        colors={STATUS_COLORS}
-        onToggle={onToggleStatus}
-        onSelectAll={onSelectAllStatuses}
-      />
+      {filtersOpen && (
+        <div className="space-y-3">
+          <FilterRow
+            label="Status"
+            items={STATUSES}
+            selected={selectedStatuses}
+            colors={STATUS_COLORS}
+            onToggle={onToggleStatus}
+            onSelectAll={onSelectAllStatuses}
+          />
 
-      <FilterRow
-        label="Priority"
-        items={PRIORITIES}
-        selected={selectedPriorities}
-        colors={PRIORITY_COLORS}
-        onToggle={onTogglePriority}
-        onSelectAll={onSelectAllPriorities}
-      />
+          <FilterRow
+            label="Priority"
+            items={PRIORITIES}
+            selected={selectedPriorities}
+            colors={PRIORITY_COLORS}
+            onToggle={onTogglePriority}
+            onSelectAll={onSelectAllPriorities}
+          />
 
-      <FilterRow
-        label="Effort"
-        items={EFFORTS}
-        selected={selectedEffort}
-        colors={EFFORT_COLORS}
-        onToggle={onToggleEffort}
-        onSelectAll={onSelectAllEffort}
-      />
+          <FilterRow
+            label="Effort"
+            items={EFFORTS}
+            selected={selectedEffort}
+            colors={EFFORT_COLORS}
+            onToggle={onToggleEffort}
+            onSelectAll={onSelectAllEffort}
+          />
 
-      <FilterRow
-        label="Type"
-        items={TYPES}
-        selected={selectedTypes}
-        colors={TYPE_COLORS}
-        onToggle={onToggleType}
-        onSelectAll={onSelectAllTypes}
-      />
+          <FilterRow
+            label="Type"
+            items={TYPES}
+            selected={selectedTypes}
+            colors={TYPE_COLORS}
+            onToggle={onToggleType}
+            onSelectAll={onSelectAllTypes}
+          />
 
-      {availablePhases.length > 0 && (
-        <div className="flex items-center gap-2 flex-wrap" data-arrow-nav>
-          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Phase:</span>
-          {availablePhases.map((m) => {
-            const active = selectedPhases.has(m);
-            return (
-              <button
-                key={m}
-                onClick={() => onTogglePhase(m)}
-                className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
-                  active
-                    ? `${getPhaseColor(m)} font-medium`
-                    : INACTIVE_STYLE
-                }`}
-              >
-                {m}
-              </button>
-            );
-          })}
+          {availablePhases.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap" data-arrow-nav>
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Phase:</span>
+              {availablePhases.map((m) => {
+                const active = selectedPhases.has(m);
+                return (
+                  <button
+                    key={m}
+                    onClick={() => onTogglePhase(m)}
+                    className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
+                      active
+                        ? `${getPhaseColor(m)} font-medium`
+                        : INACTIVE_STYLE
+                    }`}
+                  >
+                    {m}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

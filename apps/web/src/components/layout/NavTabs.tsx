@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useConfig } from "../../hooks/use-config.ts";
+import { useProject } from "../../hooks/use-project.ts";
 
 interface Tab {
   path: string;
@@ -17,7 +18,8 @@ const baseTabs: Tab[] = [
 ];
 
 function useTabs(): Tab[] {
-  const { phases } = useConfig();
+  const { project } = useProject();
+  const { phases } = useConfig(project);
   if (phases.length === 0) return baseTabs;
   return [
     ...baseTabs.slice(0, 5), // Tasks through Graph
@@ -40,7 +42,7 @@ interface DesktopNavProps {
 export function DesktopNav({ onSearchOpen }: DesktopNavProps) {
   const tabs = useTabs();
   return (
-    <nav className="hidden md:flex items-center gap-1" data-arrow-nav>
+    <nav className="flex items-center gap-1" data-arrow-nav>
       {tabs.map((tab) => (
         <NavLink key={tab.path} to={tab.path} className={navLinkClass}>
           {tab.label}

@@ -3,7 +3,8 @@ import type { ApiError, Task, TaskUpdateRequest } from "./types.ts";
 export async function fetcher<T>(url: string): Promise<T> {
   const res = await fetch(url);
   if (!res.ok) {
-    throw new Error(`API error: ${res.status} ${res.statusText}`);
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error ?? `API error: ${res.status} ${res.statusText}`);
   }
   return res.json();
 }
