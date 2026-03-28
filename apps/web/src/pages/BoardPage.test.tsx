@@ -1,30 +1,33 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { screen } from "@testing-library/react";
 import { BoardPage } from "./BoardPage.tsx";
-import type { BoardGroup } from "../api/types.ts";
+import {
+  createBoardTask,
+  createBoardGroup,
+  renderWithProviders,
+} from "../test-utils/index.ts";
 
-const mockGroups: BoardGroup[] = [
-  {
+const mockGroups = [
+  createBoardGroup({
     group: "pending",
-    count: 2,
     tasks: [
-      { id: "001", title: "Task A", status: "pending", priority: "high", effort: "small", type: "feature", tags: ["backend", "api"] },
-      { id: "002", title: "Task B", status: "pending", priority: "low", effort: "large", type: "bug", tags: ["frontend"] },
+      createBoardTask({ id: "001", title: "Task A", status: "pending", priority: "high", effort: "small", type: "feature", tags: ["backend", "api"] }),
+      createBoardTask({ id: "002", title: "Task B", status: "pending", priority: "low", effort: "large", type: "bug", tags: ["frontend"] }),
     ],
-  },
-  {
+  }),
+  createBoardGroup({
     group: "in-progress",
-    count: 1,
     tasks: [
-      { id: "003", title: "Task C", status: "in-progress", priority: "medium", effort: "medium", type: "chore", tags: ["api"] },
+      createBoardTask({ id: "003", title: "Task C", status: "in-progress", priority: "medium", effort: "medium", type: "chore", tags: ["api"] }),
     ],
-  },
+  }),
 ];
 
-let mockBoardData: BoardGroup[] | undefined = mockGroups;
+let mockBoardData: typeof mockGroups | undefined = mockGroups;
 let mockBoardError: Error | undefined;
 let mockBoardLoading = false;
+let mockPhases: { id: string; name: string; description: string }[] = [];
+let mockReadonly = false;
 const mockMutate = vi.fn();
 
 vi.mock("../hooks/use-board.ts", () => ({
@@ -44,9 +47,6 @@ vi.mock("../hooks/use-project.ts", () => ({
   useProject: () => ({ project: null }),
 }));
 
-let mockPhases: string[] = [];
-let mockReadonly = false;
-
 vi.mock("../hooks/use-config.ts", () => ({
   useConfig: () => ({ readonly: mockReadonly, phases: mockPhases }),
 }));
@@ -56,11 +56,7 @@ vi.mock("../api/client.ts", () => ({
 }));
 
 function renderPage(initialEntries: string[] = ["/"]) {
-  return render(
-    <MemoryRouter initialEntries={initialEntries}>
-      <BoardPage />
-    </MemoryRouter>,
-  );
+  return renderWithProviders(<BoardPage />, { initialEntries });
 }
 
 describe("BoardPage", () => {
@@ -75,11 +71,6 @@ describe("BoardPage", () => {
   describe("availableTags extraction", () => {
     it("extracts unique sorted tags from all groups", () => {
       renderPage();
-      // The filter bar should show tags. We can verify the tags are collected
-      // by checking the BoardFilterBar receives them. Since we can't directly
-      // inspect props, we verify the tags appear in the filter UI.
-      // The BoardFilterBar renders tag options — we check indirectly through
-      // the rendered output showing the board with tasks that have these tags.
       expect(screen.getByText("Task A")).toBeInTheDocument();
       expect(screen.getByText("Task B")).toBeInTheDocument();
       expect(screen.getByText("Task C")).toBeInTheDocument();
@@ -95,7 +86,7 @@ describe("BoardPage", () => {
     });
 
     it("includes phase option when phases exist", () => {
-      mockPhases = ["mvp", "v2"];
+      mockPhases = [{ id: "mvp", name: "MVP", description: "" }, { id: "v2", name: "V2", description: "" }];
       renderPage();
       const select = screen.getByRole("combobox");
       const options = Array.from(select.querySelectorAll("option")).map(o => o.textContent);
@@ -128,7 +119,6 @@ describe("BoardPage", () => {
       mockBoardData = undefined;
       mockBoardLoading = true;
       renderPage();
-      // LoadingState with variant="board" renders something
       expect(screen.queryByText("Task A")).not.toBeInTheDocument();
     });
 

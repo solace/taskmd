@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { StatsPage } from "./StatsPage.tsx";
+import { createStats } from "../test-utils/index.ts";
 
 vi.mock("../hooks/use-stats.ts", () => ({
   useStats: vi.fn(),
@@ -29,7 +30,6 @@ describe("StatsPage", () => {
       isValidating: false,
     });
     const { container } = render(<StatsPage />);
-    // LoadingState renders animated skeleton divs
     expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
   });
 
@@ -47,18 +47,7 @@ describe("StatsPage", () => {
 
   it("renders empty state when total_tasks is 0", () => {
     mockUseStats.mockReturnValue({
-      data: {
-        total_tasks: 0,
-        tasks_by_status: {},
-        tasks_by_priority: {},
-        tasks_by_effort: {},
-        tasks_by_phase: {},
-        blocked_tasks_count: 0,
-        critical_path_length: 0,
-        max_dependency_depth: 0,
-        avg_dependencies_per_task: 0,
-        tags_by_count: [],
-      },
+      data: createStats({ total_tasks: 0, tasks_by_status: {}, tasks_by_priority: {}, tasks_by_effort: {}, blocked_tasks_count: 0, critical_path_length: 0, max_dependency_depth: 0, avg_dependencies_per_task: 0, tags_by_count: [] }),
       error: undefined,
       isLoading: false,
       mutate: vi.fn(),
@@ -70,18 +59,7 @@ describe("StatsPage", () => {
 
   it("renders StatsView when data is available", () => {
     mockUseStats.mockReturnValue({
-      data: {
-        total_tasks: 42,
-        tasks_by_status: { pending: 10 },
-        tasks_by_priority: { high: 5 },
-        tasks_by_effort: { small: 20 },
-        tasks_by_phase: {},
-        blocked_tasks_count: 2,
-        critical_path_length: 3,
-        max_dependency_depth: 4,
-        avg_dependencies_per_task: 1.5,
-        tags_by_count: [],
-      },
+      data: createStats({ total_tasks: 42 }),
       error: undefined,
       isLoading: false,
       mutate: vi.fn(),

@@ -1,7 +1,7 @@
 ---
 title: "Create shared test utilities for web app"
 id: "01kmsmkh1"
-status: pending
+status: completed
 priority: medium
 type: chore
 tags: ["testing", "quality"]
@@ -17,12 +17,12 @@ Create shared test utilities to reduce boilerplate and friction when writing new
 
 ## Tasks
 
-- [ ] Create `src/test-utils/mock-api.ts` with pre-built mock responses for common API calls (`/tasks`, `/stats`, `/config`, `/board`)
-- [ ] Create `src/test-utils/render.ts` with a `renderWithProviders` helper that wraps components with router + query client
-- [ ] Create `src/test-utils/fixtures.ts` with factory functions (`createTask()`, `createStats()`, `createConfig()`) for building test data
-- [ ] Create `src/test-utils/keyboard.ts` with helpers for simulating keyboard navigation sequences
-- [ ] Add a barrel export `src/test-utils/index.ts`
-- [ ] Refactor at least 2 existing test files to use the new utilities and verify they still pass
+- [x] Create `src/test-utils/mock-api.ts` with pre-built mock responses for common API calls (`/tasks`, `/stats`, `/config`, `/board`)
+- [x] Create `src/test-utils/render.ts` with a `renderWithProviders` helper that wraps components with router + query client
+- [x] Create `src/test-utils/fixtures.ts` with factory functions (`createTask()`, `createStats()`, `createConfig()`) for building test data
+- [x] Create `src/test-utils/keyboard.ts` with helpers for simulating keyboard navigation sequences
+- [x] Add a barrel export `src/test-utils/index.ts`
+- [x] Refactor at least 2 existing test files to use the new utilities and verify they still pass
 
 ## Acceptance Criteria
 
