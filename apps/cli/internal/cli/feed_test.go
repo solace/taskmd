@@ -518,8 +518,11 @@ func TestFeedCommand_CompletedStatus(t *testing.T) {
 	defer func() { gitLogFunc = oldGitLog }()
 
 	oldGitShow := gitShowFunc
-	gitShowFunc = func(_, path string) (string, error) {
+	gitShowFunc = func(hash, path string) (string, error) {
 		if strings.Contains(path, "042") {
+			if strings.HasSuffix(hash, "^") {
+				return "---\nid: 042\ntitle: Add Auth\nstatus: in-progress\n---\n# Task", nil
+			}
 			return "---\nid: 042\ntitle: Add Auth\nstatus: completed\n---\n# Task", nil
 		}
 		return "", fmt.Errorf("not found")
@@ -533,8 +536,9 @@ func TestFeedCommand_CompletedStatus(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.Contains(output, "[Completed]") {
-		t.Error("expected [Completed] tag for task 042")
+	// Rich diff shows status transition as compact summary
+	if !strings.Contains(output, "status in-progress") || !strings.Contains(output, "completed") {
+		t.Error("expected status transition in output")
 	}
 	if !strings.Contains(output, "[Added]") {
 		t.Error("expected [Added] tag for task 043")
@@ -553,8 +557,11 @@ func TestFeedCommand_CancelledStatus(t *testing.T) {
 	defer func() { gitLogFunc = oldGitLog }()
 
 	oldGitShow := gitShowFunc
-	gitShowFunc = func(_, path string) (string, error) {
+	gitShowFunc = func(hash, path string) (string, error) {
 		if strings.Contains(path, "042") {
+			if strings.HasSuffix(hash, "^") {
+				return "---\nid: 042\ntitle: Add Auth\nstatus: in-progress\n---\n# Task", nil
+			}
 			return "---\nid: 042\ntitle: Add Auth\nstatus: cancelled\n---\n# Task", nil
 		}
 		return "", fmt.Errorf("not found")
@@ -568,8 +575,9 @@ func TestFeedCommand_CancelledStatus(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.Contains(output, "[Cancelled]") {
-		t.Error("expected [Cancelled] tag for task 042")
+	// Rich diff shows status transition as compact summary
+	if !strings.Contains(output, "status in-progress") || !strings.Contains(output, "cancelled") {
+		t.Error("expected status transition in output")
 	}
 }
 
@@ -584,8 +592,11 @@ func TestFeedCommand_CompletedStatus_JSON(t *testing.T) {
 	defer func() { gitLogFunc = oldGitLog }()
 
 	oldGitShow := gitShowFunc
-	gitShowFunc = func(_, path string) (string, error) {
+	gitShowFunc = func(hash, path string) (string, error) {
 		if strings.Contains(path, "042") {
+			if strings.HasSuffix(hash, "^") {
+				return "---\nid: 042\ntitle: Add Auth\nstatus: in-progress\n---\n# Task", nil
+			}
 			return "---\nid: 042\ntitle: Add Auth\nstatus: completed\n---\n# Task", nil
 		}
 		return "", fmt.Errorf("not found")
@@ -604,8 +615,23 @@ func TestFeedCommand_CompletedStatus_JSON(t *testing.T) {
 		t.Fatalf("failed to parse JSON: %v", err)
 	}
 
+	// TaskStatus still set for backward compatibility
 	if entries[0].Files[0].TaskStatus != "completed" {
 		t.Errorf("expected taskStatus 'completed', got %q", entries[0].Files[0].TaskStatus)
+	}
+
+	// FieldChanges should include the status transition
+	if len(entries[0].Files[0].FieldChanges) == 0 {
+		t.Fatal("expected field changes for task 042")
+	}
+	found := false
+	for _, fc := range entries[0].Files[0].FieldChanges {
+		if fc.Field == "status" && fc.OldValue == "in-progress" && fc.NewValue == "completed" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected status field change in-progress → completed")
 	}
 }
 
@@ -924,6 +950,193 @@ func TestParseSinceTime(t *testing.T) {
 	ts = parseSinceTime("garbage")
 	if !ts.IsZero() {
 		t.Errorf("expected zero time for invalid input, got %v", ts)
+	}
+}
+
+func TestFeedCommand_RichDiff_StatusAndPriority(t *testing.T) {
+	resetFeedFlags()
+	noColor = true
+	defer func() { noColor = false }()
+
+	gitLog := `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Alice
+2026-02-28 10:30:00 +0000
+chore: update task 042
+
+M	tasks/cli/042-add-auth.md
+`
+	oldGitLog := gitLogFunc
+	gitLogFunc = func(_ string, _ []string) (string, error) {
+		return gitLog, nil
+	}
+	defer func() { gitLogFunc = oldGitLog }()
+
+	oldGitShow := gitShowFunc
+	gitShowFunc = func(hash, _ string) (string, error) {
+		if strings.HasSuffix(hash, "^") {
+			return "---\nid: 042\nstatus: pending\npriority: medium\n---\n# Task\n\n- [ ] Add tests\n", nil
+		}
+		return "---\nid: 042\nstatus: in-progress\npriority: high\n---\n# Task\n\n- [x] Add tests\n", nil
+	}
+	defer func() { gitShowFunc = oldGitShow }()
+
+	output, err := captureFeedOutput(t, func() error {
+		return runFeed(feedCmd, nil)
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Compact one-line summary with all changes
+	if !strings.Contains(output, "priority medium") {
+		t.Error("expected priority change in output")
+	}
+	if !strings.Contains(output, "status pending") {
+		t.Error("expected status change in output")
+	}
+	if !strings.Contains(output, "subtask(s) completed") {
+		t.Error("expected subtask completion count in output")
+	}
+	// Uses [Modified] tag with change summary appended
+	if !strings.Contains(output, "[Modified]") {
+		t.Error("expected [Modified] tag with change summary")
+	}
+}
+
+func TestFeedCommand_RichDiff_GenericFallback(t *testing.T) {
+	resetFeedFlags()
+	noColor = true
+	defer func() { noColor = false }()
+
+	gitLog := `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Alice
+2026-02-28 10:30:00 +0000
+docs: update task 042 description
+
+M	tasks/cli/042-add-auth.md
+`
+	oldGitLog := gitLogFunc
+	gitLogFunc = func(_ string, _ []string) (string, error) {
+		return gitLog, nil
+	}
+	defer func() { gitLogFunc = oldGitLog }()
+
+	oldGitShow := gitShowFunc
+	gitShowFunc = func(hash, _ string) (string, error) {
+		if strings.HasSuffix(hash, "^") {
+			return "---\nid: 042\nstatus: pending\n---\n# Task\n\nOld description.", nil
+		}
+		return "---\nid: 042\nstatus: pending\n---\n# Task\n\nNew description.", nil
+	}
+	defer func() { gitShowFunc = oldGitShow }()
+
+	output, err := captureFeedOutput(t, func() error {
+		return runFeed(feedCmd, nil)
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// No frontmatter or subtask changes → generic [Modified]
+	if !strings.Contains(output, "[Modified]") {
+		t.Error("expected [Modified] fallback when no rich changes detected")
+	}
+}
+
+func TestFeedCommand_RichDiff_JSON(t *testing.T) {
+	resetFeedFlags()
+	feedFormat = "json"
+
+	gitLog := `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Alice
+2026-02-28 10:30:00 +0000
+chore: update task 042
+
+M	tasks/cli/042-add-auth.md
+`
+	oldGitLog := gitLogFunc
+	gitLogFunc = func(_ string, _ []string) (string, error) {
+		return gitLog, nil
+	}
+	defer func() { gitLogFunc = oldGitLog }()
+
+	oldGitShow := gitShowFunc
+	gitShowFunc = func(hash, _ string) (string, error) {
+		if strings.HasSuffix(hash, "^") {
+			return "---\nid: 042\nstatus: pending\n---\n# Task\n\n- [ ] Add tests\n", nil
+		}
+		return "---\nid: 042\nstatus: in-progress\n---\n# Task\n\n- [x] Add tests\n", nil
+	}
+	defer func() { gitShowFunc = oldGitShow }()
+
+	output, err := captureFeedOutput(t, func() error {
+		return runFeed(feedCmd, nil)
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var entries []FeedEntry
+	if err := json.Unmarshal([]byte(output), &entries); err != nil {
+		t.Fatalf("failed to parse JSON: %v\noutput: %s", err, output)
+	}
+
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 entry, got %d", len(entries))
+	}
+
+	fc := entries[0].Files[0]
+	if len(fc.FieldChanges) != 1 {
+		t.Fatalf("expected 1 field change, got %d", len(fc.FieldChanges))
+	}
+	if fc.FieldChanges[0].Field != "status" || fc.FieldChanges[0].OldValue != "pending" || fc.FieldChanges[0].NewValue != "in-progress" {
+		t.Errorf("unexpected field change: %+v", fc.FieldChanges[0])
+	}
+	if len(fc.SubtaskChanges) != 1 {
+		t.Fatalf("expected 1 subtask change, got %d", len(fc.SubtaskChanges))
+	}
+	if fc.SubtaskChanges[0].Text != "Add tests" || !fc.SubtaskChanges[0].Done {
+		t.Errorf("unexpected subtask change: %+v", fc.SubtaskChanges[0])
+	}
+}
+
+func TestFeedCommand_RichDiff_CreatedFileWithCompletedStatus(t *testing.T) {
+	resetFeedFlags()
+	noColor = true
+	defer func() { noColor = false }()
+
+	gitLog := `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Alice
+2026-02-28 10:30:00 +0000
+feat: add completed task
+
+A	tasks/cli/050-done-task.md
+`
+	oldGitLog := gitLogFunc
+	gitLogFunc = func(_ string, _ []string) (string, error) {
+		return gitLog, nil
+	}
+	defer func() { gitLogFunc = oldGitLog }()
+
+	oldGitShow := gitShowFunc
+	gitShowFunc = func(hash, _ string) (string, error) {
+		if strings.HasSuffix(hash, "^") {
+			return "", fmt.Errorf("not found")
+		}
+		return "---\nid: 050\nstatus: completed\n---\n# Done Task", nil
+	}
+	defer func() { gitShowFunc = oldGitShow }()
+
+	output, err := captureFeedOutput(t, func() error {
+		return runFeed(feedCmd, nil)
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Created files with completed status show [Completed]
+	if !strings.Contains(output, "[Completed]") {
+		t.Error("expected [Completed] tag for created file with completed status")
 	}
 }
 

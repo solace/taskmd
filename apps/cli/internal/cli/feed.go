@@ -46,10 +46,12 @@ type FeedEntry struct {
 
 // FileChange represents a file changed in a commit.
 type FileChange struct {
-	Path       string `json:"path"`
-	Status     string `json:"status"`
-	TaskID     string `json:"taskID,omitempty"`
-	TaskStatus string `json:"taskStatus,omitempty"`
+	Path           string          `json:"path"`
+	Status         string          `json:"status"`
+	TaskID         string          `json:"taskID,omitempty"`
+	TaskStatus     string          `json:"taskStatus,omitempty"`
+	FieldChanges   []FieldChange   `json:"fieldChanges,omitempty"`
+	SubtaskChanges []SubtaskChange `json:"subtaskChanges,omitempty"`
 }
 
 var taskIDFromFilenameRegex = regexp.MustCompile(`(?:^|/)(\w+)-`)
@@ -110,7 +112,7 @@ func runFeed(_ *cobra.Command, _ []string) error {
 		for i := range gitEntries {
 			gitEntries[i].Source = "git"
 		}
-		enrichEntriesWithTaskStatus(gitEntries)
+		enrichEntriesWithDiffAnalysis(gitEntries)
 	}
 
 	if feedSource != "git" {
@@ -247,21 +249,49 @@ func extractStatusFromContent(content string) string {
 	return ""
 }
 
-// enrichEntriesWithTaskStatus reads task files at each commit to determine
-// their status, overriding the file-change label for completed/cancelled tasks.
-func enrichEntriesWithTaskStatus(entries []FeedEntry) {
+// enrichEntriesWithDiffAnalysis reads task files at each commit and its parent
+// to detect field-level changes and subtask completions.
+func enrichEntriesWithDiffAnalysis(entries []FeedEntry) {
 	for i := range entries {
 		for j := range entries[i].Files {
-			fc := &entries[i].Files[j]
-			content, err := gitShowFunc(entries[i].Hash, fc.Path)
-			if err != nil {
-				continue
-			}
-			status := extractStatusFromContent(content)
-			if status == "completed" || status == "cancelled" {
-				fc.TaskStatus = status
-			}
+			enrichFileChange(&entries[i].Files[j], entries[i].Hash)
 		}
+	}
+}
+
+func enrichFileChange(fc *FileChange, hash string) {
+	newContent, err := gitShowFunc(hash, fc.Path)
+	if err != nil {
+		return
+	}
+
+	if fc.Status != "modified" {
+		setTerminalStatus(fc, newContent)
+		return
+	}
+
+	oldContent, err := gitShowFunc(hash+"^", fc.Path)
+	if err != nil {
+		setTerminalStatus(fc, newContent)
+		return
+	}
+
+	fieldChanges, subtaskChanges := analyzeDiff(oldContent, newContent)
+	fc.FieldChanges = fieldChanges
+	fc.SubtaskChanges = subtaskChanges
+
+	for _, change := range fieldChanges {
+		if change.Field == "status" && (change.NewValue == "completed" || change.NewValue == "cancelled") {
+			fc.TaskStatus = change.NewValue
+		}
+	}
+}
+
+// setTerminalStatus checks if a file has completed/cancelled status and sets TaskStatus.
+func setTerminalStatus(fc *FileChange, content string) {
+	status := extractStatusFromContent(content)
+	if status == "completed" || status == "cancelled" {
+		fc.TaskStatus = status
 	}
 }
 
@@ -529,12 +559,7 @@ func writeFeedText(entries []FeedEntry) error {
 		fmt.Printf("%s %s: %s\n", date, author, entry.Message)
 
 		for _, f := range entry.Files {
-			statusTag := fileStatusTag(f)
-			line := fmt.Sprintf("  %s %s", statusTag, f.Path)
-			if f.TaskID != "" {
-				line = fmt.Sprintf("  %s %s (%s)", statusTag, f.Path, formatTaskID(f.TaskID, r))
-			}
-			fmt.Println(line)
+			writeFileChangeText(f, r)
 		}
 	}
 
@@ -548,6 +573,45 @@ func writeWorklogEntryText(entry FeedEntry, r *lipgloss.Renderer) {
 		taskRef = fmt.Sprintf(" (%s)", formatTaskID(entry.TaskID, r))
 	}
 	fmt.Printf("%s [Worklog]%s %s\n", date, taskRef, entry.Message)
+}
+
+func writeFileChangeText(f FileChange, r *lipgloss.Renderer) {
+	statusTag := fileStatusTag(f)
+	taskRef := ""
+	if f.TaskID != "" {
+		taskRef = fmt.Sprintf(" (%s)", formatTaskID(f.TaskID, r))
+	}
+
+	summary := formatChangeSummary(f)
+	if summary != "" {
+		fmt.Printf("  %s %s%s: %s\n", statusTag, f.Path, taskRef, summary)
+	} else {
+		fmt.Printf("  %s %s%s\n", statusTag, f.Path, taskRef)
+	}
+}
+
+// formatChangeSummary builds a compact one-line summary of field and subtask changes.
+func formatChangeSummary(f FileChange) string {
+	var parts []string
+	for _, fc := range f.FieldChanges {
+		parts = append(parts, fmt.Sprintf("%s %s \u2192 %s", fc.Field, fc.OldValue, fc.NewValue))
+	}
+	done := 0
+	undone := 0
+	for _, sc := range f.SubtaskChanges {
+		if sc.Done {
+			done++
+		} else {
+			undone++
+		}
+	}
+	if done > 0 {
+		parts = append(parts, fmt.Sprintf("%d subtask(s) completed", done))
+	}
+	if undone > 0 {
+		parts = append(parts, fmt.Sprintf("%d subtask(s) unchecked", undone))
+	}
+	return strings.Join(parts, ", ")
 }
 
 func fileStatusTag(fc FileChange) string {

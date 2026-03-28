@@ -1,7 +1,7 @@
 ---
 title: "Add rich diff analysis to feed command"
 id: "01kjmgaqf"
-status: pending
+status: completed
 priority: low
 type: feature
 tags: ["cli", "git"]
@@ -17,12 +17,12 @@ Enhance the feed command to detect and display specific field-level changes from
 
 ## Tasks
 
-- [ ] Parse git diffs for task files to extract frontmatter field changes (using `git log -p` or `git diff` between commits)
-- [ ] Detect status transitions and display them (e.g. `[status] 042: pending → in-progress`)
-- [ ] Detect priority changes (e.g. `[priority] 042: medium → high`)
-- [ ] Detect subtask check-off events from body diffs (e.g. `[subtask] 042: completed "Add tests"`)
-- [ ] Fall back to generic `[modified]` for changes that don't match known patterns
-- [ ] Add tests with sample diffs covering status changes, priority changes, subtask completions, and mixed edits
+- [x] Parse git diffs for task files to extract frontmatter field changes (using `git log -p` or `git diff` between commits)
+- [x] Detect status transitions and display them (e.g. `[status] 042: pending → in-progress`)
+- [x] Detect priority changes (e.g. `[priority] 042: medium → high`)
+- [x] Detect subtask check-off events from body diffs (e.g. `[subtask] 042: completed "Add tests"`)
+- [x] Fall back to generic `[modified]` for changes that don't match known patterns
+- [x] Add tests with sample diffs covering status changes, priority changes, subtask completions, and mixed edits
 
 ## Acceptance Criteria
 
