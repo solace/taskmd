@@ -1,5 +1,4 @@
 import {
-  flexRender,
   getCoreRowModel,
   getSortedRowModel,
   getFilteredRowModel,
@@ -7,8 +6,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import { useState, useMemo, useCallback } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { KeyboardList } from "../shared/KeyboardList.tsx";
+import { useSearchParams } from "react-router-dom";
 import type { Task } from "../../api/types.ts";
 import { usePhase } from "../../hooks/use-phase.tsx";
 import { STATUSES, PRIORITIES, EFFORTS, TYPES } from "./TaskTable/constants.ts";
@@ -17,6 +15,7 @@ import { createTaskColumns } from "./TaskTable/columns.tsx";
 import { toggleInSet } from "./TaskTable/utils.ts";
 import { applyFilters, hasActiveFilters as checkActiveFilters } from "./TaskTable/filters.ts";
 import { MobileCardList } from "./TaskTable/MobileCardList.tsx";
+import { DesktopTable } from "./TaskTable/DesktopTable.tsx";
 
 interface TaskTableProps {
   tasks: Task[];
@@ -28,7 +27,6 @@ interface TaskTableProps {
 }
 
 export function TaskTable({ tasks, initialTags, initialStatuses, initialPriorities, initialEffort, initialTypes }: TaskTableProps) {
-  const navigate = useNavigate();
   const [, setSearchParams] = useSearchParams();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -96,17 +94,18 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
     setGlobalFilter("");
   }
 
-  function toggleTag(tag: string) {
+  const toggleTag = useCallback((tag: string) => {
     setSelectedTags((prev) => {
       const next = toggleInSet(prev, tag);
       syncFiltersToUrl({ tag: next });
       return next;
     });
-  }
+  }, [syncFiltersToUrl]);
 
   const filteredTasks = useMemo(
     () => applyFilters(tasks, filterState),
-    [tasks, selectedStatuses, selectedPriorities, selectedTypes, selectedTags, selectedEffort, selectedPhases],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- filterState is derived from these individual deps
+    [tasks, selectedStatuses, selectedPriorities, selectedTypes, selectedTags, selectedEffort, selectedPhases, globalFilter],
   );
 
   const taskStatusMap = useMemo(
@@ -116,7 +115,7 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
 
   const columns = useMemo(
     () => createTaskColumns(selectedTags, toggleTag, taskStatusMap, showPhase),
-    [selectedTags, taskStatusMap, showPhase],
+    [selectedTags, toggleTag, taskStatusMap, showPhase],
   );
 
   const table = useReactTable({
@@ -201,81 +200,7 @@ export function TaskTable({ tasks, initialTags, initialStatuses, initialPrioriti
         hasActiveFilters={hasActiveFilters}
       />
       <MobileCardList rows={rows} onClearFilters={clearFilters} showPhase={showPhase} />
-      {/* Desktop table */}
-      <KeyboardList
-        className="hidden sm:block overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700"
-        role="grid"
-        aria-label="Task list"
-        itemCount={visibleCount}
-        onActivate={(index) => {
-          const task = rows[index]?.original;
-          if (task) navigate(`/tasks/${task.id}`);
-        }}
-      >
-        {(focusedRowIndex) => (
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800">
-              {table.getHeaderGroups().map((hg) => (
-                <tr key={hg.id}>
-                  {hg.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      onClick={header.column.getToggleSortingHandler()}
-                      className={`px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer select-none ${(header.column.columnDef.meta as Record<string, string>)?.className ?? ""}`}
-                    >
-                      <div className="flex items-center gap-1">
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                        {{ asc: " ^", desc: " v" }[
-                          header.column.getIsSorted() as string
-                        ] ?? ""}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
-              {visibleCount === 0 ? (
-                <tr>
-                  <td
-                    colSpan={columns.length}
-                    className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
-                  >
-                    No tasks match your filters.{" "}
-                    <button
-                      onClick={clearFilters}
-                      className="text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      Clear filters
-                    </button>
-                  </td>
-                </tr>
-              ) : (
-                rows.map((row, idx) => (
-                  <tr
-                    key={row.id}
-                    id={`task-row-${idx}`}
-                    aria-selected={idx === focusedRowIndex}
-                    className={`hover:bg-gray-50 dark:hover:bg-gray-700 ${idx === focusedRowIndex ? "ring-2 ring-inset ring-blue-500" : ""}`}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className={`px-4 py-3 text-sm ${(cell.column.columnDef.meta as Record<string, string>)?.className ?? ""}`}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        )}
-      </KeyboardList>
+      <DesktopTable table={table} rows={rows} columns={columns} clearFilters={clearFilters} />
       <p className="mt-2 text-xs text-gray-400">
         Showing {visibleCount} of {tasks.length} tasks
       </p>

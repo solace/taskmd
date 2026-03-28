@@ -190,7 +190,7 @@ func (s *Server) mountStatic(mux *http.ServeMux) {
 
 		// SPA fallback: serve index.html with injected config
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(indexHTML)
+		_, _ = w.Write(indexHTML)
 	})
 }
 

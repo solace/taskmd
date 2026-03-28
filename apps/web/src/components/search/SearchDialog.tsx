@@ -11,33 +11,35 @@ interface SearchDialogProps {
 }
 
 export function SearchDialog({ open, onClose }: SearchDialogProps) {
+  if (!open) return null;
+  return <SearchDialogContent onClose={onClose} />;
+}
+
+function SearchDialogContent({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState("");
-  const [activeIndex, setActiveIndex] = useState(-1);
+  const [activeState, setActiveState] = useState<{ index: number; resultsId: unknown }>({ index: -1, resultsId: null });
   const inputRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
-  const prevOpenRef = useRef(false);
   const navigate = useNavigate();
-
-  // Reset state synchronously during render to avoid flash of stale results
-  if (open && !prevOpenRef.current) {
-    query && setQuery("");
-    activeIndex !== -1 && setActiveIndex(-1);
-  }
-  prevOpenRef.current = open;
 
   const { project } = useProject();
   const { data: results } = useSearch(query, project);
 
-  useEffect(() => {
-    if (open) {
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
-  }, [open]);
+  // Reset active index when results change by comparing identity
+  const activeIndex = activeState.resultsId === results ? activeState.index : -1;
+  const setActiveIndex = useCallback(
+    (update: number | ((prev: number) => number)) => {
+      setActiveState((prev) => {
+        const next = typeof update === "function" ? update(prev.resultsId === results ? prev.index : -1) : update;
+        return { index: next, resultsId: results };
+      });
+    },
+    [results],
+  );
 
-  // Reset active index when results change
   useEffect(() => {
-    setActiveIndex(-1);
-  }, [results]);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, []);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -78,7 +80,7 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
         }
       }
     },
-    [onClose, results, activeIndex, navigate],
+    [onClose, results, activeIndex, navigate, setActiveIndex],
   );
 
   const handleSelect = useCallback(
@@ -88,8 +90,6 @@ export function SearchDialog({ open, onClose }: SearchDialogProps) {
     },
     [onClose, navigate],
   );
-
-  if (!open) return null;
 
   return (
     <div

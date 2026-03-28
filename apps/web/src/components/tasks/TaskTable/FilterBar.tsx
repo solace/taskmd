@@ -140,7 +140,6 @@ export function FilterBar({
             onToggle={onToggleStatus}
             onSelectAll={onSelectAllStatuses}
           />
-
           <FilterRow
             label="Priority"
             items={PRIORITIES}
@@ -149,7 +148,6 @@ export function FilterBar({
             onToggle={onTogglePriority}
             onSelectAll={onSelectAllPriorities}
           />
-
           <FilterRow
             label="Effort"
             items={EFFORTS}
@@ -158,7 +156,6 @@ export function FilterBar({
             onToggle={onToggleEffort}
             onSelectAll={onSelectAllEffort}
           />
-
           <FilterRow
             label="Type"
             items={TYPES}
@@ -171,22 +168,17 @@ export function FilterBar({
           {availablePhases.length > 0 && (
             <div className="flex items-center gap-2 flex-wrap" data-arrow-nav>
               <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Phase:</span>
-              {availablePhases.map((m) => {
-                const active = selectedPhases.has(m);
-                return (
-                  <button
-                    key={m}
-                    onClick={() => onTogglePhase(m)}
-                    className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
-                      active
-                        ? `${getPhaseColor(m)} font-medium`
-                        : INACTIVE_STYLE
-                    }`}
-                  >
-                    {m}
-                  </button>
-                );
-              })}
+              {availablePhases.map((m) => (
+                <button
+                  key={m}
+                  onClick={() => onTogglePhase(m)}
+                  className={`min-h-[44px] sm:min-h-0 inline-flex items-center px-2.5 py-1 text-xs rounded-full transition-colors duration-150 ${
+                    selectedPhases.has(m) ? `${getPhaseColor(m)} font-medium` : INACTIVE_STYLE
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
             </div>
           )}
         </div>

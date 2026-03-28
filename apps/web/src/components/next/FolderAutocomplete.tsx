@@ -49,7 +49,6 @@ export function FolderAutocomplete({
       .map((r) => r.folder);
   }, [folders, query]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setActiveIndex(0);
   }, [suggestions]);

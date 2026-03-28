@@ -23,3 +23,25 @@ if command -v golangci-lint >/dev/null 2>&1; then
         fi
     fi
 fi
+
+# Run ESLint and TypeScript type-check on staged web files
+staged_web=$(git diff --cached --name-only --diff-filter=ACM | grep '^apps/web/.*\.\(ts\|tsx\)$')
+if [ -n "$staged_web" ]; then
+    if command -v pnpm >/dev/null 2>&1; then
+        out=$(cd apps/web && pnpm lint 2>&1)
+        if [ $? -ne 0 ]; then
+            echo "$out"
+            echo "ESLint (apps/web) failed. Fix the issues above before committing."
+            exit 1
+        fi
+
+        out=$(cd apps/web && pnpm typeCheck 2>&1)
+        if [ $? -ne 0 ]; then
+            echo "$out"
+            echo "TypeScript type-check (apps/web) failed. Fix the issues above before committing."
+            exit 1
+        fi
+    else
+        echo "Warning: pnpm not found, skipping web linting and type-check"
+    fi
+fi

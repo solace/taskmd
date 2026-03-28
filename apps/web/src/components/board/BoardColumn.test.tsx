@@ -29,7 +29,7 @@ function renderColumn(props: Partial<React.ComponentProps<typeof BoardColumn>> =
   );
 }
 
-function makeDragEvent(type: string, data: Record<string, string> = {}) {
+function makeDragEvent(_type: string, data: Record<string, string> = {}) {
   const store: Record<string, string> = { ...data };
   return {
     preventDefault: vi.fn(),

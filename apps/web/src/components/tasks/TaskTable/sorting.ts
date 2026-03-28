@@ -17,7 +17,7 @@ export function comparePriority(a: string | null | undefined, b: string | null |
 
 export function countUnmetDependencies(
   deps: string[] | null,
-  taskStatusMap: Map<string, string> | undefined,
+  taskStatusMap?: Map<string, string>,
 ): number {
   if (!deps) return 0;
   if (!taskStatusMap) return deps.length;
@@ -27,7 +27,7 @@ export function countUnmetDependencies(
 export function compareBlocked(
   depsA: string[] | null,
   depsB: string[] | null,
-  taskStatusMap: Map<string, string> | undefined,
+  taskStatusMap?: Map<string, string>,
 ): number {
   return countUnmetDependencies(depsA, taskStatusMap) - countUnmetDependencies(depsB, taskStatusMap);
 }

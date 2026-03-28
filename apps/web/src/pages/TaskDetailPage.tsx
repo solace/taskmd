@@ -13,6 +13,7 @@ import { TaskEditForm } from "../components/tasks/TaskEditForm.tsx";
 import { LoadingState } from "../components/shared/LoadingState.tsx";
 import { ErrorState } from "../components/shared/ErrorState.tsx";
 import { StatusBadge, PhaseBadge } from "../components/tasks/TaskTable/Badges.tsx";
+import { WorklogSection } from "../components/tasks/WorklogSection.tsx";
 
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -184,31 +185,7 @@ export function TaskDetailPage() {
             )}
 
             {worklogEntries && worklogEntries.length > 0 && (
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
-                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-3">
-                  Worklog
-                  <span className="ml-2 px-1.5 py-0.5 text-xs bg-gray-100 rounded dark:bg-gray-700">
-                    {worklogEntries.length}
-                  </span>
-                </h3>
-                <div className="space-y-4">
-                  {worklogEntries.map((entry, i) => (
-                    <div key={i} className="border-l-2 border-gray-200 dark:border-gray-600 pl-4">
-                      <time className="text-xs text-gray-400 font-mono">
-                        {new Date(entry.timestamp).toLocaleString()}
-                      </time>
-                      <div className="prose prose-sm max-w-none dark:prose-invert mt-1">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          rehypePlugins={[rehypeRaw]}
-                        >
-                          {entry.content}
-                        </ReactMarkdown>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <WorklogSection entries={worklogEntries} />
             )}
 
             {task.file_path && (
