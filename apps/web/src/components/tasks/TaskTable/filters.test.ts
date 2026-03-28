@@ -113,6 +113,27 @@ describe("applyFilters", () => {
     expect(result.map((t) => t.id)).toEqual(["001"]);
   });
 
+  it("filters by selected phases", () => {
+    const tasksWithPhases = [
+      makeTask({ id: "001", phase: "mvp" }),
+      makeTask({ id: "002", phase: "v2" }),
+      makeTask({ id: "003", phase: "" }),
+    ];
+    const filters = { ...defaultFilterState(), selectedPhases: new Set(["mvp"]) };
+    const result = applyFilters(tasksWithPhases, filters);
+    expect(result.map((t) => t.id)).toEqual(["001"]);
+  });
+
+  it("excludes tasks without phase when phase filter is active", () => {
+    const tasksWithPhases = [
+      makeTask({ id: "001", phase: "mvp" }),
+      makeTask({ id: "002", phase: "" }),
+    ];
+    const filters = { ...defaultFilterState(), selectedPhases: new Set(["mvp"]) };
+    const result = applyFilters(tasksWithPhases, filters);
+    expect(result.map((t) => t.id)).toEqual(["001"]);
+  });
+
   it("returns empty array when no tasks match", () => {
     const filters = { ...defaultFilterState(), selectedStatuses: new Set(["cancelled"]) };
     const result = applyFilters(sampleTasks, filters);
