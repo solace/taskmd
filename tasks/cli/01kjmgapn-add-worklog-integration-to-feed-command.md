@@ -1,7 +1,7 @@
 ---
 title: "Add worklog integration to feed command"
 id: "01kjmgapn"
-status: pending
+status: completed
 priority: low
 type: feature
 tags: ["cli", "git"]
@@ -17,13 +17,13 @@ Extend the `taskmd feed` command to include worklog entries alongside git-based 
 
 ## Tasks
 
-- [ ] Parse worklog files from `.worklogs/` directories, extracting timestamp headers and entry summaries
-- [ ] Merge worklog entries into the feed timeline alongside git-based events
-- [ ] Add a `[worklog]` event type label in feed output
-- [ ] Show a truncated first line of the worklog entry as the event description
-- [ ] Support `--source` flag to filter by event source (e.g. `--source git`, `--source worklog`, or both)
-- [ ] Handle worklogs with missing or malformed timestamps gracefully
-- [ ] Add tests for worklog parsing, merging, and the `--source` filter
+- [x] Parse worklog files from `.worklogs/` directories, extracting timestamp headers and entry summaries
+- [x] Merge worklog entries into the feed timeline alongside git-based events
+- [x] Add a `[worklog]` event type label in feed output
+- [x] Show a truncated first line of the worklog entry as the event description
+- [x] Support `--source` flag to filter by event source (e.g. `--source git`, `--source worklog`, or both)
+- [x] Handle worklogs with missing or malformed timestamps gracefully
+- [x] Add tests for worklog parsing, merging, and the `--source` filter
 
 ## Acceptance Criteria
 

@@ -7,10 +7,14 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/spf13/cobra"
+
+	"github.com/driangle/taskmd/sdk/go/worklog"
 )
 
 var (
@@ -18,6 +22,7 @@ var (
 	feedLimit  int
 	feedSince  string
 	feedScope  string
+	feedSource string
 )
 
 // gitLogFunc is the function used to run git log.
@@ -28,13 +33,15 @@ var gitLogFunc = runGitLog
 // Override in tests to avoid running actual git commands.
 var gitShowFunc = runGitShow
 
-// FeedEntry represents a single commit in the activity feed.
+// FeedEntry represents a single event in the activity feed.
 type FeedEntry struct {
-	Hash      string       `json:"hash"`
-	Author    string       `json:"author"`
+	Source    string       `json:"source"`
+	Hash      string       `json:"hash,omitempty"`
+	Author    string       `json:"author,omitempty"`
 	Timestamp time.Time    `json:"timestamp"`
 	Message   string       `json:"message"`
-	Files     []FileChange `json:"files"`
+	TaskID    string       `json:"taskID,omitempty"`
+	Files     []FileChange `json:"files,omitempty"`
 }
 
 // FileChange represents a file changed in a commit.
@@ -61,7 +68,9 @@ Examples:
   taskmd feed --since 7d
   taskmd feed --limit 10
   taskmd feed --scope cli
-  taskmd feed --format json`,
+  taskmd feed --format json
+  taskmd feed --source worklog
+  taskmd feed --source git`,
 	Args: cobra.NoArgs,
 	RunE: runFeed,
 }
@@ -70,9 +79,10 @@ func init() {
 	rootCmd.AddCommand(feedCmd)
 
 	feedCmd.Flags().StringVar(&feedFormat, "format", "text", "output format (text, json)")
-	feedCmd.Flags().IntVar(&feedLimit, "limit", 20, "maximum number of commits to show")
+	feedCmd.Flags().IntVar(&feedLimit, "limit", 20, "maximum number of entries to show")
 	feedCmd.Flags().StringVar(&feedSince, "since", "", "show changes since (e.g. 2d, 1w, 2026-02-28)")
 	feedCmd.Flags().StringVar(&feedScope, "scope", "", "filter to a tasks subdirectory; supports wildcards (e.g. cli, cli*)")
+	feedCmd.Flags().StringVar(&feedSource, "source", "all", "filter by event source (all, git, worklog)")
 }
 
 func runFeed(_ *cobra.Command, _ []string) error {
@@ -80,18 +90,38 @@ func runFeed(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
+	validSources := map[string]bool{"all": true, "git": true, "worklog": true}
+	if !validSources[feedSource] {
+		return fmt.Errorf("unsupported source: %q (supported: all, git, worklog)", feedSource)
+	}
+
 	flags := GetGlobalFlags()
 	tasksDir := flags.TaskDir
 
-	args := buildGitLogArgs(tasksDir, feedLimit, feedSince, feedScope)
+	var gitEntries, worklogEntries []FeedEntry
 
-	output, err := gitLogFunc(tasksDir, args)
-	if err != nil {
-		return fmt.Errorf("failed to read git history (is this a git repository?): %w", err)
+	if feedSource != "worklog" {
+		args := buildGitLogArgs(tasksDir, feedLimit, feedSince, feedScope)
+		output, err := gitLogFunc(tasksDir, args)
+		if err != nil {
+			return fmt.Errorf("failed to read git history (is this a git repository?): %w", err)
+		}
+		gitEntries = parseGitLogOutput(output)
+		for i := range gitEntries {
+			gitEntries[i].Source = "git"
+		}
+		enrichEntriesWithTaskStatus(gitEntries)
 	}
 
-	entries := parseGitLogOutput(output)
-	enrichEntriesWithTaskStatus(entries)
+	if feedSource != "git" {
+		worklogEntries = scanWorklogEntries(tasksDir, feedScope, feedSince, flags.Verbose)
+	}
+
+	entries := mergeEntries(gitEntries, worklogEntries)
+
+	if feedLimit > 0 && len(entries) > feedLimit {
+		entries = entries[:feedLimit]
+	}
 
 	if len(entries) == 0 {
 		if feedFormat == "text" {
@@ -350,15 +380,148 @@ func isHexString(s string) bool {
 	return true
 }
 
+// scanWorklogEntries finds .worklogs/*.md files under tasksDir and converts
+// their entries into FeedEntry values with Source "worklog".
+func scanWorklogEntries(tasksDir, scope, since string, verbose bool) []FeedEntry {
+	var sinceTime time.Time
+	if since != "" {
+		sinceTime = parseSinceTime(since)
+	}
+
+	pattern := buildWorklogGlobPattern(tasksDir, scope)
+	files, _ := filepath.Glob(pattern)
+
+	var entries []FeedEntry
+	for _, f := range files {
+		wl, err := worklog.ParseWorklog(f)
+		if err != nil {
+			if verbose {
+				fmt.Fprintf(os.Stderr, "warning: failed to parse worklog %s: %v\n", f, err)
+			}
+			continue
+		}
+
+		for _, e := range wl.Entries {
+			if !sinceTime.IsZero() && e.Timestamp.Before(sinceTime) {
+				continue
+			}
+			entries = append(entries, FeedEntry{
+				Source:    "worklog",
+				TaskID:    wl.TaskID,
+				Timestamp: e.Timestamp,
+				Message:   truncateFirstLine(e.Content),
+			})
+		}
+	}
+
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].Timestamp.After(entries[j].Timestamp)
+	})
+
+	return entries
+}
+
+func buildWorklogGlobPattern(tasksDir, scope string) string {
+	if scope != "" && containsGlobChars(scope) {
+		// For wildcard scopes, we can't easily expand here; use a broad pattern.
+		// The worklog files live under .worklogs/ inside each scope dir.
+		return filepath.Join(tasksDir, scope, ".worklogs", "*.md")
+	}
+	if scope != "" {
+		return filepath.Join(tasksDir, scope, ".worklogs", "*.md")
+	}
+	// Match worklogs in any subdirectory (one level deep) or root
+	return filepath.Join(tasksDir, "*", ".worklogs", "*.md")
+}
+
+// truncateFirstLine returns the first non-empty line of content.
+func truncateFirstLine(content string) string {
+	for _, line := range strings.Split(content, "\n") {
+		line = strings.TrimSpace(line)
+		if line != "" {
+			return line
+		}
+	}
+	return ""
+}
+
+// parseSinceTime converts a since string into a time.Time cutoff.
+func parseSinceTime(since string) time.Time {
+	unitDurations := map[byte]time.Duration{
+		'd': 24 * time.Hour,
+		'w': 7 * 24 * time.Hour,
+		'm': 30 * 24 * time.Hour,
+		'y': 365 * 24 * time.Hour,
+	}
+
+	if len(since) >= 2 {
+		unit := since[len(since)-1]
+		numPart := since[:len(since)-1]
+		if d, ok := unitDurations[unit]; ok {
+			allDigits := true
+			for _, c := range numPart {
+				if c < '0' || c > '9' {
+					allDigits = false
+					break
+				}
+			}
+			if allDigits {
+				n := 0
+				for _, c := range numPart {
+					n = n*10 + int(c-'0')
+				}
+				return time.Now().Add(-time.Duration(n) * d)
+			}
+		}
+	}
+
+	// Try absolute date
+	if t, err := time.Parse("2006-01-02", since); err == nil {
+		return t
+	}
+
+	return time.Time{}
+}
+
+// mergeEntries merges two slices of FeedEntry sorted by timestamp descending.
+func mergeEntries(a, b []FeedEntry) []FeedEntry {
+	if len(b) == 0 {
+		return a
+	}
+	if len(a) == 0 {
+		return b
+	}
+
+	result := make([]FeedEntry, 0, len(a)+len(b))
+	i, j := 0, 0
+	for i < len(a) && j < len(b) {
+		if a[i].Timestamp.After(b[j].Timestamp) || a[i].Timestamp.Equal(b[j].Timestamp) {
+			result = append(result, a[i])
+			i++
+		} else {
+			result = append(result, b[j])
+			j++
+		}
+	}
+	result = append(result, a[i:]...)
+	result = append(result, b[j:]...)
+	return result
+}
+
 func writeFeedText(entries []FeedEntry) error {
 	r := getRenderer()
 
-	fmt.Println(formatDim("Recent task activity from git history", r))
+	fmt.Println(formatDim("Recent task activity", r))
 	fmt.Println()
 
 	for i, entry := range entries {
 		if i > 0 {
 			fmt.Println()
+		}
+
+		if entry.Source == "worklog" {
+			writeWorklogEntryText(entry, r)
+			continue
 		}
 
 		date := formatDim(entry.Timestamp.Format("2006-01-02 15:04"), r)
@@ -376,6 +539,15 @@ func writeFeedText(entries []FeedEntry) error {
 	}
 
 	return nil
+}
+
+func writeWorklogEntryText(entry FeedEntry, r *lipgloss.Renderer) {
+	date := formatDim(entry.Timestamp.Format("2006-01-02 15:04"), r)
+	taskRef := ""
+	if entry.TaskID != "" {
+		taskRef = fmt.Sprintf(" (%s)", formatTaskID(entry.TaskID, r))
+	}
+	fmt.Printf("%s [Worklog]%s %s\n", date, taskRef, entry.Message)
 }
 
 func fileStatusTag(fc FileChange) string {

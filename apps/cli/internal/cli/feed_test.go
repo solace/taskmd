@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 const sampleGitLogOutput = `aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -46,6 +47,7 @@ func resetFeedFlags() {
 	feedLimit = 20
 	feedSince = ""
 	feedScope = ""
+	feedSource = "all"
 }
 
 // noopGitShow returns an error so enrichEntriesWithTaskStatus is a no-op.
@@ -621,4 +623,314 @@ func TestBuildGitLogArgs_NoOptionalFlags(t *testing.T) {
 	if strings.Contains(lastArg, "//") {
 		t.Errorf("unexpected double slash in path: %s", lastArg)
 	}
+}
+
+func createWorklogFiles(t *testing.T, tasksDir string) {
+	t.Helper()
+	wlDir := tasksDir + "/cli/.worklogs"
+	if err := os.MkdirAll(wlDir, 0755); err != nil {
+		t.Fatalf("failed to create worklogs dir: %v", err)
+	}
+	content := `## 2026-02-15T10:00:00Z
+
+Started implementation of the search feature.
+
+**Approach:** Full-text search with SQLite.
+
+## 2026-02-15T14:30:00Z
+
+Completed login endpoint.
+`
+	if err := os.WriteFile(wlDir+"/015.md", []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write worklog file: %v", err)
+	}
+}
+
+func TestScanWorklogEntries(t *testing.T) {
+	tmpDir := t.TempDir()
+	createWorklogFiles(t, tmpDir)
+
+	entries := scanWorklogEntries(tmpDir, "cli", "", false)
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 worklog entries, got %d", len(entries))
+	}
+
+	// Should be sorted newest first
+	if entries[0].Message != "Completed login endpoint." {
+		t.Errorf("expected newest entry first, got: %s", entries[0].Message)
+	}
+	if entries[0].Source != "worklog" {
+		t.Errorf("expected source 'worklog', got: %s", entries[0].Source)
+	}
+	if entries[0].TaskID != "015" {
+		t.Errorf("expected task ID '015', got: %s", entries[0].TaskID)
+	}
+	if entries[1].Message != "Started implementation of the search feature." {
+		t.Errorf("expected older entry second, got: %s", entries[1].Message)
+	}
+}
+
+func TestScanWorklogEntries_SinceFilter(t *testing.T) {
+	tmpDir := t.TempDir()
+	createWorklogFiles(t, tmpDir)
+
+	// Filter to only entries after 2026-02-15T12:00:00Z
+	entries := scanWorklogEntries(tmpDir, "cli", "2026-02-15", false)
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 entries with since=2026-02-15, got %d", len(entries))
+	}
+
+	// Use a date after the entries
+	entries = scanWorklogEntries(tmpDir, "cli", "2026-02-16", false)
+	if len(entries) != 0 {
+		t.Fatalf("expected 0 entries with since=2026-02-16, got %d", len(entries))
+	}
+}
+
+func TestScanWorklogEntries_MalformedTimestamp(t *testing.T) {
+	tmpDir := t.TempDir()
+	wlDir := tmpDir + "/cli/.worklogs"
+	if err := os.MkdirAll(wlDir, 0755); err != nil {
+		t.Fatalf("failed to create worklogs dir: %v", err)
+	}
+
+	content := `## not-a-timestamp
+
+This entry should be skipped.
+
+## 2026-03-01T09:00:00Z
+
+Valid entry here.
+`
+	if err := os.WriteFile(wlDir+"/020.md", []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write worklog: %v", err)
+	}
+
+	entries := scanWorklogEntries(tmpDir, "cli", "", false)
+	if len(entries) != 1 {
+		t.Fatalf("expected 1 entry (malformed skipped), got %d", len(entries))
+	}
+	if entries[0].Message != "Valid entry here." {
+		t.Errorf("unexpected message: %s", entries[0].Message)
+	}
+}
+
+func TestMergeEntries(t *testing.T) {
+	git := []FeedEntry{
+		{Source: "git", Timestamp: mustParseTime("2026-02-28T10:00:00Z"), Message: "git-1"},
+		{Source: "git", Timestamp: mustParseTime("2026-02-26T10:00:00Z"), Message: "git-2"},
+	}
+	wl := []FeedEntry{
+		{Source: "worklog", Timestamp: mustParseTime("2026-02-27T12:00:00Z"), Message: "wl-1"},
+		{Source: "worklog", Timestamp: mustParseTime("2026-02-25T08:00:00Z"), Message: "wl-2"},
+	}
+
+	merged := mergeEntries(git, wl)
+	if len(merged) != 4 {
+		t.Fatalf("expected 4 merged entries, got %d", len(merged))
+	}
+
+	expected := []string{"git-1", "wl-1", "git-2", "wl-2"}
+	for i, e := range merged {
+		if e.Message != expected[i] {
+			t.Errorf("merged[%d] = %q, want %q", i, e.Message, expected[i])
+		}
+	}
+}
+
+func TestMergeEntries_EmptySlices(t *testing.T) {
+	entries := []FeedEntry{{Source: "git", Message: "only"}}
+
+	if got := mergeEntries(entries, nil); len(got) != 1 {
+		t.Errorf("merge with nil b: expected 1, got %d", len(got))
+	}
+	if got := mergeEntries(nil, entries); len(got) != 1 {
+		t.Errorf("merge with nil a: expected 1, got %d", len(got))
+	}
+}
+
+func TestFeedCommand_SourceWorklog(t *testing.T) {
+	resetFeedFlags()
+	feedSource = "worklog"
+	noColor = true
+	defer func() { noColor = false }()
+
+	tmpDir := t.TempDir()
+	createWorklogFiles(t, tmpDir)
+
+	oldTaskDir := taskDir
+	taskDir = tmpDir
+	defer func() { taskDir = oldTaskDir }()
+
+	// Git log should NOT be called
+	oldGitLog := gitLogFunc
+	gitLogFunc = func(_ string, _ []string) (string, error) {
+		t.Fatal("git log should not be called with --source worklog")
+		return "", nil
+	}
+	defer func() { gitLogFunc = oldGitLog }()
+
+	oldGitShow := gitShowFunc
+	gitShowFunc = noopGitShow
+	defer func() { gitShowFunc = oldGitShow }()
+
+	output, err := captureFeedOutput(t, func() error {
+		return runFeed(feedCmd, nil)
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(output, "[Worklog]") {
+		t.Error("expected [Worklog] tag in output")
+	}
+	if !strings.Contains(output, "015") {
+		t.Error("expected task ID 015 in output")
+	}
+	if !strings.Contains(output, "Started implementation") {
+		t.Error("expected worklog message in output")
+	}
+}
+
+func TestFeedCommand_SourceGit(t *testing.T) {
+	resetFeedFlags()
+	feedSource = "git"
+	noColor = true
+	defer func() { noColor = false }()
+
+	oldGitLog := gitLogFunc
+	gitLogFunc = func(_ string, _ []string) (string, error) {
+		return sampleGitLogOutput, nil
+	}
+	defer func() { gitLogFunc = oldGitLog }()
+
+	oldGitShow := gitShowFunc
+	gitShowFunc = noopGitShow
+	defer func() { gitShowFunc = oldGitShow }()
+
+	output, err := captureFeedOutput(t, func() error {
+		return runFeed(feedCmd, nil)
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if strings.Contains(output, "[Worklog]") {
+		t.Error("expected no [Worklog] tag with --source git")
+	}
+	if !strings.Contains(output, "Alice") {
+		t.Error("expected git entries in output")
+	}
+}
+
+func TestFeedCommand_InvalidSource(t *testing.T) {
+	resetFeedFlags()
+	feedSource = "invalid"
+
+	oldGitLog := gitLogFunc
+	gitLogFunc = func(_ string, _ []string) (string, error) {
+		return "", nil
+	}
+	defer func() { gitLogFunc = oldGitLog }()
+
+	err := runFeed(feedCmd, nil)
+	if err == nil {
+		t.Fatal("expected error for invalid source")
+	}
+	if !strings.Contains(err.Error(), "unsupported source") {
+		t.Errorf("expected 'unsupported source' error, got: %v", err)
+	}
+}
+
+func TestFeedCommand_WorklogJSON(t *testing.T) {
+	resetFeedFlags()
+	feedFormat = "json"
+	feedSource = "worklog"
+
+	tmpDir := t.TempDir()
+	createWorklogFiles(t, tmpDir)
+
+	oldTaskDir := taskDir
+	taskDir = tmpDir
+	defer func() { taskDir = oldTaskDir }()
+
+	oldGitShow := gitShowFunc
+	gitShowFunc = noopGitShow
+	defer func() { gitShowFunc = oldGitShow }()
+
+	output, err := captureFeedOutput(t, func() error {
+		return runFeed(feedCmd, nil)
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var entries []FeedEntry
+	if err := json.Unmarshal([]byte(output), &entries); err != nil {
+		t.Fatalf("failed to parse JSON: %v\noutput: %s", err, output)
+	}
+
+	if len(entries) != 2 {
+		t.Fatalf("expected 2 entries, got %d", len(entries))
+	}
+	if entries[0].Source != "worklog" {
+		t.Errorf("expected source 'worklog', got %q", entries[0].Source)
+	}
+	if entries[0].TaskID != "015" {
+		t.Errorf("expected taskID '015', got %q", entries[0].TaskID)
+	}
+}
+
+func TestTruncateFirstLine(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"First line\nSecond line", "First line"},
+		{"\n\nThird line", "Third line"},
+		{"", ""},
+		{"Single line", "Single line"},
+		{"  Whitespace line  \nNext", "Whitespace line"},
+	}
+
+	for _, tt := range tests {
+		got := truncateFirstLine(tt.input)
+		if got != tt.expected {
+			t.Errorf("truncateFirstLine(%q) = %q, want %q", tt.input, got, tt.expected)
+		}
+	}
+}
+
+func TestParseSinceTime(t *testing.T) {
+	// Absolute date
+	ts := parseSinceTime("2026-02-15")
+	if ts.IsZero() {
+		t.Error("expected non-zero time for absolute date")
+	}
+	if ts.Year() != 2026 || ts.Month() != 2 || ts.Day() != 15 {
+		t.Errorf("unexpected date: %v", ts)
+	}
+
+	// Relative duration (just check it's in the past and non-zero)
+	ts = parseSinceTime("7d")
+	if ts.IsZero() {
+		t.Error("expected non-zero time for 7d")
+	}
+	if !ts.Before(mustParseTime("2026-03-28T00:00:00Z")) {
+		t.Error("expected 7d ago to be before now")
+	}
+
+	// Invalid
+	ts = parseSinceTime("garbage")
+	if !ts.IsZero() {
+		t.Errorf("expected zero time for invalid input, got %v", ts)
+	}
+}
+
+func mustParseTime(s string) time.Time {
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		panic(err)
+	}
+	return t
 }
