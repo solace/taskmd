@@ -1,7 +1,7 @@
 ---
 title: "Create incremental test coverage improvement plan"
 id: "212"
-status: pending
+status: completed
 priority: low
 type: chore
 tags: ["testing", "quality"]
@@ -17,12 +17,12 @@ Once the test infrastructure is in place (task 211), create a concrete plan for 
 
 ## Tasks
 
-- [ ] Audit the web app codebase and categorize modules by risk/importance (core logic, utilities, UI components, pages)
-- [ ] Measure baseline coverage after task 211 is complete
-- [ ] Define coverage milestones (e.g. 30% → 50% → 70% → 80%) with target dates or sprint goals
-- [ ] Prioritize test targets: critical paths first (data parsing, state management, API calls), then UI components
-- [ ] Document the plan in a markdown file (e.g. `apps/web/TESTING.md`)
-- [ ] Identify areas where testing patterns or helpers would reduce friction (e.g. test fixtures, mock factories)
+- [x] Audit the web app codebase and categorize modules by risk/importance (core logic, utilities, UI components, pages)
+- [x] Measure baseline coverage after task 211 is complete
+- [x] Define coverage milestones (e.g. 30% → 50% → 70% → 80%) with target dates or sprint goals
+- [x] Prioritize test targets: critical paths first (data parsing, state management, API calls), then UI components
+- [x] Document the plan in a markdown file (e.g. `apps/web/TESTING.md`)
+- [x] Identify areas where testing patterns or helpers would reduce friction (e.g. test fixtures, mock factories)
 
 ## Acceptance Criteria
 
