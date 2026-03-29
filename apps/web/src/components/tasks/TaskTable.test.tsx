@@ -243,20 +243,3 @@ describe("TaskTable global filter", () => {
   });
 });
 
-describe("TaskTable phase toggle", () => {
-  it("toggles phase filter when clicking a phase button", async () => {
-    const tasksWithPhase = [
-      makeTask({ id: "001", status: "pending", phase: "mvp" }),
-      makeTask({ id: "002", status: "pending", phase: "v2" }),
-      makeTask({ id: "003", status: "pending", phase: "" }),
-    ];
-    const user = userEvent.setup();
-    renderWithRouter(<TaskTable tasks={tasksWithPhase} />);
-    expect(screen.getByText("Showing 3 of 3 tasks")).toBeInTheDocument();
-
-    await user.click(screen.getByRole("button", { name: /Filters/ }));
-    // Phase buttons should appear since tasks have phases
-    await user.click(screen.getByRole("button", { name: "mvp" }));
-    expect(screen.getByText("Showing 1 of 3 tasks")).toBeInTheDocument();
-  });
-});

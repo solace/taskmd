@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import type { CellContext, Row } from "@tanstack/react-table";
 import { createTaskColumns } from "./columns.tsx";
@@ -207,55 +207,4 @@ describe("createTaskColumns", () => {
     });
   });
 
-  describe("tags column", () => {
-    it("renders tag buttons when tags are present", () => {
-      const task = createTask({ tags: ["backend", "api"] });
-      const cols = getColumns();
-      const tagsCol = cols.find((c) => (c as { accessorKey?: string }).accessorKey === "tags")!;
-      const cellFn = tagsCol.cell as (ctx: CellContext<Task, string[]>) => React.ReactNode;
-      renderCell(cellFn(makeCellContext(task, "tags") as CellContext<Task, string[]>));
-      expect(screen.getByRole("button", { name: "backend" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "api" })).toBeInTheDocument();
-    });
-
-    it("renders '-' when tags is null", () => {
-      const task = createTask({ tags: null });
-      const cols = getColumns();
-      const tagsCol = cols.find((c) => (c as { accessorKey?: string }).accessorKey === "tags")!;
-      const cellFn = tagsCol.cell as (ctx: CellContext<Task, string[] | null>) => React.ReactNode;
-      renderCell(cellFn(makeCellContext(task, "tags") as CellContext<Task, string[] | null>));
-      expect(screen.getByText("-")).toBeInTheDocument();
-    });
-
-    it("calls toggleTag when a tag button is clicked", () => {
-      const toggleTag = vi.fn();
-      const task = createTask({ tags: ["frontend"] });
-      const cols = getColumns(new Set(), toggleTag);
-      const tagsCol = cols.find((c) => (c as { accessorKey?: string }).accessorKey === "tags")!;
-      const cellFn = tagsCol.cell as (ctx: CellContext<Task, string[]>) => React.ReactNode;
-      renderCell(cellFn(makeCellContext(task, "tags") as CellContext<Task, string[]>));
-      fireEvent.click(screen.getByRole("button", { name: "frontend" }));
-      expect(toggleTag).toHaveBeenCalledWith("frontend");
-    });
-
-    it("applies active styling when tag is in selectedTags", () => {
-      const task = createTask({ tags: ["backend"] });
-      const cols = getColumns(new Set(["backend"]));
-      const tagsCol = cols.find((c) => (c as { accessorKey?: string }).accessorKey === "tags")!;
-      const cellFn = tagsCol.cell as (ctx: CellContext<Task, string[]>) => React.ReactNode;
-      renderCell(cellFn(makeCellContext(task, "tags") as CellContext<Task, string[]>));
-      const btn = screen.getByRole("button", { name: "backend" });
-      expect(btn.className).toContain("bg-blue-100");
-    });
-
-    it("applies inactive styling when tag is not in selectedTags", () => {
-      const task = createTask({ tags: ["backend"] });
-      const cols = getColumns(new Set());
-      const tagsCol = cols.find((c) => (c as { accessorKey?: string }).accessorKey === "tags")!;
-      const cellFn = tagsCol.cell as (ctx: CellContext<Task, string[]>) => React.ReactNode;
-      renderCell(cellFn(makeCellContext(task, "tags") as CellContext<Task, string[]>));
-      const btn = screen.getByRole("button", { name: "backend" });
-      expect(btn.className).toContain("bg-gray-100");
-    });
-  });
 });

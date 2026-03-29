@@ -7,7 +7,7 @@ vi.mock("@xyflow/react", () => ({
     <div data-testid={`handle-${type}`} data-position={position} />
   ),
   Position: { Top: "top", Bottom: "bottom" },
-  memo: (fn: any) => fn,
+  memo: (fn: unknown) => fn,
 }));
 
 import { TaskNode } from "./TaskNode.tsx";

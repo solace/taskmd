@@ -7,10 +7,11 @@ vi.mock("react-router-dom", async () => {
   const actual = await vi.importActual("react-router-dom");
   return { ...actual, useNavigate: () => mockNavigate };
 });
+interface MockNode { id: string; data?: { label?: string; taskId?: string } }
 vi.mock("@xyflow/react", () => ({
-  ReactFlow: ({ nodes, edges, onNodeClick, children }: any) => (
+  ReactFlow: ({ nodes, edges, onNodeClick, children }: { nodes: MockNode[]; edges: unknown[]; onNodeClick?: (e: React.MouseEvent, n: MockNode) => void; children?: React.ReactNode }) => (
     <div data-testid="react-flow" data-nodes={nodes.length} data-edges={edges.length}>
-      {nodes.map((n: any) => (
+      {nodes.map((n: MockNode) => (
         <div key={n.id} data-testid={`node-${n.id}`} onClick={(e) => onNodeClick?.(e, n)}>
           {n.data?.label}
         </div>

@@ -3,7 +3,7 @@ import { renderHook } from "@testing-library/react";
 
 let mockKey: string | undefined;
 vi.mock("swr", () => ({
-  default: (key: string, _fetcher: unknown, options?: any) => {
+  default: (key: string, _fetcher: unknown, options?: { fallbackData?: unknown }) => {
     mockKey = key;
     return {
       data: options?.fallbackData ?? undefined,

@@ -5,9 +5,11 @@ import { createGraphData } from "../test-utils/fixtures.ts";
 vi.mock("../hooks/use-graph.ts", () => ({ useGraph: vi.fn() }));
 vi.mock("../hooks/use-phase.tsx", () => ({ usePhase: () => ({ phase: null }) }));
 vi.mock("../hooks/use-project.ts", () => ({ useProject: () => ({ project: null }) }));
+interface GraphNode { id: string; [key: string]: unknown }
+interface GraphData { nodes?: GraphNode[]; edges?: unknown[] }
 vi.mock("../components/graph/useGraphLayout.ts", () => ({
-  useGraphLayout: (data: any) => ({
-    nodes: data?.nodes?.map((n: any) => ({ id: n.id, data: n })) ?? [],
+  useGraphLayout: (data: GraphData | undefined) => ({
+    nodes: data?.nodes?.map((n: GraphNode) => ({ id: n.id, data: n })) ?? [],
     edges: data?.edges ?? [],
   }),
 }));
@@ -15,17 +17,19 @@ vi.mock("@xyflow/react", () => ({
   ReactFlowProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-let capturedGraphViewProps: any = {};
+interface MockGraphViewProps { onViewportChange?: (v: unknown) => void; defaultViewport?: unknown; [key: string]: unknown }
+let capturedGraphViewProps: MockGraphViewProps = {};
 vi.mock("../components/graph/GraphView.tsx", () => ({
-  GraphView: (props: any) => {
+  GraphView: (props: MockGraphViewProps) => {
     capturedGraphViewProps = props;
     return <div data-testid="graph-view">GraphView</div>;
   },
 }));
 
-let capturedFiltersProps: any = {};
+interface MockFiltersProps { selectedStatuses: Set<string>; onToggleStatus: (s: string) => void; onClearFilters: () => void; [key: string]: unknown }
+let capturedFiltersProps: MockFiltersProps = {} as MockFiltersProps;
 vi.mock("../components/graph/GraphFilters.tsx", () => ({
-  GraphFilters: (props: any) => {
+  GraphFilters: (props: MockFiltersProps) => {
     capturedFiltersProps = props;
     return <div data-testid="graph-filters">Filters</div>;
   },
@@ -41,7 +45,7 @@ vi.mock("../components/graph/GraphLegend.tsx", () => ({
 }));
 vi.mock("../components/graph/graph-utils.ts", () => ({
   findMatchedNodeIds: () => new Set(),
-  filterGraphByStatus: (_data: any, _statuses: Set<string>) => _data,
+  filterGraphByStatus: (data: unknown) => data,
 }));
 
 import { useGraph } from "../hooks/use-graph.ts";
@@ -172,7 +176,7 @@ describe("GraphPage", () => {
     render(<GraphPage />);
 
     const viewport = { x: 100, y: 200, zoom: 1.5 };
-    capturedGraphViewProps.onViewportChange(viewport);
+    capturedGraphViewProps.onViewportChange!(viewport);
     // Re-render to check the viewport is passed back
     render(<GraphPage />);
     expect(capturedGraphViewProps.defaultViewport).toEqual(viewport);

@@ -25,7 +25,7 @@ describe("ProjectSelector", () => {
       isLoading: false,
       mutate: vi.fn(),
       isValidating: false,
-    } as any);
+    } as unknown as ReturnType<typeof useProjects>);
     const { container } = render(<ProjectSelector />);
     expect(container.innerHTML).toBe("");
   });
@@ -37,7 +37,7 @@ describe("ProjectSelector", () => {
       isLoading: false,
       mutate: vi.fn(),
       isValidating: false,
-    } as any);
+    } as unknown as ReturnType<typeof useProjects>);
     const { container } = render(<ProjectSelector />);
     expect(container.innerHTML).toBe("");
   });
@@ -52,7 +52,7 @@ describe("ProjectSelector", () => {
       isLoading: false,
       mutate: vi.fn(),
       isValidating: false,
-    } as any);
+    } as unknown as ReturnType<typeof useProjects>);
     render(<ProjectSelector />);
     expect(screen.getByRole("combobox")).toBeInTheDocument();
     expect(screen.getByText("Project One")).toBeInTheDocument();
@@ -66,7 +66,7 @@ describe("ProjectSelector", () => {
       isLoading: false,
       mutate: vi.fn(),
       isValidating: false,
-    } as any);
+    } as unknown as ReturnType<typeof useProjects>);
     render(<ProjectSelector />);
     expect(screen.getByText("(local)")).toBeInTheDocument();
   });
@@ -81,7 +81,7 @@ describe("ProjectSelector", () => {
       isLoading: false,
       mutate: vi.fn(),
       isValidating: false,
-    } as any);
+    } as unknown as ReturnType<typeof useProjects>);
     render(<ProjectSelector />);
     fireEvent.change(screen.getByRole("combobox"), {
       target: { value: "proj-2" },
@@ -96,7 +96,7 @@ describe("ProjectSelector", () => {
       isLoading: false,
       mutate: vi.fn(),
       isValidating: false,
-    } as any);
+    } as unknown as ReturnType<typeof useProjects>);
     render(<ProjectSelector />);
     fireEvent.change(screen.getByRole("combobox"), {
       target: { value: "" },

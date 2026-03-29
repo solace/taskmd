@@ -3,7 +3,7 @@ import { renderHook } from "@testing-library/react";
 
 let lastKey: string | undefined;
 vi.mock("swr", () => ({
-  default: (key: string, _fetcher: unknown) => {
+  default: (key: string) => {
     lastKey = key;
     return {
       data: [],
