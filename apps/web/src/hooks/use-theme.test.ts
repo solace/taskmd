@@ -92,4 +92,61 @@ describe("useTheme", () => {
       expect.any(Function),
     );
   });
+
+  it("responds to OS theme change when no stored preference", () => {
+    let changeHandler: (() => void) | undefined;
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: false,
+      addEventListener: (_event: string, handler: () => void) => {
+        changeHandler = handler;
+      },
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+
+    const { result } = renderHook(() => useTheme());
+    expect(result.current.theme).toBe("light");
+
+    // Simulate OS switching to dark
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+
+    act(() => {
+      changeHandler?.();
+    });
+
+    expect(result.current.theme).toBe("dark");
+  });
+
+  it("ignores OS theme change when stored preference exists", () => {
+    localStorage.setItem("theme", "light");
+
+    let changeHandler: (() => void) | undefined;
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: false,
+      addEventListener: (_event: string, handler: () => void) => {
+        changeHandler = handler;
+      },
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+
+    const { result } = renderHook(() => useTheme());
+    expect(result.current.theme).toBe("light");
+
+    // Simulate OS switching to dark - should be ignored
+    vi.spyOn(window, "matchMedia").mockReturnValue({
+      matches: true,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    } as unknown as MediaQueryList);
+
+    act(() => {
+      changeHandler?.();
+    });
+
+    // Should remain light because stored preference overrides
+    expect(result.current.theme).toBe("light");
+  });
 });

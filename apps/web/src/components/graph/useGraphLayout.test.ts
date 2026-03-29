@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { computeGraphLayout, NODE_WIDTH, NODE_HEIGHT } from "./useGraphLayout.ts";
+import { renderHook } from "@testing-library/react";
+import { computeGraphLayout, useGraphLayout, NODE_WIDTH, NODE_HEIGHT } from "./useGraphLayout.ts";
 import type { GraphData } from "../../api/types.ts";
 
 describe("computeGraphLayout", () => {
@@ -80,5 +81,23 @@ describe("computeGraphLayout", () => {
   it("exports NODE_WIDTH and NODE_HEIGHT constants", () => {
     expect(NODE_WIDTH).toBe(200);
     expect(NODE_HEIGHT).toBe(60);
+  });
+});
+
+describe("useGraphLayout", () => {
+  it("returns empty arrays when data is undefined", () => {
+    const { result } = renderHook(() => useGraphLayout(undefined));
+    expect(result.current.nodes).toEqual([]);
+    expect(result.current.edges).toEqual([]);
+  });
+
+  it("computes layout when data is provided", () => {
+    const data: GraphData = {
+      nodes: [{ id: "1", title: "Task 1", status: "pending" }],
+      edges: [],
+    };
+    const { result } = renderHook(() => useGraphLayout(data));
+    expect(result.current.nodes).toHaveLength(1);
+    expect(result.current.nodes[0].id).toBe("1");
   });
 });

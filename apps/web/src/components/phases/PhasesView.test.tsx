@@ -1,7 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
+
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return { ...actual, useNavigate: () => mockNavigate };
+});
 import { PhasesView } from "./PhasesView.tsx";
 import type { Task } from "../../api/types.ts";
 import type { PhaseInfo } from "../../hooks/use-config.ts";
@@ -98,6 +104,13 @@ describe("PhasesView", () => {
     await userEvent.click(alphaCard);
     // Navigation happens via useNavigate — we can verify the button exists and is clickable
     expect(alphaCard).toBeInTheDocument();
+  });
+
+  it("navigates to /tasks when 'View all' is clicked for unphased tasks", async () => {
+    const tasks = [makeTask({ id: "1", phase: "" })];
+    renderView({ phases, tasks });
+    await userEvent.click(screen.getByText("View all →"));
+    expect(mockNavigate).toHaveBeenCalledWith("/tasks");
   });
 
   it("shows status badges for non-zero counts", () => {

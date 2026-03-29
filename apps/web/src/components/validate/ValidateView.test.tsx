@@ -92,6 +92,20 @@ describe("ValidateView", () => {
     expect(dots[1].className).toContain("bg-yellow-400");
   });
 
+  it("groups issues without file_path under (general)", () => {
+    const issues = [
+      createValidationIssue({
+        file_path: undefined,
+        message: "General issue",
+      }),
+    ];
+
+    renderView(createValidationResult({ issues, errors: 1, warnings: 0 }));
+
+    expect(screen.getByText("(general)")).toBeInTheDocument();
+    expect(screen.getByText("General issue")).toBeInTheDocument();
+  });
+
   it("shows multiple file headings when issues span different files", () => {
     const files = [
       "tasks/alpha/010-a.md",

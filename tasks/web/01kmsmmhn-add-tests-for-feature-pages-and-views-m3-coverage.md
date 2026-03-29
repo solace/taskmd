@@ -1,7 +1,7 @@
 ---
 title: "Add tests for feature pages and views (M3 coverage target)"
 id: "01kmsmmhn"
-status: pending
+status: completed
 priority: low
 type: chore
 tags: ["testing", "quality"]
@@ -18,16 +18,16 @@ Add tests for feature pages and view components to reach the M3 milestone (80% s
 
 ## Tasks
 
-- [ ] Add tests for `GraphPage.tsx` (0% → target 70%+)
-- [ ] Add tests for `GraphView.tsx` (0% → target 70%+)
-- [ ] Add tests for `GraphFilters.tsx` (0% → target 70%+)
-- [ ] Add tests for `ValidateView.tsx` (0% → target 70%+)
-- [ ] Add tests for `ValidatePage.tsx` (0% → target 70%+)
-- [ ] Add tests for `TasksPage.tsx` (0% → target 70%+)
-- [ ] Add tests for `TracksPage.tsx` (0% → target 70%+)
-- [ ] Add tests for `PhasesPage.tsx` (0% → target 70%+)
-- [ ] Add tests for `App.tsx` (0% → target 70%+) — routing setup
-- [ ] Verify overall coverage reaches M3 thresholds
+- [x] Add tests for `GraphPage.tsx` (0% → target 70%+)
+- [x] Add tests for `GraphView.tsx` (0% → target 70%+)
+- [x] Add tests for `GraphFilters.tsx` (0% → target 70%+)
+- [x] Add tests for `ValidateView.tsx` (0% → target 70%+)
+- [x] Add tests for `ValidatePage.tsx` (0% → target 70%+)
+- [x] Add tests for `TasksPage.tsx` (0% → target 70%+)
+- [x] Add tests for `TracksPage.tsx` (0% → target 70%+)
+- [x] Add tests for `PhasesPage.tsx` (0% → target 70%+)
+- [x] Add tests for `App.tsx` (0% → target 70%+) — routing setup
+- [x] Verify overall coverage reaches M3 thresholds
 
 ## Acceptance Criteria
 

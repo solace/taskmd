@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { NextPage } from "./NextPage.tsx";
@@ -26,6 +26,7 @@ let mockNextError: Error | undefined;
 let mockNextLoading = false;
 let lastNextArgs: { limit: number; group?: string } = { limit: 5 };
 
+const mockMutate = vi.fn();
 vi.mock("../hooks/use-next.ts", () => ({
   useNext: (limit: number, group?: string) => {
     lastNextArgs = { limit, group };
@@ -33,10 +34,14 @@ vi.mock("../hooks/use-next.ts", () => ({
       data: mockNextData,
       error: mockNextError,
       isLoading: mockNextLoading,
-      mutate: vi.fn(),
+      mutate: mockMutate,
       isValidating: false,
     };
   },
+}));
+
+vi.mock("../hooks/use-project.ts", () => ({
+  useProject: () => ({ project: null }),
 }));
 
 vi.mock("../hooks/use-tasks.ts", () => ({
@@ -116,5 +121,13 @@ describe("NextPage URL sync", () => {
       screen.getByText(/No actionable tasks found/),
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Folder:")).toBeInTheDocument();
+  });
+
+  it("calls mutate when retry is clicked in error state", () => {
+    mockNextError = new Error("Server error");
+    mockNextData = undefined;
+    renderPage(["/"]);
+    fireEvent.click(screen.getByText("Retry"));
+    expect(mockMutate).toHaveBeenCalled();
   });
 });

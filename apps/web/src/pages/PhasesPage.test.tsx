@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 
 vi.mock("../hooks/use-config.ts", () => ({ useConfig: vi.fn() }));
 vi.mock("../hooks/use-project.ts", () => ({
@@ -60,5 +60,19 @@ describe("PhasesPage", () => {
     });
     render(<PhasesPage />);
     expect(screen.getByTestId("phases-view")).toBeInTheDocument();
+  });
+
+  it("calls mutate when retry is clicked in error state", () => {
+    const mockMutate = vi.fn();
+    mockUseTasks.mockReturnValue({
+      data: undefined,
+      error: new Error("Failed to load"),
+      isLoading: false,
+      mutate: mockMutate,
+      isValidating: false,
+    });
+    render(<PhasesPage />);
+    fireEvent.click(screen.getByText("Retry"));
+    expect(mockMutate).toHaveBeenCalled();
   });
 });

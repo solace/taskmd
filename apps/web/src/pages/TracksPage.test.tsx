@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { TracksPage } from "./TracksPage.tsx";
 import { createTracksResult } from "../test-utils/index.ts";
 
@@ -57,5 +57,19 @@ describe("TracksPage", () => {
     });
     render(<TracksPage />);
     expect(screen.getByTestId("tracks-view")).toBeInTheDocument();
+  });
+
+  it("calls mutate when retry is clicked in error state", () => {
+    const mockMutate = vi.fn();
+    mockUseTracks.mockReturnValue({
+      data: undefined,
+      error: new Error("Server error"),
+      isLoading: false,
+      mutate: mockMutate,
+      isValidating: false,
+    });
+    render(<TracksPage />);
+    fireEvent.click(screen.getByText("Retry"));
+    expect(mockMutate).toHaveBeenCalled();
   });
 });

@@ -63,4 +63,58 @@ describe("App", () => {
     );
     expect(screen.getByTestId("stats-page")).toBeInTheDocument();
   });
+
+  it("renders graph page at /graph", () => {
+    render(
+      <MemoryRouter initialEntries={["/graph"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("graph-page")).toBeInTheDocument();
+  });
+
+  it("renders next page at /next", () => {
+    render(
+      <MemoryRouter initialEntries={["/next"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("next-page")).toBeInTheDocument();
+  });
+
+  it("renders tracks page at /tracks", () => {
+    render(
+      <MemoryRouter initialEntries={["/tracks"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("tracks-page")).toBeInTheDocument();
+  });
+
+  it("renders validate page at /validate", () => {
+    render(
+      <MemoryRouter initialEntries={["/validate"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("validate-page")).toBeInTheDocument();
+  });
+
+  it("renders phases page at /phases", () => {
+    render(
+      <MemoryRouter initialEntries={["/phases"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("phases-page")).toBeInTheDocument();
+  });
+
+  it("renders task detail page at /tasks/:id", () => {
+    render(
+      <MemoryRouter initialEntries={["/tasks/001"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("task-detail-page")).toBeInTheDocument();
+  });
 });

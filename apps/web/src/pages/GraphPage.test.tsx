@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { createGraphData } from "../test-utils/fixtures.ts";
 
 vi.mock("../hooks/use-graph.ts", () => ({ useGraph: vi.fn() }));
@@ -14,11 +14,21 @@ vi.mock("../components/graph/useGraphLayout.ts", () => ({
 vi.mock("@xyflow/react", () => ({
   ReactFlowProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
+
+let capturedGraphViewProps: any = {};
 vi.mock("../components/graph/GraphView.tsx", () => ({
-  GraphView: () => <div data-testid="graph-view">GraphView</div>,
+  GraphView: (props: any) => {
+    capturedGraphViewProps = props;
+    return <div data-testid="graph-view">GraphView</div>;
+  },
 }));
+
+let capturedFiltersProps: any = {};
 vi.mock("../components/graph/GraphFilters.tsx", () => ({
-  GraphFilters: () => <div data-testid="graph-filters">Filters</div>,
+  GraphFilters: (props: any) => {
+    capturedFiltersProps = props;
+    return <div data-testid="graph-filters">Filters</div>;
+  },
 }));
 vi.mock("../components/graph/GraphStats.tsx", () => ({
   GraphStats: () => <div data-testid="graph-stats">Stats</div>,
@@ -90,5 +100,81 @@ describe("GraphPage", () => {
     expect(screen.getByTestId("graph-stats")).toBeInTheDocument();
     expect(screen.getByTestId("graph-search")).toBeInTheDocument();
     expect(screen.getByTestId("graph-legend")).toBeInTheDocument();
+  });
+
+  it("calls mutate when retry is clicked in error state", () => {
+    const mockMutate = vi.fn();
+    mockUseGraph.mockReturnValue({
+      data: undefined,
+      error: new Error("fail"),
+      isLoading: false,
+      mutate: mockMutate,
+      isValidating: false,
+    });
+    render(<GraphPage />);
+    fireEvent.click(screen.getByText("Retry"));
+    expect(mockMutate).toHaveBeenCalled();
+  });
+
+  it("toggleStatus adds and removes statuses", () => {
+    mockUseGraph.mockReturnValue({
+      data: createGraphData(),
+      error: undefined,
+      isLoading: false,
+      mutate: vi.fn(),
+      isValidating: false,
+    });
+    render(<GraphPage />);
+
+    // Initially no filters selected
+    expect(capturedFiltersProps.selectedStatuses.size).toBe(0);
+
+    // Toggle a status on
+    capturedFiltersProps.onToggleStatus("pending");
+    render(<GraphPage />);
+    expect(capturedFiltersProps.selectedStatuses.has("pending")).toBe(true);
+
+    // Toggle it off
+    capturedFiltersProps.onToggleStatus("pending");
+    render(<GraphPage />);
+    expect(capturedFiltersProps.selectedStatuses.has("pending")).toBe(false);
+  });
+
+  it("clearFilters resets selected statuses", () => {
+    mockUseGraph.mockReturnValue({
+      data: createGraphData(),
+      error: undefined,
+      isLoading: false,
+      mutate: vi.fn(),
+      isValidating: false,
+    });
+    render(<GraphPage />);
+
+    // Add a filter first
+    capturedFiltersProps.onToggleStatus("pending");
+    render(<GraphPage />);
+    expect(capturedFiltersProps.selectedStatuses.size).toBe(1);
+
+    // Clear filters
+    capturedFiltersProps.onClearFilters();
+    render(<GraphPage />);
+    expect(capturedFiltersProps.selectedStatuses.size).toBe(0);
+  });
+
+  it("onViewportChange persists viewport", () => {
+    mockUseGraph.mockReturnValue({
+      data: createGraphData(),
+      error: undefined,
+      isLoading: false,
+      mutate: vi.fn(),
+      isValidating: false,
+    });
+    render(<GraphPage />);
+
+    const viewport = { x: 100, y: 200, zoom: 1.5 };
+    capturedGraphViewProps.onViewportChange(viewport);
+    // Re-render to check the viewport is passed back
+    render(<GraphPage />);
+    expect(capturedGraphViewProps.defaultViewport).toEqual(viewport);
   });
 });

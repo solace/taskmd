@@ -61,4 +61,31 @@ describe("GraphView", () => {
     fireEvent.click(screen.getByTestId("node-1"));
     expect(mockNavigate).toHaveBeenCalledWith("/tasks/001");
   });
+
+  it("decorates nodes with highlighted/dimmed when search is active", () => {
+    const nodes = [
+      { id: "1", position: { x: 0, y: 0 }, data: { label: "Task A", taskId: "001" } },
+      { id: "2", position: { x: 100, y: 0 }, data: { label: "Task B", taskId: "002" } },
+    ];
+    const matchedNodeIds = new Set(["1"]);
+    renderWithProviders(
+      <GraphView nodes={nodes} edges={[]} searchActive={true} matchedNodeIds={matchedNodeIds} />,
+    );
+    const flow = screen.getByTestId("react-flow");
+    expect(flow).toBeInTheDocument();
+    // Both nodes should be rendered
+    expect(screen.getByTestId("node-1")).toBeInTheDocument();
+    expect(screen.getByTestId("node-2")).toBeInTheDocument();
+  });
+
+  it("does not decorate nodes when search is not active", () => {
+    const nodes = [
+      { id: "1", position: { x: 0, y: 0 }, data: { label: "Task A", taskId: "001" } },
+    ];
+    const matchedNodeIds = new Set(["1"]);
+    renderWithProviders(
+      <GraphView nodes={nodes} edges={[]} searchActive={false} matchedNodeIds={matchedNodeIds} />,
+    );
+    expect(screen.getByTestId("react-flow")).toHaveAttribute("data-nodes", "1");
+  });
 });

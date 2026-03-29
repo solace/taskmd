@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { TasksPage } from "./TasksPage.tsx";
 import { createTask } from "../test-utils/index.ts";
@@ -81,5 +81,19 @@ describe("TasksPage", () => {
     renderWithRouter();
     expect(screen.getByTestId("task-table")).toBeInTheDocument();
     expect(screen.getByText("Tasks: 2")).toBeInTheDocument();
+  });
+
+  it("calls mutate when retry is clicked in error state", () => {
+    const mockMutate = vi.fn();
+    mockUseTasks.mockReturnValue({
+      data: undefined,
+      error: new Error("Server error"),
+      isLoading: false,
+      mutate: mockMutate,
+      isValidating: false,
+    });
+    renderWithRouter();
+    fireEvent.click(screen.getByText("Retry"));
+    expect(mockMutate).toHaveBeenCalled();
   });
 });

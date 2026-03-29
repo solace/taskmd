@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { StatsPage } from "./StatsPage.tsx";
 import { createStats } from "../test-utils/index.ts";
 
@@ -9,6 +9,18 @@ vi.mock("../hooks/use-stats.ts", () => ({
 
 vi.mock("../hooks/use-phase.tsx", () => ({
   usePhase: () => ({ phase: null, setPhase: vi.fn() }),
+}));
+
+vi.mock("../hooks/use-project.ts", () => ({
+  useProject: () => ({ project: null, setProject: vi.fn() }),
+}));
+
+vi.mock("../hooks/use-tasks.ts", () => ({
+  useTasks: () => ({ data: undefined }),
+}));
+
+vi.mock("../hooks/use-config.ts", () => ({
+  useConfig: () => ({ phases: [] }),
 }));
 
 vi.mock("../components/stats/StatsView.tsx", () => ({
@@ -68,5 +80,19 @@ describe("StatsPage", () => {
     render(<StatsPage />);
     expect(screen.getByTestId("stats-view")).toBeInTheDocument();
     expect(screen.getByText("Stats: 42 tasks")).toBeInTheDocument();
+  });
+
+  it("calls mutate when retry is clicked in error state", () => {
+    const mockMutate = vi.fn();
+    mockUseStats.mockReturnValue({
+      data: undefined,
+      error: new Error("Server error"),
+      isLoading: false,
+      mutate: mockMutate,
+      isValidating: false,
+    });
+    render(<StatsPage />);
+    fireEvent.click(screen.getByText("Retry"));
+    expect(mockMutate).toHaveBeenCalled();
   });
 });

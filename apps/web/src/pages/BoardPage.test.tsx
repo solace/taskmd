@@ -155,4 +155,14 @@ describe("BoardPage", () => {
       expect(select.value).toBe("priority");
     });
   });
+
+  describe("retry", () => {
+    it("calls mutate when retry is clicked in error state", () => {
+      mockBoardData = undefined;
+      mockBoardError = new Error("Network error");
+      renderPage();
+      fireEvent.click(screen.getByText("Retry"));
+      expect(mockMutate).toHaveBeenCalled();
+    });
+  });
 });
