@@ -47,3 +47,4 @@ apps/docs/.vitepress/dist/
 # misc
 settings.local.json
 .claude/worktrees
+apps/web/tsconfig.app.tsbuildinfo

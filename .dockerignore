@@ -10,7 +10,7 @@ scripts
 tasks
 apps/docs
 apps/vscode
-node_modules
+**/node_modules
 *.swp
 *.swo
 .DS_Store

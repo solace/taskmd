@@ -10,7 +10,7 @@ COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
 COPY apps/web/package.json apps/web/
 
 # Install dependencies
-RUN pnpm install --frozen-lockfile --filter @taskmd/web
+RUN NODE_ENV=development pnpm install --frozen-lockfile --filter @taskmd/web...
 
 # Copy web source and build
 COPY apps/web/ apps/web/
