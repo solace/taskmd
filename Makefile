@@ -8,17 +8,21 @@ install-dev:
 install-dev-full:
 	$(MAKE) -C apps/cli install-dev-full
 
-# Quick check: compile and test CLI + SDK
+# Quick check: compile and lint all projects (no tests)
 check-lite:
 	cd apps/cli && go build ./...
-	cd apps/cli && go test ./...
-	cd sdk/go && go build ./...
-	cd sdk/go && go test ./...
-
-# Run all checks (CLI tests, lint, vet + SDK + web tests + docs build + Docker build)
-check: check-lite
 	$(MAKE) -C apps/cli lint
+	cd sdk/go && go build ./...
+	cd apps/web && pnpm run typeCheck
+	cd apps/web && pnpm run lint
+	cd apps/vscode && pnpm run lint
+
+# Run all checks (compile, lint, tests for all projects + docs build + Docker build)
+check: check-lite
+	cd apps/cli && go test ./...
+	cd sdk/go && go test ./...
 	cd apps/web && npx vitest run
+	cd apps/vscode && pnpm test
 	cd apps/docs && pnpm build
 	docker build -t taskmd:ci-check .
 

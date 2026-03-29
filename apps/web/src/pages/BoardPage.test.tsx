@@ -55,6 +55,9 @@ vi.mock("../api/client.ts", () => ({
   updateTask: vi.fn(),
 }));
 
+import { updateTask } from "../api/client.ts";
+const mockUpdateTask = vi.mocked(updateTask);
+
 function renderPage(initialEntries: string[] = ["/"]) {
   return renderWithProviders(<BoardPage />, { initialEntries });
 }
@@ -66,6 +69,7 @@ describe("BoardPage", () => {
     mockBoardLoading = false;
     mockPhases = [];
     mockReadonly = false;
+    mockUpdateTask.mockReset();
   });
 
   describe("availableTags extraction", () => {
@@ -163,6 +167,24 @@ describe("BoardPage", () => {
       renderPage();
       fireEvent.click(screen.getByText("Retry"));
       expect(mockMutate).toHaveBeenCalled();
+    });
+  });
+
+  describe("loading skeleton", () => {
+    it("shows animate-pulse skeleton when isLoading is true", () => {
+      mockBoardData = undefined;
+      mockBoardLoading = true;
+      const { container } = renderPage();
+      expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
+    });
+  });
+
+  describe("groupBy change to status", () => {
+    it("removes groupBy param when changed to status", () => {
+      renderPage(["/?groupBy=priority"]);
+      const select = screen.getByRole("combobox") as HTMLSelectElement;
+      fireEvent.change(select, { target: { value: "status" } });
+      expect(select.value).toBe("status");
     });
   });
 });

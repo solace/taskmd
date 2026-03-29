@@ -11,37 +11,9 @@ else
     echo "Warning: taskmd not found, skipping validation"
 fi
 
-# Run golangci-lint on staged Go files in apps/cli
-if command -v golangci-lint >/dev/null 2>&1; then
-    staged=$(git diff --cached --name-only --diff-filter=ACM | grep '^apps/cli/.*\.go$')
-    if [ -n "$staged" ]; then
-        out=$(cd apps/cli && golangci-lint run 2>&1)
-        if [ $? -ne 0 ]; then
-            echo "$out"
-            echo "golangci-lint failed. Fix the issues above before committing."
-            exit 1
-        fi
-    fi
-fi
-
-# Run ESLint and TypeScript type-check on staged web files
-staged_web=$(git diff --cached --name-only --diff-filter=ACM | grep '^apps/web/.*\.\(ts\|tsx\)$')
-if [ -n "$staged_web" ]; then
-    if command -v pnpm >/dev/null 2>&1; then
-        out=$(cd apps/web && pnpm lint 2>&1)
-        if [ $? -ne 0 ]; then
-            echo "$out"
-            echo "ESLint (apps/web) failed. Fix the issues above before committing."
-            exit 1
-        fi
-
-        out=$(cd apps/web && pnpm typeCheck 2>&1)
-        if [ $? -ne 0 ]; then
-            echo "$out"
-            echo "TypeScript type-check (apps/web) failed. Fix the issues above before committing."
-            exit 1
-        fi
-    else
-        echo "Warning: pnpm not found, skipping web linting and type-check"
-    fi
+# Run compile + lint checks for all projects
+make check-lite
+if [ $? -ne 0 ]; then
+    echo "check-lite failed. Fix the issues above before committing."
+    exit 1
 fi

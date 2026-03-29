@@ -150,3 +150,113 @@ describe("TaskTable priority toggle", () => {
     expect(screen.getByText("Showing 2 of 3 tasks")).toBeInTheDocument();
   });
 });
+
+describe("TaskTable effort toggle", () => {
+  it("toggles effort filter when clicking an effort button", async () => {
+    const tasksWithEffort = [
+      makeTask({ id: "001", status: "pending", effort: "small" }),
+      makeTask({ id: "002", status: "pending", effort: "large" }),
+      makeTask({ id: "003", status: "pending", effort: "medium" }),
+    ];
+    const user = userEvent.setup();
+    renderWithRouter(<TaskTable tasks={tasksWithEffort} />);
+
+    await user.click(screen.getByRole("button", { name: /Filters/ }));
+    await user.click(screen.getByRole("button", { name: "small" }));
+    expect(screen.getByText("Showing 2 of 3 tasks")).toBeInTheDocument();
+  });
+
+  it("selects all effort when clicking all button", async () => {
+    const tasksWithEffort = [
+      makeTask({ id: "001", status: "pending", effort: "small" }),
+      makeTask({ id: "002", status: "pending", effort: "large" }),
+    ];
+    const user = userEvent.setup();
+    renderWithRouter(<TaskTable tasks={tasksWithEffort} initialEffort={["small"]} />);
+    expect(screen.getByText("Showing 1 of 2 tasks")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Filters/ }));
+    // Find the "all" button in the Effort row - it's the third "all" button (Status, Priority, Effort)
+    const allButtons = screen.getAllByRole("button", { name: "all" });
+    await user.click(allButtons[2]); // Effort row all button
+    expect(screen.getByText("Showing 2 of 2 tasks")).toBeInTheDocument();
+  });
+});
+
+describe("TaskTable type toggle", () => {
+  it("toggles type filter when clicking a type button", async () => {
+    const user = userEvent.setup();
+    renderWithRouter(<TaskTable tasks={tasks} />);
+
+    await user.click(screen.getByRole("button", { name: /Filters/ }));
+    await user.click(screen.getByRole("button", { name: "feature" }));
+    expect(screen.getByText("Showing 2 of 3 tasks")).toBeInTheDocument();
+  });
+
+  it("selects all types when clicking all button", async () => {
+    const user = userEvent.setup();
+    renderWithRouter(<TaskTable tasks={tasks} initialTypes={["bug"]} />);
+    expect(screen.getByText("Showing 1 of 3 tasks")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Filters/ }));
+    // Type row all button - it's the 4th "all" button (Status, Priority, Effort, Type)
+    const allButtons = screen.getAllByRole("button", { name: "all" });
+    await user.click(allButtons[3]); // Type row all button
+    expect(screen.getByText("Showing 3 of 3 tasks")).toBeInTheDocument();
+  });
+});
+
+describe("TaskTable selectAll status and priority", () => {
+  it("selects all statuses when clicking all button", async () => {
+    const user = userEvent.setup();
+    renderWithRouter(<TaskTable tasks={tasks} initialStatuses={["pending"]} />);
+    expect(screen.getByText("Showing 1 of 3 tasks")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Filters/ }));
+    const allButtons = screen.getAllByRole("button", { name: "all" });
+    await user.click(allButtons[0]); // Status row all button
+    expect(screen.getByText("Showing 3 of 3 tasks")).toBeInTheDocument();
+  });
+
+  it("selects all priorities when clicking all button", async () => {
+    const user = userEvent.setup();
+    renderWithRouter(<TaskTable tasks={tasks} initialPriorities={["high"]} />);
+    expect(screen.getByText("Showing 1 of 3 tasks")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Filters/ }));
+    const allButtons = screen.getAllByRole("button", { name: "all" });
+    await user.click(allButtons[1]); // Priority row all button
+    expect(screen.getByText("Showing 3 of 3 tasks")).toBeInTheDocument();
+  });
+});
+
+describe("TaskTable global filter", () => {
+  it("filters tasks by text input", async () => {
+    const user = userEvent.setup();
+    renderWithRouter(<TaskTable tasks={tasks} />);
+    expect(screen.getByText("Showing 3 of 3 tasks")).toBeInTheDocument();
+
+    const input = screen.getByPlaceholderText("Filter tasks...");
+    await user.type(input, "001");
+    // globalFilter should filter the table
+    expect(screen.getByText("Showing 1 of 3 tasks")).toBeInTheDocument();
+  });
+});
+
+describe("TaskTable phase toggle", () => {
+  it("toggles phase filter when clicking a phase button", async () => {
+    const tasksWithPhase = [
+      makeTask({ id: "001", status: "pending", phase: "mvp" }),
+      makeTask({ id: "002", status: "pending", phase: "v2" }),
+      makeTask({ id: "003", status: "pending", phase: "" }),
+    ];
+    const user = userEvent.setup();
+    renderWithRouter(<TaskTable tasks={tasksWithPhase} />);
+    expect(screen.getByText("Showing 3 of 3 tasks")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /Filters/ }));
+    // Phase buttons should appear since tasks have phases
+    await user.click(screen.getByRole("button", { name: "mvp" }));
+    expect(screen.getByText("Showing 1 of 3 tasks")).toBeInTheDocument();
+  });
+});

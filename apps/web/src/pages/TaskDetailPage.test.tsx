@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { TaskDetailPage } from "./TaskDetailPage.tsx";
@@ -42,14 +42,18 @@ vi.mock("../hooks/use-task-detail.ts", () => ({
   }),
 }));
 
+let mockWorklogData: import("../api/types.ts").WorklogEntry[] | undefined;
+
 vi.mock("../hooks/use-worklog.ts", () => ({
   useWorklog: () => ({
-    data: undefined,
+    data: mockWorklogData,
   }),
 }));
 
+let mockReadonly = false;
+
 vi.mock("../hooks/use-config.ts", () => ({
-  useConfig: () => ({ readonly: false }),
+  useConfig: () => ({ readonly: mockReadonly }),
 }));
 
 vi.mock("../hooks/use-project.ts", () => ({
@@ -81,6 +85,8 @@ describe("TaskDetailPage", () => {
     mockLoading = false;
     mockMutate.mockReset();
     mockUpdateTask.mockReset();
+    mockWorklogData = undefined;
+    mockReadonly = false;
   });
 
   it("renders task details", () => {
@@ -212,5 +218,100 @@ describe("TaskDetailPage", () => {
       // Error should be cleared
       expect(screen.queryByText("Err")).not.toBeInTheDocument();
     });
+  });
+
+  it("hides Edit button when readonly is true", () => {
+    mockReadonly = true;
+    renderPage();
+    expect(screen.queryByText("Edit")).not.toBeInTheDocument();
+  });
+
+  it("shows loading state", () => {
+    mockLoading = true;
+    mockTask = undefined;
+    const { container } = renderPage();
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
+  });
+
+  it("shows error state with retry", () => {
+    mockError = new Error("Network error");
+    mockTask = undefined;
+    renderPage();
+    expect(screen.getByText("Something went wrong")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Retry"));
+    expect(mockMutate).toHaveBeenCalled();
+  });
+
+  it("renders task dependencies as links", () => {
+    mockTask = makeTask({ dependencies: ["010", "020"] });
+    renderPage();
+    expect(screen.getByText("Dependencies")).toBeInTheDocument();
+    const depLinks = screen.getAllByText(/^0[12]0$/);
+    expect(depLinks).toHaveLength(2);
+    expect(depLinks[0].closest("a")).toHaveAttribute("href", "/tasks/010");
+    expect(depLinks[1].closest("a")).toHaveAttribute("href", "/tasks/020");
+  });
+
+  it("does not render dependencies section when empty", () => {
+    mockTask = makeTask({ dependencies: null });
+    renderPage();
+    expect(screen.queryByText("Dependencies")).not.toBeInTheDocument();
+  });
+
+  it("renders task tags as links", () => {
+    mockTask = makeTask({ tags: ["backend", "api"] });
+    renderPage();
+    expect(screen.getByText("Tags")).toBeInTheDocument();
+    expect(screen.getByText("backend")).toBeInTheDocument();
+    expect(screen.getByText("api")).toBeInTheDocument();
+  });
+
+  it("does not render tags section when empty", () => {
+    mockTask = makeTask({ tags: null });
+    renderPage();
+    expect(screen.queryByText("Tags")).not.toBeInTheDocument();
+  });
+
+  it("renders task body as markdown", () => {
+    mockTask = makeTask({ body: "**Bold text** content" });
+    renderPage();
+    expect(screen.getByText("Bold text")).toBeInTheDocument();
+  });
+
+  it("does not render body section when empty", () => {
+    mockTask = makeTask({ body: "" });
+    const { container } = renderPage();
+    expect(container.querySelector(".prose")).not.toBeInTheDocument();
+  });
+
+  it("renders file_path when present", () => {
+    mockTask = makeTask({ file_path: "tasks/042-test.md" });
+    renderPage();
+    expect(screen.getByText("tasks/042-test.md")).toBeInTheDocument();
+  });
+
+  it("renders parent link when present", () => {
+    mockTask = makeTask({ parent: "001" });
+    renderPage();
+    expect(screen.getByText("Parent")).toBeInTheDocument();
+    const parentLink = screen.getByText("001");
+    expect(parentLink.closest("a")).toHaveAttribute("href", "/tasks/001");
+  });
+
+  it("renders effort, phase, owner, group, created fields", () => {
+    mockTask = makeTask({ effort: "large", phase: "mvp", owner: "alice", group: "web", created: "2026-03-01" });
+    renderPage();
+    expect(screen.getByText("large")).toBeInTheDocument();
+    expect(screen.getByText("alice")).toBeInTheDocument();
+    expect(screen.getByText("web")).toBeInTheDocument();
+    expect(screen.getByText("2026-03-01")).toBeInTheDocument();
+  });
+
+  it("renders worklog section when entries exist", () => {
+    mockWorklogData = [
+      { timestamp: "2026-01-15T10:30:00Z", content: "Started work" },
+    ];
+    renderPage();
+    expect(screen.getByText("Started work")).toBeInTheDocument();
   });
 });

@@ -10,9 +10,142 @@ permissions:
   packages: write
 
 jobs:
+  # ── Validation jobs (mirror `make check`) ──────────────────────────
+
+  lint-cli:
+    name: Lint CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - uses: golangci/golangci-lint-action@v4
+        with:
+          version: latest
+          working-directory: apps/cli
+          args: --timeout=5m
+
+  test-cli:
+    name: Test CLI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - name: Build CLI
+        working-directory: apps/cli
+        run: go build ./...
+      - name: Run tests
+        working-directory: apps/cli
+        run: go test -race ./...
+
+  test-sdk:
+    name: Test SDK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+      - name: Build SDK
+        working-directory: sdk/go
+        run: go build ./...
+      - name: Run tests
+        working-directory: sdk/go
+        run: go test -race ./...
+
+  check-web:
+    name: Check Web Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pnpm-store
+            apps/web/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+      - name: Install dependencies
+        working-directory: apps/web
+        run: pnpm install --frozen-lockfile
+      - name: Type check
+        working-directory: apps/web
+        run: pnpm run typeCheck
+      - name: Lint
+        working-directory: apps/web
+        run: pnpm run lint
+      - name: Test
+        working-directory: apps/web
+        run: pnpm test
+
+  check-vscode:
+    name: Check VS Code Extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        working-directory: apps/vscode
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        working-directory: apps/vscode
+        run: pnpm run lint
+      - name: Test
+        working-directory: apps/vscode
+        run: pnpm test
+
+  build-docs:
+    name: Build Docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install dependencies
+        working-directory: apps/docs
+        run: pnpm install --frozen-lockfile
+      - name: Build
+        working-directory: apps/docs
+        run: pnpm build
+
+  docker-check:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: taskmd:ci-check
+
+  # ── Release job (gates on all checks) ──────────────────────────────
+
   release:
     name: Build and Release
     runs-on: ubuntu-latest
+    needs: [lint-cli, test-cli, test-sdk, check-web, check-vscode, build-docs, docker-check]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

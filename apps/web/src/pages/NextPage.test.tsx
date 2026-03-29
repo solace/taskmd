@@ -130,4 +130,19 @@ describe("NextPage URL sync", () => {
     fireEvent.click(screen.getByText("Retry"));
     expect(mockMutate).toHaveBeenCalled();
   });
+
+  it("shows loading state", () => {
+    mockNextLoading = true;
+    mockNextData = undefined;
+    const { container } = renderPage();
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
+  });
+
+  it("returns null when data is undefined and not loading", () => {
+    mockNextData = undefined;
+    mockNextError = undefined;
+    mockNextLoading = false;
+    const { container } = renderPage();
+    expect(screen.queryByLabelText("Folder:")).not.toBeInTheDocument();
+  });
 });

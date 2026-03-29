@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { StatsPage } from "./StatsPage.tsx";
-import { createStats } from "../test-utils/index.ts";
+import { createStats, createTask } from "../test-utils/index.ts";
 
 vi.mock("../hooks/use-stats.ts", () => ({
   useStats: vi.fn(),
@@ -16,11 +16,11 @@ vi.mock("../hooks/use-project.ts", () => ({
 }));
 
 vi.mock("../hooks/use-tasks.ts", () => ({
-  useTasks: () => ({ data: undefined }),
+  useTasks: vi.fn(),
 }));
 
 vi.mock("../hooks/use-config.ts", () => ({
-  useConfig: () => ({ phases: [] }),
+  useConfig: vi.fn(),
 }));
 
 vi.mock("../components/stats/StatsView.tsx", () => ({
@@ -32,7 +32,18 @@ vi.mock("../components/stats/StatsView.tsx", () => ({
 import { useStats } from "../hooks/use-stats.ts";
 const mockUseStats = vi.mocked(useStats);
 
+import { useTasks } from "../hooks/use-tasks.ts";
+const mockUseTasks = vi.mocked(useTasks);
+
+import { useConfig } from "../hooks/use-config.ts";
+const mockUseConfig = vi.mocked(useConfig);
+
 describe("StatsPage", () => {
+  beforeEach(() => {
+    mockUseTasks.mockReturnValue({ data: undefined } as ReturnType<typeof useTasks>);
+    mockUseConfig.mockReturnValue({ phases: [], readonly: false, version: "1.0.0" } as ReturnType<typeof useConfig>);
+  });
+
   it("renders loading state", () => {
     mockUseStats.mockReturnValue({
       data: undefined,
@@ -94,5 +105,44 @@ describe("StatsPage", () => {
     render(<StatsPage />);
     fireEvent.click(screen.getByText("Retry"));
     expect(mockMutate).toHaveBeenCalled();
+  });
+
+  it("returns null when data is undefined", () => {
+    mockUseStats.mockReturnValue({
+      data: undefined,
+      error: undefined,
+      isLoading: false,
+      mutate: vi.fn(),
+      isValidating: false,
+    });
+    const { container } = render(<StatsPage />);
+    expect(container.innerHTML).toBe("");
+  });
+
+  it("computes phaseProgress when phases and tasks are available", () => {
+    mockUseConfig.mockReturnValue({
+      phases: [
+        { id: "mvp", name: "MVP", description: "" },
+        { id: "v2", name: "V2", description: "" },
+      ],
+      readonly: false,
+      version: "1.0.0",
+    } as ReturnType<typeof useConfig>);
+    mockUseTasks.mockReturnValue({
+      data: [
+        createTask({ phase: "mvp", status: "completed" }),
+        createTask({ phase: "mvp", status: "pending" }),
+        createTask({ phase: "v2", status: "pending" }),
+      ],
+    } as ReturnType<typeof useTasks>);
+    mockUseStats.mockReturnValue({
+      data: createStats({ total_tasks: 3 }),
+      error: undefined,
+      isLoading: false,
+      mutate: vi.fn(),
+      isValidating: false,
+    });
+    render(<StatsPage />);
+    expect(screen.getByTestId("stats-view")).toBeInTheDocument();
   });
 });

@@ -138,5 +138,59 @@ describe("BoardView", () => {
       fireEvent.keyDown(grid, { key: "Enter" });
       expect(mockNavigate).not.toHaveBeenCalled();
     });
+
+    it("ArrowUp moves to previous card in column", () => {
+      renderWithProviders(<BoardView groups={makeGroups()} groupBy="status" readonly={false} />);
+      const grid = getGrid();
+      // Focus first column, move down twice to card 1
+      fireEvent.keyDown(grid, { key: "ArrowDown" });
+      fireEvent.keyDown(grid, { key: "ArrowDown" });
+      expect(screen.getByTestId("column-pending")).toHaveAttribute("data-focused-card", "1");
+      // Move up
+      fireEvent.keyDown(grid, { key: "ArrowUp" });
+      expect(screen.getByTestId("column-pending")).toHaveAttribute("data-focused-card", "0");
+    });
+
+    it("ArrowUp from unfocused state does nothing", () => {
+      renderWithProviders(<BoardView groups={makeGroups()} groupBy="status" readonly={false} />);
+      const grid = getGrid();
+      fireEvent.keyDown(grid, { key: "ArrowUp" });
+      // Both should stay at -1
+      expect(screen.getByTestId("column-pending")).toHaveAttribute("data-focused-card", "-1");
+    });
+
+    it("ArrowRight wraps from last column to first", () => {
+      renderWithProviders(<BoardView groups={makeGroups()} groupBy="status" readonly={false} />);
+      const grid = getGrid();
+      // Focus first column
+      fireEvent.keyDown(grid, { key: "ArrowDown" });
+      // Move to second column
+      fireEvent.keyDown(grid, { key: "ArrowRight" });
+      // Move right again should wrap to first
+      fireEvent.keyDown(grid, { key: "ArrowRight" });
+      expect(screen.getByTestId("column-pending")).toHaveAttribute("data-focused-card", "0");
+    });
+
+    it("ArrowDown wraps within column", () => {
+      renderWithProviders(<BoardView groups={makeGroups()} groupBy="status" readonly={false} />);
+      const grid = getGrid();
+      // Focus first column
+      fireEvent.keyDown(grid, { key: "ArrowDown" });
+      // Move to card 1
+      fireEvent.keyDown(grid, { key: "ArrowDown" });
+      // Move down should wrap to 0
+      fireEvent.keyDown(grid, { key: "ArrowDown" });
+      expect(screen.getByTestId("column-pending")).toHaveAttribute("data-focused-card", "0");
+    });
+
+    it("ArrowUp wraps within column", () => {
+      renderWithProviders(<BoardView groups={makeGroups()} groupBy="status" readonly={false} />);
+      const grid = getGrid();
+      // Focus first column (card 0)
+      fireEvent.keyDown(grid, { key: "ArrowDown" });
+      // Move up should wrap to last card
+      fireEvent.keyDown(grid, { key: "ArrowUp" });
+      expect(screen.getByTestId("column-pending")).toHaveAttribute("data-focused-card", "1");
+    });
   });
 });

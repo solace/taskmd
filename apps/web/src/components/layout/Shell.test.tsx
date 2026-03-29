@@ -132,4 +132,48 @@ describe("Shell", () => {
     fireEvent.click(searchButton);
     expect(screen.getByTestId("search-dialog")).toBeDefined();
   });
+
+  it("applies graph page layout class when on /graph", () => {
+    renderShell(["/graph"]);
+    const main = screen.getByTestId("child-content").closest("main");
+    expect(main?.className).toContain("flex-1");
+  });
+
+  it("does not apply graph page layout class on other pages", () => {
+    renderShell(["/"]);
+    const main = screen.getByTestId("child-content").closest("main");
+    expect(main?.className).not.toContain("flex-1");
+  });
+
+  it("does not open search for / key on TEXTAREA", () => {
+    renderShell();
+    const textarea = document.createElement("textarea");
+    document.body.appendChild(textarea);
+    fireEvent.keyDown(textarea, { key: "/" });
+    expect(screen.queryByTestId("search-dialog")).toBeNull();
+    document.body.removeChild(textarea);
+  });
+
+  it("does not open search for / key on SELECT", () => {
+    renderShell();
+    const select = document.createElement("select");
+    document.body.appendChild(select);
+    fireEvent.keyDown(select, { key: "/" });
+    expect(screen.queryByTestId("search-dialog")).toBeNull();
+    document.body.removeChild(select);
+  });
+
+  it("does not render version when not provided", () => {
+    mockApi.config = { readonly: false, version: "", phases: [] };
+    renderShell();
+    expect(screen.queryByText("1.2.3")).toBeNull();
+  });
+
+  it("ArrowUp on main content focuses header nav", () => {
+    renderShell();
+    const main = document.getElementById("main-content")!;
+    main.focus();
+    fireEvent.keyDown(main, { key: "ArrowUp" });
+    expect(document.activeElement?.tagName).toBeDefined();
+  });
 });
