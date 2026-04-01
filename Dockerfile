@@ -17,7 +17,7 @@ COPY apps/web/ apps/web/
 RUN pnpm --filter @taskmd/web build
 
 # Stage 2: Build Go binary
-FROM golang:1.24-alpine AS go-builder
+FROM golang:1.25-alpine AS go-builder
 
 WORKDIR /build
 
