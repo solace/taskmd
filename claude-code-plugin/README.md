@@ -30,7 +30,9 @@ There are two plugins available:
 | **taskmd** | Slash command skills (`/taskmd:do-task`, `/taskmd:next-task`, etc.) that orchestrate task workflows by invoking the `taskmd` CLI | Yes |
 | **taskmd-mcp** | An MCP server that exposes task operations as tools (`list`, `get`, `next`, `search`, `set`, etc.), letting Claude call taskmd directly through the Model Context Protocol | Yes |
 
-**taskmd** is best for interactive, human-driven workflows via slash commands. **taskmd-mcp** gives Claude direct tool access for autonomous task operations. You can install both.
+**taskmd** is best for interactive, human-driven workflows via slash commands. **taskmd-mcp** gives Claude direct tool access for autonomous task operations.
+
+> **Choose one, not both.** The two plugins overlap in functionality — installing both will clutter your environment with redundant commands. Pick **taskmd** if you prefer slash-command-driven workflows, or **taskmd-mcp** if you want Claude to have direct tool access via MCP.
 
 First, add the taskmd marketplace:
 
@@ -38,13 +40,13 @@ First, add the taskmd marketplace:
 claude plugin marketplace add driangle/taskmd
 ```
 
-Then install the plugin(s):
+Then install **one** of the plugins:
 
 ```bash
-# Install slash command skills
+# Option A: Slash command skills (interactive workflows)
 claude plugin install taskmd@taskmd-marketplace --scope project
 
-# Install MCP server for direct tool access (optional)
+# Option B: MCP server (direct tool access for Claude)
 claude plugin install taskmd-mcp@taskmd-marketplace --scope project
 ```
 
