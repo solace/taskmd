@@ -192,6 +192,7 @@ func applyTerminalDateLogic(task *model.Task, req *taskfile.UpdateRequest) {
 	}
 	today := time.Now().Format("2006-01-02")
 	newStatus := model.Status(*req.Status)
+	wasTerminal := task.Status.IsResolved()
 
 	switch {
 	case newStatus == model.StatusCompleted:
@@ -200,8 +201,8 @@ func applyTerminalDateLogic(task *model.Task, req *taskfile.UpdateRequest) {
 	case newStatus == model.StatusCancelled:
 		req.CancelledAt = &today
 		req.RemoveFields = append(req.RemoveFields, "completed_at")
-	case task.Status.IsResolved():
-		// Leaving terminal state: clear whichever was set
+	case wasTerminal:
+		// Reopening: task was completed/cancelled, now moving to a non-terminal status.
 		req.RemoveFields = append(req.RemoveFields, "completed_at", "cancelled_at")
 	}
 }

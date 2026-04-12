@@ -71,6 +71,7 @@ func handleSet(_ context.Context, _ *gomcp.CallToolRequest, input SetInput) (*go
 	if req.Status != nil {
 		today := time.Now().Format("2006-01-02")
 		newStatus := model.Status(*req.Status)
+		wasTerminal := task.Status.IsResolved()
 		switch {
 		case newStatus == model.StatusCompleted:
 			req.Completed = &today
@@ -78,7 +79,8 @@ func handleSet(_ context.Context, _ *gomcp.CallToolRequest, input SetInput) (*go
 		case newStatus == model.StatusCancelled:
 			req.CancelledAt = &today
 			req.RemoveFields = append(req.RemoveFields, "completed_at")
-		case task.Status.IsResolved():
+		case wasTerminal:
+			// Reopening: task was completed/cancelled, now moving to a non-terminal status.
 			req.RemoveFields = append(req.RemoveFields, "completed_at", "cancelled_at")
 		}
 	}
