@@ -10,11 +10,12 @@ List tasks using the `taskmd` CLI.
 
 ## Instructions
 
-The user's arguments are in `$ARGUMENTS` (e.g. `--status pending`, `--format json`, a directory path).
+The user's arguments are in `$ARGUMENTS` (e.g. `--filter status=pending`, `--format json`, a directory path).
 
 1. Run `taskmd list $ARGUMENTS`
    - If `$ARGUMENTS` is empty, run: `taskmd list`
-   - Common flags: `--status`, `--priority`, `--format`, `--filter`
-   - Phase filtering: `taskmd list --filter phase=core-cli` to list tasks in a specific phase
+   - Common flags: `--filter`, `--format`, `--sort`, `--scope`, `--phase`
+   - Filter examples: `--filter status=pending`, `--filter priority=high`, `--filter "priority>=medium"`
+   - Phase filtering: `taskmd list --phase core-cli` or `taskmd list --filter phase=core-cli`
    - Use `taskmd phases` to see all configured phases with progress stats
 2. Present the output to the user
