@@ -463,6 +463,9 @@ taskmd graph --format json --out graph.json
 | `--downstream` | `false` | Show only dependents (descendants) |
 | `--focus` | | Highlight specific task ID |
 | `--filter` | | Filter tasks (repeatable, AND logic) |
+| `--status` | | Shortcut for `--filter status=<value>` |
+| `--priority` | | Shortcut for `--filter priority=<value>` |
+| `--phase` | | Filter by phase |
 | `--scope` | | Filter by scope; supports wildcards (e.g. `cli`, `cli*`) |
 | `--out`, `-o` | | Write output to file |
 
