@@ -228,31 +228,15 @@ func outputProjectTable(ptasks []*ProjectTask, columnsStr string) error {
 func applyListFiltersAndSort(tasks []*model.Task) ([]*model.Task, error) {
 	var err error
 
-	// Expand shortcut flags into filter expressions
-	if listStatus != "" {
-		listFilters = append(listFilters, "status="+listStatus)
-	}
-	if listPriority != "" {
-		listFilters = append(listFilters, "priority="+listPriority)
-	}
-
-	// Apply filters (multiple filters are AND'ed together)
-	if len(listFilters) > 0 {
-		tasks, err = applyFilters(tasks, listFilters)
-		if err != nil {
-			return nil, fmt.Errorf("filter error: %w", err)
-		}
-	}
-
-	// Apply scope filter
-	if listScope != "" {
-		warnUnknownScope(listScope)
-		tasks = filterTasksByScope(tasks, listScope)
-	}
-
-	// Apply phase filter
-	if listPhase != "" {
-		tasks = filterTasksByPhase(tasks, listPhase)
+	tasks, err = applyShortcutFilters(tasks, FilterShortcuts{
+		Status:   listStatus,
+		Priority: listPriority,
+		Phase:    listPhase,
+		Scope:    listScope,
+		Filters:  listFilters,
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	// Apply sorting

@@ -1,11 +1,12 @@
 ---
 title: "Add list-compatible filter shortcuts to graph command"
 id: "01kpwpa5d"
-status: pending
+status: completed
 priority: medium
 type: feature
 tags: ["cli", "graph", "filters"]
 created: "2026-04-23"
+completed_at: 2026-04-23
 ---
 
 # Add list-compatible filter shortcuts to graph command
@@ -20,12 +21,12 @@ The `graph` command already supports `--filter key=value` and `--scope`, but lac
 
 ## Tasks
 
-- [ ] Extract a reusable filter-expansion function (shortcut flags → filter expressions, apply filters, apply scope, apply phase) that accepts parameters instead of reading package-level vars
-- [ ] Add `--status`, `--priority`, and `--phase` shortcut flags to `graphCmd` in `graph.go`
-- [ ] Wire the graph command to use the shared filter function instead of its inline filtering logic
-- [ ] Update `list` to call the same shared function
-- [ ] Add tests for the new shortcut flags on the graph command
-- [ ] Verify existing list and graph tests still pass
+- [x] Extract a reusable filter-expansion function (shortcut flags → filter expressions, apply filters, apply scope, apply phase) that accepts parameters instead of reading package-level vars
+- [x] Add `--status`, `--priority`, and `--phase` shortcut flags to `graphCmd` in `graph.go`
+- [x] Wire the graph command to use the shared filter function instead of its inline filtering logic
+- [x] Update `list` to call the same shared function
+- [x] Add tests for the new shortcut flags on the graph command
+- [x] Verify existing list and graph tests still pass
 
 ## Acceptance Criteria
 
