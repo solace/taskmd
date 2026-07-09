@@ -11,6 +11,7 @@ interface AppConfig {
   readonly: boolean;
   version: string;
   phases: PhaseInfo[];
+  scopes: string[];
 }
 
 declare global {
@@ -36,5 +37,6 @@ export function useConfig(project?: string | null) {
     readonly: data?.readonly ?? false,
     version: data?.version ?? "",
     phases: data?.phases ?? [],
+    scopes: data?.scopes ?? [],
   };
 }

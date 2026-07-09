@@ -195,40 +195,52 @@ Use the "Group by" dropdown to organize by:
 
 **URL:** `http://localhost:8080/graph`
 
-Interactive dependency visualization using @xyflow/react (ReactFlow).
+Interactive hierarchical multigraph built with @xyflow/react and the ELK layout engine.
 
 **Features:**
-- Visual dependency graph
-- Nodes represent tasks
-- Arrows show dependencies
-- Color-coded by status
-- Interactive exploration
+- ELK-powered layered layout — dependency order top to bottom
+- Phase compound regions — tasks with `phase:` appear inside labelled dashed containers
+- Scope clusters — isolated tasks with `touches:` are grouped into teal-bordered clusters
+- Overlay toggles — **Related** and **Spawned-by** edges can be toggled on/off without re-layout
+- Preset system — **Default / Deps only / Related / Provenance / Focus** presets in the header
+- Focus mode — click a node or use the Focus preset to see a BFS subgraph at depth 1/2/3
+- Hover dimming — hovering a node highlights its neighbourhood and dims all other nodes
+- Color-by scope — dropdown to tint nodes by their first `touches` scope
+- LOD gating — overlay edges auto-hide below zoom 0.5 to reduce clutter
+
+**Edge types:**
+- **Solid gray arrow** — dependency (always visible)
+- **Solid indigo diamond** — parent→child composition
+- **Dashed purple** — related (overlay, toggle in header)
+- **Dotted violet** — spawned-by (overlay, toggle in header)
 
 **Node Colors:**
-- 🟡 Yellow - pending
-- 🔵 Blue - in-progress
-- 🟢 Green - completed
-- 🔴 Red - blocked
+- 🟡 Yellow — pending
+- 🔵 Blue — in-progress
+- 🟢 Green — completed
+- 🔴 Red — blocked
 
 **Interactions:**
-- **Hover** - Highlight task
-- **Click** - View task details (future enhancement)
-- **Pan** - Drag to move view
-- **Zoom** - Mouse wheel or pinch
+- **Hover** — dims non-adjacent nodes, highlights neighbours
+- **Click node in Focus preset** — re-centres focus on that node
+- **Pan** — drag to move view
+- **Zoom** — mouse wheel or pinch; overlay edges hide below 0.5×
+- **Status filters** — toggle statuses in the filter bar to show/hide node groups
+- **Search** — find a task by ID or title; matched nodes are highlighted
 
 **Understanding the Graph:**
-- **Arrows** - Point from dependency to dependent
-  - Task A → Task B means B depends on A
-- **Chains** - Long paths show critical paths
-- **Bottlenecks** - Tasks with many outgoing arrows block others
-- **Clusters** - Groups of related tasks
+- **Arrows** — point from dependency to dependent (A → B means B depends on A)
+- **Phase regions** — dashed indigo box; all tasks with the same `phase:` value
+- **Scope clusters** — dashed teal box; isolated tasks grouped by their first `touches` scope
+- **Diamond edges** — parent→child (composition); child sits below parent in the layout
+- **Focus mode** — shows only the BFS neighbourhood of the selected task
 
 **Best for:**
-- Understanding dependencies
-- Identifying critical paths
-- Finding blockers
-- Planning parallel work
-- Detecting circular dependencies
+- Understanding dependencies and critical paths
+- Visualising phase and scope structure at a glance
+- Tracing task provenance (spawned-by chain)
+- Finding blockers with the upstream Focus view
+- Planning parallel work across scope clusters
 
 #### 4. Stats View
 
@@ -597,22 +609,35 @@ Each grouping provides different insights:
 
 ### Graph Features
 
-**Dependency Visualization:**
-- See the full task network
-- Understand relationships
-- Identify critical paths
-- Spot potential issues
+**Multigraph layout:**
+- ELK `layered` algorithm — dependencies flow top-to-bottom, crossing minimised
+- Phase compound regions — tasks with `phase:` frontmatter appear inside dashed boxes
+- Scope clusters — isolated tasks with `touches:` are grouped into compact teal clusters
 
-**Color Coding:**
-- Completed tasks (green)
-- In-progress tasks (blue)
-- Pending tasks (yellow)
-- Blocked tasks (red)
+**Edge types:**
+- Dependency edges (always on) — solid gray, drives layout ranking
+- Parent edges — solid indigo diamond at parent end
+- Related edges — dashed purple overlay (toggle in header, hidden below zoom 0.5)
+- Spawned-by edges — dotted violet overlay (toggle in header, hidden below zoom 0.5)
+
+**Preset system:**
+- **Default** — deps + parent edges, phase/scope grouping enabled
+- **Deps only** — suppresses related and spawned-by overlays
+- **Related** — shows related overlay, hides spawned-by
+- **Provenance** — shows spawned-by chain, hides related
+- **Focus** — shows a BFS subgraph of the selected task at depth 1/2/3
+
+**Interaction features:**
+- Hover dimming — non-adjacent nodes fade on hover
+- Click-to-focus — click any node in Focus preset to re-centre
+- Color by scope — tints nodes by their primary `touches` scope
+- LOD zoom gating — overlay edges auto-hide below zoom 0.5
 
 **Use Cases:**
 - Planning parallel work streams
 - Finding tasks that unblock others
-- Understanding project structure
+- Understanding phase and scope structure
+- Tracing task provenance through spawned-by chains
 - Detecting circular dependencies
 
 ### Stats Features

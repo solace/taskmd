@@ -54,8 +54,9 @@ func collectReportData(tasks []*model.Task, groupBy string, includeGraph bool) (
 
 	if includeGraph {
 		g := graph.NewGraph(tasks)
-		data.GraphMermaid = g.ToMermaid("")
-		data.GraphJSON = g.ToJSON()
+		opts := graph.DefaultRenderOptions()
+		data.GraphMermaid = g.ToMermaid(opts)
+		data.GraphJSON = g.ToJSON(opts)
 	}
 
 	return data, nil

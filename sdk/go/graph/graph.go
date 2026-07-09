@@ -53,12 +53,35 @@ func (f *ASCIIFormatter) applyReference(text string) string {
 	return text
 }
 
+// RenderOptions controls which edges and structural features are included in graph output.
+// Use DefaultRenderOptions() to get current-behaviour defaults.
+type RenderOptions struct {
+	FocusTaskID   string
+	ShowRelated   bool
+	ShowSpawnedBy bool
+	ShowParent    bool
+	Subgraphs     bool
+}
+
+// DefaultRenderOptions returns options that reproduce the existing output exactly.
+func DefaultRenderOptions() RenderOptions {
+	return RenderOptions{ShowRelated: true, ShowSpawnedBy: true}
+}
+
 // Graph represents a task dependency graph
 type Graph struct {
 	Tasks        []*model.Task
 	TaskMap      map[string]*model.Task
 	Adjacency    map[string][]string // task ID -> list of dependent task IDs
 	RevAdjacency map[string][]string // task ID -> list of dependency task IDs
+	// RelatedEdges holds deduplicated undirected related pairs. Each pair [a,b] has a <= b lexicographically.
+	RelatedEdges [][2]string
+	// RelatedMap holds all related task IDs for a given task ID (both directions).
+	RelatedMap map[string][]string
+	// SpawnedByEdges holds directed provenance edges: [child, source] meaning child was spawned by source.
+	SpawnedByEdges [][2]string
+	// ParentEdges holds directed parent→child pairs where both tasks exist in the graph: [child, parent].
+	ParentEdges [][2]string
 }
 
 // NewGraph creates a new graph from a list of tasks
@@ -68,6 +91,7 @@ func NewGraph(tasks []*model.Task) *Graph {
 		TaskMap:      make(map[string]*model.Task),
 		Adjacency:    make(map[string][]string),
 		RevAdjacency: make(map[string][]string),
+		RelatedMap:   make(map[string][]string),
 	}
 
 	// Build task map
@@ -86,7 +110,132 @@ func NewGraph(tasks []*model.Task) *Graph {
 		}
 	}
 
+	// Build related edges (deduplicated undirected pairs, only between tasks in this graph)
+	relatedSet := make(map[string]bool)
+	relatedMapSet := make(map[string]map[string]bool)
+	for _, task := range tasks {
+		for _, relID := range task.Related {
+			if _, exists := g.TaskMap[relID]; !exists {
+				continue // skip references to tasks not in this (possibly filtered) graph
+			}
+			// Canonical edge key: lower ID first
+			a, b := task.ID, relID
+			if a > b {
+				a, b = b, a
+			}
+			edgeKey := a + ":" + b
+			if !relatedSet[edgeKey] {
+				relatedSet[edgeKey] = true
+				g.RelatedEdges = append(g.RelatedEdges, [2]string{a, b})
+			}
+			// Build bidirectional lookup
+			if relatedMapSet[task.ID] == nil {
+				relatedMapSet[task.ID] = make(map[string]bool)
+			}
+			if relatedMapSet[relID] == nil {
+				relatedMapSet[relID] = make(map[string]bool)
+			}
+			relatedMapSet[task.ID][relID] = true
+			relatedMapSet[relID][task.ID] = true
+		}
+	}
+	for id, relSet := range relatedMapSet {
+		for relID := range relSet {
+			g.RelatedMap[id] = append(g.RelatedMap[id], relID)
+		}
+		sort.Strings(g.RelatedMap[id])
+	}
+	sort.Slice(g.RelatedEdges, func(i, j int) bool {
+		if g.RelatedEdges[i][0] != g.RelatedEdges[j][0] {
+			return g.RelatedEdges[i][0] < g.RelatedEdges[j][0]
+		}
+		return g.RelatedEdges[i][1] < g.RelatedEdges[j][1]
+	})
+
+	// Build spawned_by edges (directed: child -> source)
+	spawnedSet := make(map[string]bool)
+	for _, task := range tasks {
+		if task.SpawnedBy == "" {
+			continue
+		}
+		if _, exists := g.TaskMap[task.SpawnedBy]; !exists {
+			continue // skip references to tasks not in this graph
+		}
+		edgeKey := task.ID + ":" + task.SpawnedBy
+		if !spawnedSet[edgeKey] {
+			spawnedSet[edgeKey] = true
+			g.SpawnedByEdges = append(g.SpawnedByEdges, [2]string{task.ID, task.SpawnedBy})
+		}
+	}
+	sort.Slice(g.SpawnedByEdges, func(i, j int) bool {
+		return g.SpawnedByEdges[i][0] < g.SpawnedByEdges[j][0]
+	})
+
+	// Build parent edges (directed: child -> parent, only when parent exists in graph)
+	for _, task := range tasks {
+		if task.Parent == "" {
+			continue
+		}
+		if _, exists := g.TaskMap[task.Parent]; !exists {
+			continue
+		}
+		g.ParentEdges = append(g.ParentEdges, [2]string{task.ID, task.Parent})
+	}
+	sort.Slice(g.ParentEdges, func(i, j int) bool {
+		return g.ParentEdges[i][0] < g.ParentEdges[j][0]
+	})
+
 	return g
+}
+
+// GetDownstreamN returns tasks that depend on the given task up to depth hops.
+// depth <= 0 means unlimited (delegates to GetDownstream).
+func (g *Graph) GetDownstreamN(taskID string, depth int) map[string]bool {
+	if depth <= 0 {
+		return g.GetDownstream(taskID)
+	}
+	visited := make(map[string]bool)
+	var visit func(id string, remaining int)
+	visit = func(id string, remaining int) {
+		if visited[id] {
+			return
+		}
+		visited[id] = true
+		if remaining == 0 {
+			return
+		}
+		for _, dep := range g.Adjacency[id] {
+			visit(dep, remaining-1)
+		}
+	}
+	visit(taskID, depth)
+	delete(visited, taskID)
+	return visited
+}
+
+// GetUpstreamN returns tasks the given task depends on up to depth hops.
+// depth <= 0 means unlimited (delegates to GetUpstream).
+func (g *Graph) GetUpstreamN(taskID string, depth int) map[string]bool {
+	if depth <= 0 {
+		return g.GetUpstream(taskID)
+	}
+	visited := make(map[string]bool)
+	var visit func(id string, remaining int)
+	visit = func(id string, remaining int) {
+		if visited[id] {
+			return
+		}
+		visited[id] = true
+		if remaining == 0 {
+			return
+		}
+		for _, dep := range g.RevAdjacency[id] {
+			visit(dep, remaining-1)
+		}
+	}
+	visit(taskID, depth)
+	delete(visited, taskID)
+	return visited
 }
 
 // GetDownstream returns all tasks that depend on the given task (transitively)
@@ -187,8 +336,97 @@ func (g *Graph) FilterTasks(taskIDs map[string]bool) *Graph {
 	return NewGraph(filtered)
 }
 
+// classifyByGroup groups tasks into phase groups, scope groups, and top-level.
+// A task with a phase goes into its phase group regardless of connectivity.
+// An isolated task (no dep edges in or out, no parent, no phase) with touches goes into its first scope group.
+// All others are top-level.
+func classifyByGroup(tasks []*model.Task, hasDepEdge map[string]bool) (phases, scopes map[string][]string, topLevel []string) {
+	phases = make(map[string][]string)
+	scopes = make(map[string][]string)
+	for _, task := range tasks {
+		switch {
+		case task.Phase != "":
+			phases[task.Phase] = append(phases[task.Phase], task.ID)
+		case !hasDepEdge[task.ID] && task.Parent == "" && len(task.Touches) > 0:
+			scope := task.Touches[0]
+			scopes[scope] = append(scopes[scope], task.ID)
+		default:
+			topLevel = append(topLevel, task.ID)
+		}
+	}
+	return phases, scopes, topLevel
+}
+
+// writeMermaidGroups emits subgraph blocks for phase and scope groups.
+func writeMermaidGroups(sb *strings.Builder, phases, scopes map[string][]string) {
+	phaseKeys := make([]string, 0, len(phases))
+	for k := range phases {
+		phaseKeys = append(phaseKeys, k)
+	}
+	sort.Strings(phaseKeys)
+	for _, phase := range phaseKeys {
+		ids := phases[phase]
+		sort.Strings(ids)
+		sb.WriteString(fmt.Sprintf("    subgraph phase_%s\n", phase))
+		for _, id := range ids {
+			sb.WriteString(fmt.Sprintf("        %s\n", id))
+		}
+		sb.WriteString("    end\n")
+	}
+
+	scopeKeys := make([]string, 0, len(scopes))
+	for k := range scopes {
+		scopeKeys = append(scopeKeys, k)
+	}
+	sort.Strings(scopeKeys)
+	for _, scope := range scopeKeys {
+		ids := scopes[scope]
+		sort.Strings(ids)
+		sb.WriteString(fmt.Sprintf("    subgraph scope_%s\n", scope))
+		for _, id := range ids {
+			sb.WriteString(fmt.Sprintf("        %s\n", id))
+		}
+		sb.WriteString("    end\n")
+	}
+}
+
+// writeDotGroups emits cluster subgraph blocks for phase and scope groups.
+func writeDotGroups(sb *strings.Builder, phases, scopes map[string][]string) {
+	phaseKeys := make([]string, 0, len(phases))
+	for k := range phases {
+		phaseKeys = append(phaseKeys, k)
+	}
+	sort.Strings(phaseKeys)
+	for _, phase := range phaseKeys {
+		ids := phases[phase]
+		sort.Strings(ids)
+		sb.WriteString(fmt.Sprintf("    subgraph cluster_phase_%s {\n", phase))
+		sb.WriteString(fmt.Sprintf("        label=\"%s\";\n", phase))
+		for _, id := range ids {
+			sb.WriteString(fmt.Sprintf("        %s;\n", id))
+		}
+		sb.WriteString("    }\n")
+	}
+
+	scopeKeys := make([]string, 0, len(scopes))
+	for k := range scopes {
+		scopeKeys = append(scopeKeys, k)
+	}
+	sort.Strings(scopeKeys)
+	for _, scope := range scopeKeys {
+		ids := scopes[scope]
+		sort.Strings(ids)
+		sb.WriteString(fmt.Sprintf("    subgraph cluster_scope_%s {\n", scope))
+		sb.WriteString(fmt.Sprintf("        label=\"%s\";\n", scope))
+		for _, id := range ids {
+			sb.WriteString(fmt.Sprintf("        %s;\n", id))
+		}
+		sb.WriteString("    }\n")
+	}
+}
+
 // ToMermaid generates a Mermaid diagram
-func (g *Graph) ToMermaid(focusTaskID string) string {
+func (g *Graph) ToMermaid(opts RenderOptions) string {
 	var sb strings.Builder
 	sb.WriteString("graph TD\n")
 
@@ -202,7 +440,7 @@ func (g *Graph) ToMermaid(focusTaskID string) string {
 	// Define nodes
 	for _, task := range sortedTasks {
 		nodeStyle := ""
-		if task.ID == focusTaskID {
+		if task.ID == opts.FocusTaskID {
 			nodeStyle = ":::focus"
 		} else {
 			switch task.Status {
@@ -220,7 +458,20 @@ func (g *Graph) ToMermaid(focusTaskID string) string {
 		sb.WriteString(fmt.Sprintf("    %s[\"%s: %s\"]%s\n", task.ID, task.ID, title, nodeStyle))
 	}
 
-	// Define edges
+	// Subgraph groupings (phase/scope)
+	if opts.Subgraphs {
+		hasDepEdge := make(map[string]bool)
+		for _, task := range g.Tasks {
+			for _, depID := range task.Dependencies {
+				hasDepEdge[task.ID] = true
+				hasDepEdge[depID] = true
+			}
+		}
+		phases, scopes, _ := classifyByGroup(g.Tasks, hasDepEdge)
+		writeMermaidGroups(&sb, phases, scopes)
+	}
+
+	// Define dependency edges
 	edges := make(map[string]bool) // Track unique edges
 	for _, task := range sortedTasks {
 		for _, depID := range task.Dependencies {
@@ -229,6 +480,27 @@ func (g *Graph) ToMermaid(focusTaskID string) string {
 				edges[edgeKey] = true
 				sb.WriteString(fmt.Sprintf("    %s --> %s\n", depID, task.ID))
 			}
+		}
+	}
+
+	// Define related edges (dashed, undirected)
+	if opts.ShowRelated {
+		for _, pair := range g.RelatedEdges {
+			sb.WriteString(fmt.Sprintf("    %s -.- %s\n", pair[0], pair[1]))
+		}
+	}
+
+	// Define spawned_by edges (dotted directed: child -.-> source)
+	if opts.ShowSpawnedBy {
+		for _, pair := range g.SpawnedByEdges {
+			sb.WriteString(fmt.Sprintf("    %s -.-> %s\n", pair[0], pair[1]))
+		}
+	}
+
+	// Define parent edges (open circle: child --o parent)
+	if opts.ShowParent {
+		for _, pair := range g.ParentEdges {
+			sb.WriteString(fmt.Sprintf("    %s --o %s\n", pair[0], pair[1]))
 		}
 	}
 
@@ -243,7 +515,7 @@ func (g *Graph) ToMermaid(focusTaskID string) string {
 }
 
 // ToDot generates a Graphviz DOT format
-func (g *Graph) ToDot(focusTaskID string) string {
+func (g *Graph) ToDot(opts RenderOptions) string {
 	var sb strings.Builder
 	sb.WriteString("digraph tasks {\n")
 	sb.WriteString("    rankdir=TB;\n")
@@ -259,7 +531,7 @@ func (g *Graph) ToDot(focusTaskID string) string {
 	// Define nodes
 	for _, task := range sortedTasks {
 		color := "lightgray"
-		if task.ID == focusTaskID {
+		if task.ID == opts.FocusTaskID {
 			color = "red"
 		} else {
 			switch task.Status {
@@ -280,7 +552,21 @@ func (g *Graph) ToDot(focusTaskID string) string {
 
 	sb.WriteString("\n")
 
-	// Define edges
+	// Subgraph groupings (phase/scope)
+	if opts.Subgraphs {
+		hasDepEdge := make(map[string]bool)
+		for _, task := range g.Tasks {
+			for _, depID := range task.Dependencies {
+				hasDepEdge[task.ID] = true
+				hasDepEdge[depID] = true
+			}
+		}
+		phases, scopes, _ := classifyByGroup(g.Tasks, hasDepEdge)
+		writeDotGroups(&sb, phases, scopes)
+		sb.WriteString("\n")
+	}
+
+	// Define dependency edges
 	edges := make(map[string]bool)
 	for _, task := range sortedTasks {
 		for _, depID := range task.Dependencies {
@@ -292,6 +578,27 @@ func (g *Graph) ToDot(focusTaskID string) string {
 		}
 	}
 
+	// Define related edges (dashed, undirected)
+	if opts.ShowRelated {
+		for _, pair := range g.RelatedEdges {
+			sb.WriteString(fmt.Sprintf("    %s -> %s [style=dashed, dir=none];\n", pair[0], pair[1]))
+		}
+	}
+
+	// Define spawned_by edges (dotted directed: child -> source)
+	if opts.ShowSpawnedBy {
+		for _, pair := range g.SpawnedByEdges {
+			sb.WriteString(fmt.Sprintf("    %s -> %s [style=dotted];\n", pair[0], pair[1]))
+		}
+	}
+
+	// Define parent edges (diamond: child -> parent)
+	if opts.ShowParent {
+		for _, pair := range g.ParentEdges {
+			sb.WriteString(fmt.Sprintf("    %s -> %s [arrowhead=odiamond, dir=forward, style=solid, color=\"#6366f1\"];\n", pair[0], pair[1]))
+		}
+	}
+
 	sb.WriteString("}\n")
 	return sb.String()
 }
@@ -300,7 +607,7 @@ func (g *Graph) ToDot(focusTaskID string) string {
 // An optional ASCIIFormatter applies styling callbacks; pass nil for plain text.
 //
 //nolint:gocognit,gocyclo,funlen // TODO: refactor to reduce complexity
-func (g *Graph) ToASCII(rootTaskID string, downstream bool, f *ASCIIFormatter) string {
+func (g *Graph) ToASCII(rootTaskID string, downstream bool, f *ASCIIFormatter, opts RenderOptions) string {
 	var sb strings.Builder
 
 	visited := make(map[string]bool)
@@ -315,10 +622,26 @@ func (g *Graph) ToASCII(rootTaskID string, downstream bool, f *ASCIIFormatter) s
 				if isLast {
 					connector = "└── "
 				}
+				annotation := ""
+				if opts.ShowRelated {
+					if related := g.RelatedMap[taskID]; len(related) > 0 {
+						annotation += " ~ " + strings.Join(related, ", ")
+					}
+				}
+				if opts.ShowSpawnedBy && task.SpawnedBy != "" {
+					if _, exists := g.TaskMap[task.SpawnedBy]; exists {
+						annotation += " (spawned by " + task.SpawnedBy + ")"
+					}
+				}
+				if opts.ShowParent && task.Parent != "" {
+					if _, exists := g.TaskMap[task.Parent]; exists {
+						annotation += " (child of " + task.Parent + ")"
+					}
+				}
 				ref := f.applyReference("(see above)")
-				sb.WriteString(fmt.Sprintf("%s%s[%s] %s %s\n",
+				sb.WriteString(fmt.Sprintf("%s%s[%s] %s %s%s\n",
 					prefix, f.applyConnector(connector),
-					f.applyID(taskID), f.applyTitle(task.Title, string(task.Status)), ref))
+					f.applyID(taskID), f.applyTitle(task.Title, string(task.Status)), ref, f.applyReference(annotation)))
 			}
 			return
 		}
@@ -349,11 +672,28 @@ func (g *Graph) ToASCII(rootTaskID string, downstream bool, f *ASCIIFormatter) s
 		formattedID := f.applyID(taskID)
 		formattedTitle := f.applyTitle(task.Title, string(task.Status))
 
+		annotation := ""
+		if opts.ShowRelated {
+			if related := g.RelatedMap[taskID]; len(related) > 0 {
+				annotation += " ~ " + strings.Join(related, ", ")
+			}
+		}
+		if opts.ShowSpawnedBy && task.SpawnedBy != "" {
+			if _, exists := g.TaskMap[task.SpawnedBy]; exists {
+				annotation += " (spawned by " + task.SpawnedBy + ")"
+			}
+		}
+		if opts.ShowParent && task.Parent != "" {
+			if _, exists := g.TaskMap[task.Parent]; exists {
+				annotation += " (child of " + task.Parent + ")"
+			}
+		}
+
 		if prefix == "" {
-			sb.WriteString(fmt.Sprintf("[%s] %s%s\n", formattedID, formattedTitle, statusIndicator))
+			sb.WriteString(fmt.Sprintf("[%s] %s%s%s\n", formattedID, formattedTitle, statusIndicator, f.applyReference(annotation)))
 		} else {
-			sb.WriteString(fmt.Sprintf("%s%s[%s] %s%s\n",
-				prefix, f.applyConnector(connector), formattedID, formattedTitle, statusIndicator))
+			sb.WriteString(fmt.Sprintf("%s%s[%s] %s%s%s\n",
+				prefix, f.applyConnector(connector), formattedID, formattedTitle, statusIndicator, f.applyReference(annotation)))
 		}
 
 		// Get children based on direction
@@ -424,7 +764,7 @@ func (g *Graph) ToASCII(rootTaskID string, downstream bool, f *ASCIIFormatter) s
 }
 
 // ToJSON generates a JSON graph structure
-func (g *Graph) ToJSON() map[string]any {
+func (g *Graph) ToJSON(opts RenderOptions) map[string]any {
 	nodes := []map[string]any{}
 	edges := []map[string]string{}
 
@@ -448,10 +788,19 @@ func (g *Graph) ToJSON() map[string]any {
 		if task.Group != "" {
 			node["group"] = task.Group
 		}
+		if task.Parent != "" {
+			node["parent"] = task.Parent
+		}
+		if task.Phase != "" {
+			node["phase"] = task.Phase
+		}
+		if len(task.Touches) > 0 {
+			node["touches"] = task.Touches
+		}
 		nodes = append(nodes, node)
 	}
 
-	// Build edges
+	// Build dependency edges
 	edgeSet := make(map[string]bool)
 	for _, task := range sortedTasks {
 		for _, depID := range task.Dependencies {
@@ -466,6 +815,28 @@ func (g *Graph) ToJSON() map[string]any {
 		}
 	}
 
+	// Build related edges
+	var relatedEdges []map[string]string
+	if opts.ShowRelated {
+		for _, pair := range g.RelatedEdges {
+			relatedEdges = append(relatedEdges, map[string]string{
+				"a": pair[0],
+				"b": pair[1],
+			})
+		}
+	}
+
+	// Build spawned_by edges
+	var spawnedByEdges []map[string]string
+	if opts.ShowSpawnedBy {
+		for _, pair := range g.SpawnedByEdges {
+			spawnedByEdges = append(spawnedByEdges, map[string]string{
+				"child":  pair[0],
+				"source": pair[1],
+			})
+		}
+	}
+
 	// Detect cycles
 	cycles := g.DetectCycles()
 	cyclesData := [][]string{}
@@ -476,6 +847,22 @@ func (g *Graph) ToJSON() map[string]any {
 	result := map[string]any{
 		"nodes": nodes,
 		"edges": edges,
+	}
+	if opts.ShowRelated {
+		result["relatedEdges"] = relatedEdges
+	}
+	if opts.ShowSpawnedBy {
+		result["spawnedByEdges"] = spawnedByEdges
+	}
+	if opts.ShowParent {
+		parentEdges := []map[string]string{}
+		for _, pair := range g.ParentEdges {
+			parentEdges = append(parentEdges, map[string]string{
+				"child":  pair[0],
+				"parent": pair[1],
+			})
+		}
+		result["parentEdges"] = parentEdges
 	}
 
 	if len(cyclesData) > 0 {

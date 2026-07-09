@@ -6,11 +6,13 @@ export interface Task {
   effort: string;
   type: string;
   dependencies: string[] | null;
+  related?: string[] | null;
   tags: string[] | null;
   phase: string;
   group: string;
   owner: string;
   parent: string;
+  spawned_by?: string;
   created: string;
   body: string;
   file_path: string;
@@ -43,7 +45,19 @@ export interface BoardTask {
 export interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  relatedEdges?: GraphRelatedEdge[];
+  spawnedByEdges?: GraphSpawnedByEdge[];
   cycles?: string[][];
+}
+
+export interface GraphRelatedEdge {
+  a: string;
+  b: string;
+}
+
+export interface GraphSpawnedByEdge {
+  child: string;
+  source: string;
 }
 
 export interface GraphNode {
@@ -52,6 +66,9 @@ export interface GraphNode {
   status: string;
   priority?: string;
   group?: string;
+  parent?: string;
+  phase?: string;
+  touches?: string[];
 }
 
 export interface GraphEdge {

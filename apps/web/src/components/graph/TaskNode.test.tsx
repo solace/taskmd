@@ -45,8 +45,8 @@ describe("TaskNode", () => {
       />,
     );
 
-    const node = container.querySelector(".ring-2.ring-blue-500");
-    expect(node).toBeInTheDocument();
+    const node = container.querySelector(".relative");
+    expect(node).toHaveStyle({ boxShadow: "0 0 0 2px #3b82f6" });
   });
 
   it("applies dimmed opacity when dimmed", () => {
@@ -60,14 +60,14 @@ describe("TaskNode", () => {
     expect(node).toBeInTheDocument();
   });
 
-  it("shows priority border for critical priority", () => {
+  it("shows priority ring for critical priority", () => {
     const { container } = render(
       <TaskNode
         data={{ taskId: "001", label: "Task", status: "pending", priority: "critical" }}
       />,
     );
 
-    const node = container.querySelector(".border-l-4.border-l-red-500");
-    expect(node).toBeInTheDocument();
+    const node = container.querySelector(".relative");
+    expect(node).toHaveStyle({ boxShadow: "0 0 0 2px #ef4444" });
   });
 });

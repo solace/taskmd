@@ -146,6 +146,7 @@ type Task struct {
 	Effort       Effort       `yaml:"effort" json:"effort,omitempty"`
 	Type         TaskType     `yaml:"type" json:"type,omitempty"`
 	Dependencies []string     `yaml:"dependencies" json:"dependencies"`
+	Related      []string     `yaml:"related,omitempty" json:"related,omitempty"`
 	Tags         []string     `yaml:"tags" json:"tags"`
 	Touches      []string     `yaml:"touches" json:"touches,omitempty"`
 	Context      []string     `yaml:"context" json:"context,omitempty"`
@@ -153,6 +154,7 @@ type Task struct {
 	Owner        string       `yaml:"owner" json:"owner,omitempty"`
 	Phase        string       `yaml:"phase,omitempty" json:"phase,omitempty"`
 	Parent       string       `yaml:"parent,omitempty" json:"parent,omitempty"`
+	SpawnedBy    string       `yaml:"spawned_by,omitempty" json:"spawned_by,omitempty"`
 	Created           FlexibleTime `yaml:"created_at" json:"created_at"`
 	CreatedDeprecated FlexibleTime `yaml:"created" json:"-"`
 	Completed    FlexibleTime `yaml:"completed_at,omitempty" json:"completed_at,omitempty"`

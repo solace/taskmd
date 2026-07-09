@@ -9,8 +9,9 @@ import (
 
 // DataProvider caches scan results and invalidates on file changes.
 type DataProvider struct {
-	scanDir string
-	verbose bool
+	scanDir    string
+	verbose    bool
+	ignoreDirs []string
 
 	mu    sync.RWMutex
 	tasks []*model.Task
@@ -18,11 +19,12 @@ type DataProvider struct {
 }
 
 // NewDataProvider creates a DataProvider for the given directory.
-func NewDataProvider(scanDir string, verbose bool) *DataProvider {
+func NewDataProvider(scanDir string, verbose bool, ignoreDirs []string) *DataProvider {
 	return &DataProvider{
-		scanDir: scanDir,
-		verbose: verbose,
-		dirty:   true,
+		scanDir:    scanDir,
+		verbose:    verbose,
+		ignoreDirs: ignoreDirs,
+		dirty:      true,
 	}
 }
 
@@ -43,7 +45,7 @@ func (dp *DataProvider) GetTasks() ([]*model.Task, error) {
 		return dp.tasks, nil
 	}
 
-	s := scanner.NewScanner(dp.scanDir, dp.verbose, nil)
+	s := scanner.NewScanner(dp.scanDir, dp.verbose, dp.ignoreDirs)
 	result, err := s.Scan()
 	if err != nil {
 		return nil, err
@@ -56,7 +58,7 @@ func (dp *DataProvider) GetTasks() ([]*model.Task, error) {
 
 // GetArchivedTasks scans archive directories for tasks used in dependency resolution.
 func (dp *DataProvider) GetArchivedTasks() ([]*model.Task, error) {
-	s := scanner.NewScanner(dp.scanDir, dp.verbose, nil)
+	s := scanner.NewScanner(dp.scanDir, dp.verbose, dp.ignoreDirs)
 	return s.ScanArchive()
 }
 

@@ -22,13 +22,15 @@ type PhaseInfo struct {
 
 // Config holds server configuration.
 type Config struct {
-	Port     int
-	ScanDir  string
-	Dev      bool
-	Verbose  bool
-	ReadOnly bool
-	Version  string
-	Phases   []PhaseInfo
+	Port       int
+	ScanDir    string
+	Dev        bool
+	Verbose    bool
+	ReadOnly   bool
+	Version    string
+	Phases     []PhaseInfo
+	Scopes     []string
+	IgnoreDirs []string
 
 	// ListProjects returns registered projects from the global registry.
 	// Nil means multi-project support is disabled.
@@ -49,7 +51,7 @@ type Server struct {
 
 // NewServer creates a new web server.
 func NewServer(cfg Config) *Server {
-	dp := NewDataProvider(cfg.ScanDir, cfg.Verbose)
+	dp := NewDataProvider(cfg.ScanDir, cfg.Verbose, cfg.IgnoreDirs)
 	broker := NewSSEBroker()
 
 	w := watcher.New(cfg.ScanDir, func() {
@@ -59,7 +61,7 @@ func NewServer(cfg Config) *Server {
 
 	var resolver *ProjectResolver
 	if cfg.ResolveProject != nil {
-		resolver = NewProjectResolver(cfg.ResolveProject, cfg.Verbose)
+		resolver = NewProjectResolver(cfg.ResolveProject, cfg.Verbose, cfg.IgnoreDirs)
 	}
 
 	return &Server{

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ReactFlow,
@@ -13,9 +13,25 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { TaskNode } from "./TaskNode.tsx";
+import { ContainerNode } from "./ContainerNode.tsx";
 import { useTheme } from "../../hooks/use-theme.ts";
 
-const nodeTypes: NodeTypes = { task: TaskNode };
+const nodeTypes: NodeTypes = { task: TaskNode, container: ContainerNode };
+
+// Injected into the document so React Flow edge SVGs can reference url(#rf-diamond-filled)
+function GraphMarkerDefs() {
+  return (
+    <svg style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}>
+      <defs>
+        <marker id="rf-diamond-filled" viewBox="0 0 20 10" refX="0" refY="5"
+                markerWidth="12" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 5 L 10 0 L 20 5 L 10 10 Z" fill="#6366f1" />
+        </marker>
+      </defs>
+    </svg>
+  );
+}
+
 const fitViewOptions = { minZoom: 0.5, maxZoom: 1, padding: 0.15 };
 
 interface GraphViewProps {
@@ -23,8 +39,10 @@ interface GraphViewProps {
   edges: Edge[];
   defaultViewport?: Viewport;
   onViewportChange?: (viewport: Viewport) => void;
-  matchedNodeIds?: Set<string>;
-  searchActive?: boolean;
+  // Called when a task node is clicked — caller decides navigate vs. focus
+  onTaskClick?: (taskId: string) => void;
+  // Called with nodeId on mouseenter, null on mouseleave
+  onNodeHover?: (nodeId: string | null) => void;
 }
 
 export function GraphView({
@@ -32,30 +50,39 @@ export function GraphView({
   edges,
   defaultViewport,
   onViewportChange,
-  matchedNodeIds,
-  searchActive,
+  onTaskClick,
+  onNodeHover,
 }: GraphViewProps) {
   const navigate = useNavigate();
   const { theme } = useTheme();
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_event, node) => {
-      navigate(`/tasks/${node.data.taskId}`);
+      const taskId = node.data.taskId as string | undefined;
+      if (!taskId) return;
+      if (onTaskClick) {
+        onTaskClick(taskId);
+      } else {
+        navigate(`/tasks/${taskId}`);
+      }
     },
-    [navigate],
+    [navigate, onTaskClick],
   );
 
-  const decoratedNodes = useMemo(() => {
-    if (!searchActive || !matchedNodeIds) return nodes;
-    return nodes.map((node) => ({
-      ...node,
-      data: {
-        ...node.data,
-        highlighted: matchedNodeIds.has(node.id),
-        dimmed: !matchedNodeIds.has(node.id),
-      },
-    }));
-  }, [nodes, matchedNodeIds, searchActive]);
+  const onNodeMouseEnter: NodeMouseHandler = useCallback(
+    (_event, node) => {
+      const taskId = node.data.taskId as string | undefined;
+      if (taskId && onNodeHover) onNodeHover(taskId);
+    },
+    [onNodeHover],
+  );
+
+  const onNodeMouseLeave: NodeMouseHandler = useCallback(
+    () => {
+      if (onNodeHover) onNodeHover(null);
+    },
+    [onNodeHover],
+  );
 
   if (nodes.length === 0) {
     return (
@@ -69,21 +96,26 @@ export function GraphView({
   const dotColor = theme === "dark" ? "#374151" : "#e5e7eb";
 
   return (
-    <ReactFlow
-      nodes={decoratedNodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      onNodeClick={onNodeClick}
-      fitView={!hasRestoredViewport}
-      fitViewOptions={fitViewOptions}
-      defaultViewport={hasRestoredViewport ? defaultViewport : undefined}
-      onViewportChange={onViewportChange}
-      minZoom={0.1}
-      maxZoom={2}
-      proOptions={{ hideAttribution: true }}
-    >
-      <Controls position="bottom-right" />
-      <Background variant={BackgroundVariant.Dots} gap={16} size={1} color={dotColor} />
-    </ReactFlow>
+    <>
+      <GraphMarkerDefs />
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        onNodeClick={onNodeClick}
+        onNodeMouseEnter={onNodeMouseEnter}
+        onNodeMouseLeave={onNodeMouseLeave}
+        fitView={!hasRestoredViewport}
+        fitViewOptions={fitViewOptions}
+        defaultViewport={hasRestoredViewport ? defaultViewport : undefined}
+        onViewportChange={onViewportChange}
+        minZoom={0.1}
+        maxZoom={2}
+        proOptions={{ hideAttribution: true }}
+      >
+        <Controls position="bottom-right" />
+        <Background variant={BackgroundVariant.Dots} gap={16} size={1} color={dotColor} />
+      </ReactFlow>
+    </>
   );
 }

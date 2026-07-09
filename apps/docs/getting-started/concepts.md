@@ -48,6 +48,8 @@ Build the new feature X that allows users to...
 - **`owner`** - Assignee name or identifier for filtering and display
 - **`touches`** - Scope identifiers declaring which code areas a task modifies (used by `tracks`)
 - **`parent`** - Task ID of a parent task for hierarchical grouping
+- **`related`** - Task IDs that are conceptually connected (non-blocking, bidirectional)
+- **`spawned_by`** - Task ID this task was created as a consequence of (provenance)
 - **`created`** - Creation date in `YYYY-MM-DD` format
 
 ## Status

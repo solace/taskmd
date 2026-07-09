@@ -27,6 +27,7 @@ type ConfigResponse struct {
 	ReadOnly bool        `json:"readonly"`
 	Version  string      `json:"version"`
 	Phases   []PhaseInfo `json:"phases"`
+	Scopes   []string    `json:"scopes"`
 }
 
 func handleProjects(listFn func() ([]ProjectEntry, error)) http.HandlerFunc {
@@ -52,6 +53,10 @@ func handleConfig(cfg Config) http.HandlerFunc {
 	if phases == nil {
 		phases = []PhaseInfo{}
 	}
+	scopes := cfg.Scopes
+	if scopes == nil {
+		scopes = []string{}
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		p := effectivePhases(r, phases)
 		if p == nil {
@@ -61,6 +66,7 @@ func handleConfig(cfg Config) http.HandlerFunc {
 			ReadOnly: cfg.ReadOnly,
 			Version:  cfg.Version,
 			Phases:   p,
+			Scopes:   scopes,
 		})
 	}
 }
@@ -229,7 +235,7 @@ func handleGraph(dp *DataProvider) http.HandlerFunc {
 		}
 
 		g := graph.NewGraph(tasks)
-		writeJSON(w, g.ToJSON())
+		writeJSON(w, g.ToJSON(graph.DefaultRenderOptions()))
 	}
 }
 
@@ -244,7 +250,7 @@ func handleGraphMermaid(dp *DataProvider) http.HandlerFunc {
 
 		g := graph.NewGraph(tasks)
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte(g.ToMermaid(""))) //nolint:errcheck
+		w.Write([]byte(g.ToMermaid(graph.DefaultRenderOptions()))) //nolint:errcheck
 	}
 }
 

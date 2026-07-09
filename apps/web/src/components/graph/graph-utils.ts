@@ -16,6 +16,18 @@ export function filterGraphByStatus(data: GraphData, selectedStatuses: Set<strin
   const visibleNodes = data.nodes.filter((n) => selectedStatuses.has(n.status));
   const visibleIds = new Set(visibleNodes.map((n) => n.id));
   const visibleEdges = data.edges.filter((e) => visibleIds.has(e.from) && visibleIds.has(e.to));
+  const visibleRelated = (data.relatedEdges ?? []).filter(
+    (e) => visibleIds.has(e.a) && visibleIds.has(e.b),
+  );
+  const visibleSpawnedBy = (data.spawnedByEdges ?? []).filter(
+    (e) => visibleIds.has(e.child) && visibleIds.has(e.source),
+  );
 
-  return { nodes: visibleNodes, edges: visibleEdges, cycles: data.cycles };
+  return {
+    nodes: visibleNodes,
+    edges: visibleEdges,
+    relatedEdges: visibleRelated,
+    spawnedByEdges: visibleSpawnedBy,
+    cycles: data.cycles,
+  };
 }

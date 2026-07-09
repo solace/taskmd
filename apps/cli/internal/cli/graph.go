@@ -26,6 +26,10 @@ var (
 	graphStatus        string
 	graphPriority      string
 	graphPhase         string
+	graphDepth         int
+	graphPreset        string
+	graphParentEdges   bool
+	graphSubgraphs     bool
 )
 
 // graphCmd represents the graph command
@@ -43,11 +47,23 @@ Supported formats:
 
 Multiple --filter flags are combined with AND logic.
 
+Edge visibility presets (--preset):
+  deps-only   Show only dependency edges (hide related and spawned-by)
+  related     Show deps + related edges (hide spawned-by)
+  provenance  Show deps + spawned-by edges (hide related)
+  full        Show all edges including parent, and enable subgraph grouping
+
+Multigraph flags:
+  --subgraphs      Group tasks by phase/scope in Mermaid and DOT output
+  --parent-edges   Render parent→child edges in all output formats
+  --depth N        Limit --root traversal to N hops (requires --root; 0 = unlimited)
+
 Examples:
   taskmd graph > deps.mmd
   taskmd graph --format dot | dot -Tpng > graph.png
   taskmd graph --format ascii
   taskmd graph --root 022 --downstream
+  taskmd graph --root 022 --downstream --depth 1
   taskmd graph --focus 022 --format mermaid
   taskmd graph --all --format ascii
   taskmd graph --filter priority=high
@@ -58,6 +74,10 @@ Examples:
   taskmd graph --phase web-ui
   taskmd graph --scope cli
   taskmd graph --scope "web*" --format mermaid
+  taskmd graph --preset deps-only --format json
+  taskmd graph --preset full --format mermaid
+  taskmd graph --subgraphs --format dot | dot -Tsvg > graph.svg
+  taskmd graph --parent-edges --format mermaid
 
 By default, completed tasks are excluded. Use --all to include them.`,
 	Args: cobra.MaximumNArgs(1),
@@ -80,6 +100,10 @@ func init() {
 	graphCmd.Flags().StringVar(&graphStatus, "status", "", "shortcut for --filter status=<value>")
 	graphCmd.Flags().StringVar(&graphPriority, "priority", "", "shortcut for --filter priority=<value>")
 	graphCmd.Flags().StringVar(&graphPhase, "phase", "", "filter by phase")
+	graphCmd.Flags().IntVar(&graphDepth, "depth", 0, "limit --root traversal to N hops (requires --root; 0 means unlimited)")
+	graphCmd.Flags().StringVar(&graphPreset, "preset", "", "edge visibility preset: deps-only, related, provenance, full")
+	graphCmd.Flags().BoolVar(&graphParentEdges, "parent-edges", false, "render parent→child edges (Mermaid, DOT, ASCII, JSON)")
+	graphCmd.Flags().BoolVar(&graphSubgraphs, "subgraphs", false, "group tasks by phase/scope in Mermaid and DOT output")
 }
 
 //nolint:gocognit,gocyclo,funlen // TODO: refactor to reduce complexity
@@ -89,6 +113,9 @@ func runGraph(cmd *cobra.Command, args []string) error {
 	// Validate conflicting flags
 	if graphUpstream && graphDownstream {
 		return fmt.Errorf("cannot use both --upstream and --downstream")
+	}
+	if graphDepth > 0 && graphRoot == "" {
+		return fmt.Errorf("--depth requires --root")
 	}
 
 	// --all overrides --exclude-status
@@ -188,15 +215,12 @@ func runGraph(cmd *cobra.Command, args []string) error {
 		// Filter tasks based on direction
 		var filteredIDs map[string]bool
 		if graphDownstream {
-			// Show tasks that depend on root
-			filteredIDs = g.GetDownstream(graphRoot)
+			filteredIDs = g.GetDownstreamN(graphRoot, graphDepth)
 		} else if graphUpstream {
-			// Show tasks that root depends on
-			filteredIDs = g.GetUpstream(graphRoot)
+			filteredIDs = g.GetUpstreamN(graphRoot, graphDepth)
 		} else {
-			// Show both upstream and downstream
-			upstream := g.GetUpstream(graphRoot)
-			downstream := g.GetDownstream(graphRoot)
+			upstream := g.GetUpstreamN(graphRoot, graphDepth)
+			downstream := g.GetDownstreamN(graphRoot, graphDepth)
 			filteredIDs = make(map[string]bool)
 			for id := range upstream {
 				filteredIDs[id] = true
@@ -222,13 +246,37 @@ func runGraph(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Build render options from flags; explicit flags override preset
+	opts := graph.DefaultRenderOptions()
+	switch graphPreset {
+	case "deps-only":
+		opts.ShowRelated, opts.ShowSpawnedBy = false, false
+	case "related":
+		opts.ShowSpawnedBy = false
+	case "provenance":
+		opts.ShowRelated = false
+	case "full":
+		opts.ShowParent, opts.Subgraphs = true, true
+	case "":
+		// no preset — keep defaults
+	default:
+		return fmt.Errorf("unknown preset %q (supported: deps-only, related, provenance, full)", graphPreset)
+	}
+	if graphParentEdges {
+		opts.ShowParent = true
+	}
+	if graphSubgraphs {
+		opts.Subgraphs = true
+	}
+	opts.FocusTaskID = graphFocus
+
 	// Generate output based on format
 	var output string
 	switch graphFormat {
 	case "mermaid":
-		output = g.ToMermaid(graphFocus)
+		output = g.ToMermaid(opts)
 	case "dot":
-		output = g.ToDot(graphFocus)
+		output = g.ToDot(opts)
 	case "ascii":
 		// For ASCII, use root if specified, otherwise show all roots
 		rootID := graphRoot
@@ -254,9 +302,9 @@ func runGraph(cmd *cobra.Command, args []string) error {
 				return formatDim(text, r)
 			},
 		}
-		output = g.ToASCII(rootID, showDownstream, formatter)
+		output = g.ToASCII(rootID, showDownstream, formatter, opts)
 	case "json":
-		jsonData := g.ToJSON()
+		jsonData := g.ToJSON(opts)
 		jsonBytes, err := json.MarshalIndent(jsonData, "", "  ")
 		if err != nil {
 			return fmt.Errorf("failed to marshal JSON: %w", err)

@@ -34,6 +34,8 @@ var (
 	setAddTouches    []string
 	setRemoveTouches []string
 	setDependsOn     string
+	setRelated       string
+	setSpawnedBy     string
 	setPhase         string
 )
 
@@ -78,6 +80,8 @@ func init() {
 	setCmd.Flags().StringArrayVar(&setAddTouches, "add-touches", nil, "add a scope identifier to touches (repeatable)")
 	setCmd.Flags().StringArrayVar(&setRemoveTouches, "remove-touches", nil, "remove a scope identifier from touches (repeatable)")
 	setCmd.Flags().StringVar(&setDependsOn, "depends-on", "", "set dependencies (comma-separated IDs, e.g. 010,015)")
+	setCmd.Flags().StringVar(&setRelated, "related", "", "set related tasks (comma-separated IDs, e.g. 058,063; empty string to clear)")
+	setCmd.Flags().StringVar(&setSpawnedBy, "spawned-by", "", "task ID this task was spawned from (use empty string to clear)")
 	setCmd.Flags().StringVar(&setPhase, "phase", "", "phase name (use empty string to clear)")
 }
 
@@ -251,12 +255,21 @@ func buildSetRequest(cmd *cobra.Command) (taskfile.UpdateRequest, error) {
 		req.Dependencies = &deps
 	}
 
+	if cmd.Flags().Changed("related") {
+		related := parseCommaSeparatedIDs(setRelated)
+		req.Related = &related
+	}
+
+	if cmd.Flags().Changed("spawned-by") {
+		req.SpawnedBy = &setSpawnedBy
+	}
+
 	if err := validateSetEnums(req); err != nil {
 		return taskfile.UpdateRequest{}, err
 	}
 
 	if !hasUpdates(req) {
-		return taskfile.UpdateRequest{}, fmt.Errorf("nothing to update: provide --status, --priority, --effort, --type, --owner, --parent, --phase, --done, --add-tag, --remove-tag, --add-pr, --remove-pr, --add-touches, --remove-touches, or --depends-on")
+		return taskfile.UpdateRequest{}, fmt.Errorf("nothing to update: provide --status, --priority, --effort, --type, --owner, --parent, --phase, --done, --add-tag, --remove-tag, --add-pr, --remove-pr, --add-touches, --remove-touches, --depends-on, --related, or --spawned-by")
 	}
 
 	return req, nil
@@ -269,7 +282,8 @@ func hasUpdates(req taskfile.UpdateRequest) bool {
 	hasPRs := len(req.AddPRs) > 0 || len(req.RemPRs) > 0
 	hasTouches := len(req.AddTouches) > 0 || len(req.RemTouches) > 0
 	hasDeps := req.Dependencies != nil
-	return hasScalar || hasTags || hasPRs || hasTouches || hasDeps
+	hasRelated := req.Related != nil || req.SpawnedBy != nil
+	return hasScalar || hasTags || hasPRs || hasTouches || hasDeps || hasRelated
 }
 
 type changeEntry struct {
@@ -344,6 +358,20 @@ func buildChangeLog(task *model.Task, req taskfile.UpdateRequest) []changeEntry 
 			oldValue: "[" + strings.Join(task.Dependencies, ", ") + "]",
 			newValue: "[" + strings.Join(*req.Dependencies, ", ") + "]",
 		})
+	}
+
+	if req.Related != nil {
+		changes = append(changes, changeEntry{
+			field:    "related",
+			oldValue: "[" + strings.Join(task.Related, ", ") + "]",
+			newValue: "[" + strings.Join(*req.Related, ", ") + "]",
+		})
+	}
+
+	if req.SpawnedBy != nil {
+		if ce := scalarChangeEntry("spawned_by", task.SpawnedBy, req.SpawnedBy); ce != nil {
+			changes = append(changes, *ce)
+		}
 	}
 
 	return changes

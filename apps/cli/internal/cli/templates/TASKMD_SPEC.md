@@ -1,7 +1,7 @@
 # taskmd Specification
 
-**Version:** 1.2
-**Last Updated:** 2026-02-15
+**Version:** 1.3
+**Last Updated:** 2026-07-07
 
 > **See also:** [Operations Specification](./taskmd_operations.md) — defines behavioral contracts for scanning, filtering, validation, ranking, dependency resolution, graph construction, and search.
 
@@ -32,6 +32,7 @@ Description and subtasks go here.
 | `effort` | enum | No | `small`, `medium`, `large` |
 | `type` | enum | No | `feature`, `bug`, `improvement`, `chore`, `docs` |
 | `dependencies` | array | No | List of task ID strings (e.g., `["001", "015"]`) |
+| `related` | array | No | List of task ID strings for conceptual connections (non-blocking, bidirectional) |
 | `tags` | array | No | Lowercase, hyphen-separated strings |
 | `group` | string | No | Logical grouping (derived from directory if omitted) |
 | `owner` | string | No | Free-form assignee name or identifier |
@@ -39,6 +40,7 @@ Description and subtasks go here.
 | `touches` | array | No | Abstract scope identifiers (e.g., `["cli/graph", "cli/output"]`) |
 | `context` | array | No | Explicit file paths relevant to the task (e.g., `["docs/api.md"]`) |
 | `parent` | string | No | Single task ID (e.g., `"045"`) |
+| `spawned_by` | string | No | Task ID this task was created as a consequence of |
 | `created_at` | date | No | `YYYY-MM-DD` (alias: `created`) |
 | `completed_at` | date | No | `YYYY-MM-DD` — auto-set when status becomes `completed` |
 | `cancelled_at` | date | No | `YYYY-MM-DD` — auto-set when status becomes `cancelled` |
@@ -110,6 +112,17 @@ pending → in-progress → in-review → completed
 dependencies: ["001", "015"]
 ```
 
+**`related`** — List of task IDs that are conceptually connected to this task, without implying any ordering or blocking. Use this to surface thematic or contextual connections between tasks that aren't formal dependencies.
+
+```yaml
+related: ["058", "063"]
+```
+
+- **Non-blocking**: no effect on task actionability or `next` scoring
+- **Bidirectional by convention**: if task A lists B as related, B is considered related to A even if B doesn't list A. Both directions are shown in `taskmd get` output and in the dependency graph.
+- **Validated**: related IDs must reference existing tasks; self-references produce a warning
+- **Graph rendering**: displayed as dashed/dotted edges (distinct from dependency arrows)
+
 **`tags`** — Labels for categorization and filtering. Use lowercase, hyphen-separated strings:
 
 ```yaml
@@ -166,6 +179,16 @@ context:
 ```
 
 The `context` command merges files from both `touches` (via scope resolution) and `context` (explicit paths), deduplicating by path. Each entry is tagged with its source (`scope:<name>` or `explicit`) and checked for existence. Non-existent files are not errors — the task may create them.
+
+**`spawned_by`** — Task ID of the task that caused this task to be created. Use this to record provenance when one task generates work items as a side effect. Unlike `parent`, this is a directional "created-because-of" link rather than a hierarchical containment.
+
+- Must reference an existing task ID; self-references produce a warning
+- No effect on actionability or `next` scoring
+- **Graph rendering**: displayed as dotted directed arrows (distinct from dependency arrows and related lines)
+
+```yaml
+spawned_by: "045"
+```
 
 **`parent`** — Task ID of the parent task for hierarchical grouping. A task can have at most one parent. Children are computed dynamically (not stored in frontmatter) by finding all tasks whose `parent` matches a given ID.
 

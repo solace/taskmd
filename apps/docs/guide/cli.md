@@ -251,7 +251,14 @@ taskmd next --format json
 
 ### graph - Visualize Dependencies
 
-Export task dependency graphs in various formats.
+Export task dependency graphs in various formats. The graph uses UML-inspired edge types:
+
+- **Solid arrows** (→) — hard dependencies (blocking), UML dependency
+- **Solid line + filled diamond** (◆─) — parent/child containment (UML composition; diamond at parent) — web graph only
+- **Dashed lines** (─ ─ ─) — `related` tasks (non-blocking, undirected association; Mermaid/DOT show as dashed)
+- **Dotted open arrows** (···›) — `spawned_by` provenance, directed child → source
+
+In JSON output, dependency edges appear in `edges`, related edges in `relatedEdges`, spawned-by edges in `spawnedByEdges`, and each node includes a `parent` field where set.
 
 ```bash
 # ASCII art (terminal-friendly)
@@ -438,7 +445,7 @@ taskmd snapshot --out snapshot.json
 
 > **Alias:** `show` is a deprecated alias for `get`. Use `get` instead.
 
-Display detailed information about a specific task, identified by ID, title, or file path.
+Display detailed information about a specific task, identified by ID, title, or file path. Output includes dependencies (depends-on and blocks), parent/children hierarchy, related tasks (both directions), and spawned-by provenance.
 
 **Matching priority:**
 1. Exact match by task ID (case-sensitive)
@@ -521,6 +528,8 @@ taskmd set 042 --phase ""
 | `--remove-touches` | | Remove a scope identifier from touches (repeatable) |
 | `--type` | | Work type (`feature`, `bug`, `improvement`, `chore`, `docs`) |
 | `--depends-on` | | Set dependencies (comma-separated IDs, e.g. `010,015`) |
+| `--related` | | Set related tasks (comma-separated IDs, e.g. `058,063`; empty to clear) |
+| `--spawned-by` | | Task ID this task was created as a consequence of (empty to clear) |
 | `--verify` | `false` | Run verification checks before completing a task |
 
 **Tag management:**

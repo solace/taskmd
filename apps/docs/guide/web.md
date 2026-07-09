@@ -81,8 +81,13 @@ Interactive dependency visualization using @xyflow/react (ReactFlow).
 
 ![Graph view showing interactive dependency graph with color-coded task nodes](/images/web/graph.view.png)
 
-- Nodes represent tasks, arrows show dependencies
-- Color-coded by status (yellow=pending, blue=in-progress, green=completed, red=blocked)
+- Nodes represent tasks, color-coded by status (yellow=pending, blue=in-progress, green=completed, red=blocked)
+- **Solid arrows** → hard dependencies (blocking)
+- UML-style edge types distinguish relationship kinds:
+  - **Solid dark arrow** (→) — hard dependency (UML dependency / blocking)
+  - **Solid indigo line with filled diamond** (◆─) — parent/child containment (UML composition; diamond sits at the parent)
+  - **Dashed purple line** (─ ─ ─) — related tasks, non-blocking (UML association; no arrowhead, undirected)
+  - **Dotted purple open arrow** (···›) — spawned-by provenance (UML dependency; directed child → source)
 - Useful for understanding dependencies, finding critical paths, and spotting blockers
 
 ### Stats View
@@ -164,7 +169,7 @@ Validation results for task files, showing errors and warnings.
 Full detail page for a single task.
 
 - Rendered markdown body with full task description
-- Metadata panel showing status, priority, effort, type, tags, owner, and dependencies
+- Metadata panel showing status, priority, effort, type, tags, owner, dependencies, related tasks, and spawned-by provenance
 - Worklog timeline (if worklogs exist for the task)
 - **Edit form** for updating task fields directly in the browser (hidden in read-only mode)
 

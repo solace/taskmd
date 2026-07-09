@@ -1015,6 +1015,10 @@ func resetGraphFlags() {
 	graphStatus = ""
 	graphPriority = ""
 	graphPhase = ""
+	graphDepth = 0
+	graphPreset = ""
+	graphParentEdges = false
+	graphSubgraphs = false
 }
 
 // captureGraphOutput runs runGraph and captures stdout, returning the output string.
@@ -1626,5 +1630,674 @@ func TestGraphCommand_ShortcutComposesWithExcludeStatus(t *testing.T) {
 	}
 	if len(ids) > 0 && ids[0] != "003" {
 		t.Errorf("Expected task 003, got %v", ids)
+	}
+}
+
+func createRelatedGraphTestFiles(t *testing.T) string {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+
+	tasks := map[string]string{
+		"g01-alpha.md": `---
+id: "g01"
+title: "Alpha"
+status: pending
+priority: medium
+related: ["g02"]
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+# Alpha
+`,
+		"g02-beta.md": `---
+id: "g02"
+title: "Beta"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+# Beta
+`,
+		"g03-gamma.md": `---
+id: "g03"
+title: "Gamma"
+status: pending
+priority: medium
+dependencies: ["g01"]
+tags: []
+created: 2026-02-08
+---
+# Gamma
+`,
+	}
+
+	for filename, content := range tasks {
+		err := os.WriteFile(filepath.Join(tmpDir, filename), []byte(content), 0644)
+		if err != nil {
+			t.Fatalf("Failed to create test file %s: %v", filename, err)
+		}
+	}
+
+	return tmpDir
+}
+
+func TestGraphCommand_Related_JSON(t *testing.T) {
+	tmpDir := createRelatedGraphTestFiles(t)
+	resetGraphFlags()
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+
+	relatedEdges, ok := result["relatedEdges"].([]any)
+	if !ok {
+		t.Fatalf("Expected 'relatedEdges' array in JSON output, got: %T", result["relatedEdges"])
+	}
+
+	if len(relatedEdges) != 1 {
+		t.Fatalf("Expected 1 related edge, got %d", len(relatedEdges))
+	}
+
+	edge := relatedEdges[0].(map[string]any)
+	a, b := edge["a"].(string), edge["b"].(string)
+
+	// Pair is stored lexicographically (a <= b)
+	if !((a == "g01" && b == "g02") || (a == "g02" && b == "g01")) {
+		t.Errorf("Expected related edge between g01 and g02, got %s and %s", a, b)
+	}
+}
+
+func TestGraphCommand_Related_Mermaid(t *testing.T) {
+	tmpDir := createRelatedGraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "mermaid"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if !strings.Contains(output, "-.-") {
+		t.Errorf("Expected Mermaid related edge syntax '-.-', got output:\n%s", output)
+	}
+}
+
+func TestGraphCommand_Related_DOT(t *testing.T) {
+	tmpDir := createRelatedGraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "dot"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if !strings.Contains(output, "style=dashed") {
+		t.Errorf("Expected DOT related edge to contain 'style=dashed', got:\n%s", output)
+	}
+	if !strings.Contains(output, "dir=none") {
+		t.Errorf("Expected DOT related edge to contain 'dir=none', got:\n%s", output)
+	}
+}
+
+func TestGraphCommand_Related_ASCII(t *testing.T) {
+	tmpDir := createRelatedGraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "ascii"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if !strings.Contains(output, "~") {
+		t.Errorf("Expected ASCII output to contain '~' annotation for related tasks, got:\n%s", output)
+	}
+}
+
+// createDepthTestFiles creates a linear chain: d01 -> d02 -> d03 -> d04
+func createDepthTestFiles(t *testing.T) string {
+	t.Helper()
+	tmpDir := t.TempDir()
+	tasks := map[string]string{
+		"d01-root.md": `---
+id: "d01"
+title: "Root"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+`,
+		"d02-hop1.md": `---
+id: "d02"
+title: "Hop 1"
+status: pending
+priority: medium
+dependencies: ["d01"]
+tags: []
+created: 2026-02-08
+---
+`,
+		"d03-hop2.md": `---
+id: "d03"
+title: "Hop 2"
+status: pending
+priority: medium
+dependencies: ["d02"]
+tags: []
+created: 2026-02-08
+---
+`,
+		"d04-hop3.md": `---
+id: "d04"
+title: "Hop 3"
+status: pending
+priority: medium
+dependencies: ["d03"]
+tags: []
+created: 2026-02-08
+---
+`,
+	}
+	for filename, content := range tasks {
+		if err := os.WriteFile(filepath.Join(tmpDir, filename), []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file %s: %v", filename, err)
+		}
+	}
+	return tmpDir
+}
+
+func TestGraphCommand_Depth_RequiresRoot(t *testing.T) {
+	tmpDir := createDepthTestFiles(t)
+	resetGraphFlags()
+	graphDepth = 1
+
+	_, w, _ := os.Pipe()
+	old := os.Stdout
+	os.Stdout = w
+
+	err := runGraph(graphCmd, []string{tmpDir})
+
+	w.Close()
+	os.Stdout = old
+
+	if err == nil {
+		t.Fatal("Expected error when --depth is used without --root")
+	}
+	if !strings.Contains(err.Error(), "--depth requires --root") {
+		t.Errorf("Expected '--depth requires --root' error, got: %v", err)
+	}
+}
+
+func TestGraphCommand_Depth1_Downstream(t *testing.T) {
+	tmpDir := createDepthTestFiles(t)
+	resetGraphFlags()
+	graphRoot = "d01"
+	graphDownstream = true
+	graphDepth = 1
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+	ids := graphNodeIDs(t, result)
+
+	idSet := make(map[string]bool)
+	for _, id := range ids {
+		idSet[id] = true
+	}
+
+	// Depth 1 downstream from d01: only d02 (direct dependent) + root d01
+	if !idSet["d01"] {
+		t.Error("Expected root d01 in output")
+	}
+	if !idSet["d02"] {
+		t.Error("Expected direct dependent d02 in output")
+	}
+	if idSet["d03"] {
+		t.Error("Expected d03 to be excluded at depth 1")
+	}
+	if idSet["d04"] {
+		t.Error("Expected d04 to be excluded at depth 1")
+	}
+}
+
+func TestGraphCommand_Depth2_Downstream(t *testing.T) {
+	tmpDir := createDepthTestFiles(t)
+	resetGraphFlags()
+	graphRoot = "d01"
+	graphDownstream = true
+	graphDepth = 2
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+	ids := graphNodeIDs(t, result)
+
+	idSet := make(map[string]bool)
+	for _, id := range ids {
+		idSet[id] = true
+	}
+
+	if !idSet["d01"] || !idSet["d02"] || !idSet["d03"] {
+		t.Errorf("Expected d01, d02, d03 at depth 2, got %v", ids)
+	}
+	if idSet["d04"] {
+		t.Error("Expected d04 to be excluded at depth 2")
+	}
+}
+
+func TestGraphCommand_Depth1_Upstream(t *testing.T) {
+	tmpDir := createDepthTestFiles(t)
+	resetGraphFlags()
+	graphRoot = "d04"
+	graphUpstream = true
+	graphDepth = 1
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+	ids := graphNodeIDs(t, result)
+
+	idSet := make(map[string]bool)
+	for _, id := range ids {
+		idSet[id] = true
+	}
+
+	if !idSet["d04"] || !idSet["d03"] {
+		t.Errorf("Expected d04 and d03 at upstream depth 1, got %v", ids)
+	}
+	if idSet["d02"] || idSet["d01"] {
+		t.Errorf("Expected d02/d01 excluded at upstream depth 1, got %v", ids)
+	}
+}
+
+func TestGraphCommand_Depth0_IsUnlimited(t *testing.T) {
+	tmpDir := createDepthTestFiles(t)
+	resetGraphFlags()
+	graphRoot = "d01"
+	graphDownstream = true
+	graphDepth = 0
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+	ids := graphNodeIDs(t, result)
+
+	if len(ids) != 4 {
+		t.Errorf("Expected all 4 tasks with depth 0 (unlimited), got %d: %v", len(ids), ids)
+	}
+}
+
+func TestGraphCommand_Preset_DepsOnly_JSON(t *testing.T) {
+	tmpDir := createRelatedGraphTestFiles(t)
+	resetGraphFlags()
+	graphPreset = "deps-only"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+
+	if _, ok := result["relatedEdges"]; ok {
+		t.Error("Expected relatedEdges to be omitted with --preset deps-only")
+	}
+	if _, ok := result["spawnedByEdges"]; ok {
+		t.Error("Expected spawnedByEdges to be omitted with --preset deps-only")
+	}
+}
+
+func TestGraphCommand_Preset_DepsOnly_Mermaid(t *testing.T) {
+	tmpDir := createRelatedGraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "mermaid"
+	graphPreset = "deps-only"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if strings.Contains(output, "-.-") {
+		t.Error("Expected no related edges (-.-) with --preset deps-only")
+	}
+	if strings.Contains(output, "-.->") {
+		t.Error("Expected no spawned-by edges (-.->)  with --preset deps-only")
+	}
+}
+
+func TestGraphCommand_Preset_DepsOnly_DOT(t *testing.T) {
+	tmpDir := createRelatedGraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "dot"
+	graphPreset = "deps-only"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if strings.Contains(output, "style=dashed") {
+		t.Error("Expected no dashed edges with --preset deps-only")
+	}
+	if strings.Contains(output, "style=dotted") {
+		t.Error("Expected no dotted edges with --preset deps-only")
+	}
+}
+
+func TestGraphCommand_Preset_DepsOnly_ASCII(t *testing.T) {
+	tmpDir := createRelatedGraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "ascii"
+	graphPreset = "deps-only"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if strings.Contains(output, "~") {
+		t.Errorf("Expected no ~ annotation with --preset deps-only, got:\n%s", output)
+	}
+}
+
+func TestGraphCommand_Preset_Related_SuppressesSpawnedBy(t *testing.T) {
+	tmpDir := createRelatedGraphTestFiles(t)
+	resetGraphFlags()
+	graphPreset = "related"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+
+	if _, ok := result["relatedEdges"]; !ok {
+		t.Error("Expected relatedEdges to be present with --preset related")
+	}
+	if _, ok := result["spawnedByEdges"]; ok {
+		t.Error("Expected spawnedByEdges to be omitted with --preset related")
+	}
+}
+
+func TestGraphCommand_Preset_Provenance_SuppressesRelated(t *testing.T) {
+	tmpDir := createRelatedGraphTestFiles(t)
+	resetGraphFlags()
+	graphPreset = "provenance"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+
+	if _, ok := result["relatedEdges"]; ok {
+		t.Error("Expected relatedEdges to be omitted with --preset provenance")
+	}
+	if _, ok := result["spawnedByEdges"]; !ok {
+		t.Error("Expected spawnedByEdges to be present with --preset provenance")
+	}
+}
+
+func TestGraphCommand_Preset_Invalid(t *testing.T) {
+	tmpDir := createRelatedGraphTestFiles(t)
+	resetGraphFlags()
+	graphPreset = "unknown"
+
+	_, w, _ := os.Pipe()
+	old := os.Stdout
+	os.Stdout = w
+	err := runGraph(graphCmd, []string{tmpDir})
+	w.Close()
+	os.Stdout = old
+
+	if err == nil {
+		t.Fatal("Expected error for unknown preset")
+	}
+	if !strings.Contains(err.Error(), "unknown preset") {
+		t.Errorf("Expected 'unknown preset' error, got: %v", err)
+	}
+}
+
+func createParentGraphTestFiles(t *testing.T) string {
+	t.Helper()
+	tmpDir := t.TempDir()
+	tasks := map[string]string{
+		"p01-parent.md": `---
+id: "p01"
+title: "Parent task"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+`,
+		"p02-child.md": `---
+id: "p02"
+title: "Child task"
+status: pending
+priority: medium
+parent: "p01"
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+`,
+		"p03-orphan.md": `---
+id: "p03"
+title: "No parent"
+status: pending
+priority: medium
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+`,
+	}
+	for filename, content := range tasks {
+		if err := os.WriteFile(filepath.Join(tmpDir, filename), []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file %s: %v", filename, err)
+		}
+	}
+	return tmpDir
+}
+
+func TestGraphCommand_ParentEdges_JSON(t *testing.T) {
+	tmpDir := createParentGraphTestFiles(t)
+	resetGraphFlags()
+	graphParentEdges = true
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+
+	parentEdges, ok := result["parentEdges"].([]any)
+	if !ok {
+		t.Fatalf("Expected 'parentEdges' array in JSON output, got: %T", result["parentEdges"])
+	}
+	if len(parentEdges) != 1 {
+		t.Fatalf("Expected 1 parent edge, got %d", len(parentEdges))
+	}
+	edge := parentEdges[0].(map[string]any)
+	if edge["child"] != "p02" || edge["parent"] != "p01" {
+		t.Errorf("Expected child=p02 parent=p01, got %v", edge)
+	}
+}
+
+func TestGraphCommand_ParentEdges_AbsentByDefault(t *testing.T) {
+	tmpDir := createParentGraphTestFiles(t)
+	resetGraphFlags()
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+
+	if _, ok := result["parentEdges"]; ok {
+		t.Error("Expected parentEdges to be absent when --parent-edges not set")
+	}
+}
+
+func TestGraphCommand_ParentEdges_Mermaid(t *testing.T) {
+	tmpDir := createParentGraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "mermaid"
+	graphParentEdges = true
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if !strings.Contains(output, "--o") {
+		t.Errorf("Expected '--o' parent edge syntax in Mermaid output, got:\n%s", output)
+	}
+}
+
+func TestGraphCommand_ParentEdges_DOT(t *testing.T) {
+	tmpDir := createParentGraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "dot"
+	graphParentEdges = true
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if !strings.Contains(output, "arrowhead=odiamond") {
+		t.Errorf("Expected 'arrowhead=odiamond' in DOT output, got:\n%s", output)
+	}
+}
+
+func TestGraphCommand_ParentEdges_ASCII(t *testing.T) {
+	tmpDir := createParentGraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "ascii"
+	graphParentEdges = true
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if !strings.Contains(output, "child of p01") {
+		t.Errorf("Expected '(child of p01)' annotation in ASCII output, got:\n%s", output)
+	}
+}
+
+func TestGraphCommand_Preset_Full_ImpliesParentAndSubgraphs(t *testing.T) {
+	tmpDir := createParentGraphTestFiles(t)
+	resetGraphFlags()
+	graphPreset = "full"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	result := parseGraphJSON(t, output)
+
+	if _, ok := result["parentEdges"]; !ok {
+		t.Error("Expected parentEdges with --preset full")
+	}
+}
+
+func createSubgraphTestFiles(t *testing.T) string {
+	t.Helper()
+	tmpDir := t.TempDir()
+	tasks := map[string]string{
+		"s01-phase.md": `---
+id: "s01"
+title: "Phase task"
+status: pending
+priority: medium
+phase: "v1"
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+`,
+		"s02-isolated-scope.md": `---
+id: "s02"
+title: "Isolated scope task"
+status: pending
+priority: medium
+touches: ["api"]
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+`,
+		"s03-toplevel.md": `---
+id: "s03"
+title: "Top level task"
+status: pending
+priority: medium
+dependencies: ["s01"]
+tags: []
+created: 2026-02-08
+---
+`,
+	}
+	for filename, content := range tasks {
+		if err := os.WriteFile(filepath.Join(tmpDir, filename), []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file %s: %v", filename, err)
+		}
+	}
+	return tmpDir
+}
+
+func TestGraphCommand_Subgraphs_Mermaid(t *testing.T) {
+	tmpDir := createSubgraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "mermaid"
+	graphSubgraphs = true
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if !strings.Contains(output, "subgraph phase_v1") {
+		t.Errorf("Expected 'subgraph phase_v1' in Mermaid output, got:\n%s", output)
+	}
+	if !strings.Contains(output, "subgraph scope_api") {
+		t.Errorf("Expected 'subgraph scope_api' in Mermaid output, got:\n%s", output)
+	}
+}
+
+func TestGraphCommand_Subgraphs_DOT(t *testing.T) {
+	tmpDir := createSubgraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "dot"
+	graphSubgraphs = true
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if !strings.Contains(output, "cluster_phase_v1") {
+		t.Errorf("Expected 'cluster_phase_v1' in DOT output, got:\n%s", output)
+	}
+	if !strings.Contains(output, "cluster_scope_api") {
+		t.Errorf("Expected 'cluster_scope_api' in DOT output, got:\n%s", output)
+	}
+}
+
+func TestGraphCommand_Subgraphs_AbsentByDefault_Mermaid(t *testing.T) {
+	tmpDir := createSubgraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "mermaid"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if strings.Contains(output, "subgraph") {
+		t.Errorf("Expected no subgraph blocks without --subgraphs, got:\n%s", output)
+	}
+}
+
+func TestGraphCommand_Subgraphs_JSON_Unaffected(t *testing.T) {
+	tmpDir := createSubgraphTestFiles(t)
+	resetGraphFlags()
+	graphSubgraphs = true
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+	// Should still parse as valid JSON with the usual structure
+	result := parseGraphJSON(t, output)
+	if _, ok := result["nodes"]; !ok {
+		t.Error("Expected 'nodes' key in JSON output with --subgraphs")
+	}
+}
+
+func TestGraphCommand_Preset_Full_ImpliesSubgraphs(t *testing.T) {
+	tmpDir := createSubgraphTestFiles(t)
+	resetGraphFlags()
+	graphFormat = "mermaid"
+	graphPreset = "full"
+	graphAll = true
+
+	output := captureGraphOutput(t, []string{tmpDir})
+
+	if !strings.Contains(output, "subgraph") {
+		t.Errorf("Expected subgraph blocks with --preset full, got:\n%s", output)
 	}
 }

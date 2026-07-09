@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -89,8 +90,10 @@ func runWebStart(cmd *cobra.Command, _ []string) error {
 		ReadOnly:       viper.GetBool("web.readonly"),
 		Version:        FullVersion(),
 		Phases:         parsePhasesForWeb(),
+		Scopes:         parseScopeKeysForWeb(),
 		ListProjects:   buildListProjects(),
 		ResolveProject: buildResolveProject(),
+		IgnoreDirs:     flags.IgnoreDirs,
 	})
 
 	ctx, cancel := signal.NotifyContext(
@@ -137,6 +140,24 @@ func parsePhasesForWeb() []web.PhaseInfo {
 		}
 	}
 	return phases
+}
+
+// parseScopeKeysForWeb reads scope names from .taskmd.yaml and returns a sorted slice of keys.
+func parseScopeKeysForWeb() []string {
+	raw := viper.Get("scopes")
+	if raw == nil {
+		return nil
+	}
+	scopeMap, ok := raw.(map[string]any)
+	if !ok {
+		return nil
+	}
+	keys := make([]string, 0, len(scopeMap))
+	for k := range scopeMap {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // buildListProjects returns a function that loads the global project registry

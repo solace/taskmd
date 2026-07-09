@@ -136,6 +136,15 @@ func matchesEquality(task *model.Task, field, value string) bool {
 		return matchesTouches(task.Touches, value)
 	case "parent":
 		return matchBoolOrValue(task.Parent, value)
+	case "related":
+		hasRelated := len(task.Related) > 0
+		if value == "true" {
+			return hasRelated
+		}
+		if value == "false" {
+			return !hasRelated
+		}
+		return slices.Contains(task.Related, value)
 	default:
 		return false
 	}

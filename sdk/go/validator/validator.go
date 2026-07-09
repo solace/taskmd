@@ -129,6 +129,10 @@ func (v *Validator) Validate(tasks []*model.Task) *ValidationResult {
 	v.checkMissingParent(tasks, taskMap, result)
 	v.checkParentSelfReference(tasks, result)
 	v.checkParentCycles(tasks, taskMap, result)
+	v.checkMissingRelated(tasks, taskMap, result)
+	v.checkRelatedSelfReference(tasks, result)
+	v.checkMissingSpawnedBy(tasks, taskMap, result)
+	v.checkSpawnedBySelfReference(tasks, result)
 
 	// Strict mode additional checks
 	if v.strict {
@@ -353,6 +357,59 @@ func (v *Validator) checkParentCycles(tasks []*model.Task, taskMap map[string]*m
 				break // missing parent already reported
 			}
 			current = parent.Parent
+		}
+	}
+}
+
+// checkMissingRelated checks that related task IDs reference existing tasks.
+func (v *Validator) checkMissingRelated(tasks []*model.Task, taskMap map[string]*model.Task, result *ValidationResult) {
+	for _, task := range tasks {
+		for _, relID := range task.Related {
+			if _, exists := taskMap[relID]; !exists {
+				if v.externalIDs[relID] {
+					continue
+				}
+				result.AddIssue(LevelError, task.ID, task.FilePath,
+					fmt.Sprintf("related references non-existent task: '%s'", relID))
+			}
+		}
+	}
+}
+
+// checkRelatedSelfReference warns if a task lists itself as related.
+func (v *Validator) checkRelatedSelfReference(tasks []*model.Task, result *ValidationResult) {
+	for _, task := range tasks {
+		for _, relID := range task.Related {
+			if relID == task.ID {
+				result.AddIssue(LevelWarning, task.ID, task.FilePath,
+					"task references itself as related")
+			}
+		}
+	}
+}
+
+// checkMissingSpawnedBy checks that spawned_by references an existing task.
+func (v *Validator) checkMissingSpawnedBy(tasks []*model.Task, taskMap map[string]*model.Task, result *ValidationResult) {
+	for _, task := range tasks {
+		if task.SpawnedBy == "" {
+			continue
+		}
+		if _, exists := taskMap[task.SpawnedBy]; !exists {
+			if v.externalIDs[task.SpawnedBy] {
+				continue
+			}
+			result.AddIssue(LevelError, task.ID, task.FilePath,
+				fmt.Sprintf("spawned_by references non-existent task: '%s'", task.SpawnedBy))
+		}
+	}
+}
+
+// checkSpawnedBySelfReference warns if a task lists itself as spawned_by.
+func (v *Validator) checkSpawnedBySelfReference(tasks []*model.Task, result *ValidationResult) {
+	for _, task := range tasks {
+		if task.SpawnedBy != "" && task.SpawnedBy == task.ID {
+			result.AddIssue(LevelWarning, task.ID, task.FilePath,
+				"task references itself as spawned_by")
 		}
 	}
 }

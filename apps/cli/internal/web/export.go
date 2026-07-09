@@ -21,11 +21,12 @@ import (
 
 // ExportConfig holds configuration for the static site export.
 type ExportConfig struct {
-	OutputDir string
-	ScanDir   string
-	BasePath  string
-	Verbose   bool
-	Version   string
+	OutputDir  string
+	ScanDir    string
+	BasePath   string
+	Verbose    bool
+	Version    string
+	IgnoreDirs []string
 }
 
 // Export generates a self-contained static site from task data.
@@ -55,7 +56,7 @@ func ExportWithFS(cfg ExportConfig, embeddedFS fs.FS) error {
 	}
 
 	// Scan tasks
-	dp := NewDataProvider(cfg.ScanDir, cfg.Verbose)
+	dp := NewDataProvider(cfg.ScanDir, cfg.Verbose, cfg.IgnoreDirs)
 	tasks, err := dp.GetTasks()
 	if err != nil {
 		return fmt.Errorf("failed to scan tasks: %w", err)
@@ -177,7 +178,7 @@ func generateBoardFiles(boardDir string, tasks []*model.Task) error {
 }
 
 func generateAnalyticsFiles(apiDir string, tasks []*model.Task, archivedTasks []*model.Task) error {
-	if err := writeJSONFile(apiDir, "graph.json", graph.NewGraph(tasks).ToJSON()); err != nil {
+	if err := writeJSONFile(apiDir, "graph.json", graph.NewGraph(tasks).ToJSON(graph.DefaultRenderOptions())); err != nil {
 		return err
 	}
 

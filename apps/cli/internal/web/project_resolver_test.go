@@ -11,7 +11,7 @@ func TestProjectResolver_Get_CachesResult(t *testing.T) {
 	resolver := NewProjectResolver(func(_ string) (string, []PhaseInfo, error) {
 		callCount.Add(1)
 		return t.TempDir(), []PhaseInfo{{ID: "p1"}}, nil
-	}, false)
+	}, false, nil)
 
 	// First call should invoke resolve.
 	ctx1, err := resolver.get("proj-a")
@@ -41,7 +41,7 @@ func TestProjectResolver_Get_CachesResult(t *testing.T) {
 func TestProjectResolver_Get_DifferentProjects(t *testing.T) {
 	resolver := NewProjectResolver(func(_ string) (string, []PhaseInfo, error) {
 		return t.TempDir(), nil, nil
-	}, false)
+	}, false, nil)
 
 	ctxA, err := resolver.get("a")
 	if err != nil {
@@ -59,7 +59,7 @@ func TestProjectResolver_Get_DifferentProjects(t *testing.T) {
 func TestProjectResolver_Get_NotFoundError(t *testing.T) {
 	resolver := NewProjectResolver(func(_ string) (string, []PhaseInfo, error) {
 		return "", nil, ErrProjectNotFound
-	}, false)
+	}, false, nil)
 
 	_, err := resolver.get("unknown")
 	if err == nil {
@@ -75,7 +75,7 @@ func TestProjectResolver_Get_ConcurrentAccess(t *testing.T) {
 	resolver := NewProjectResolver(func(_ string) (string, []PhaseInfo, error) {
 		callCount.Add(1)
 		return t.TempDir(), nil, nil
-	}, false)
+	}, false, nil)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 20; i++ {

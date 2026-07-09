@@ -4,7 +4,9 @@
   "private": true,
   "pnpm": {
     "onlyBuiltDependencies": [
-      "esbuild"
+      "@vscode/vsce-sign",
+      "esbuild",
+      "keytar"
     ],
     "overrides": {
       "rollup@>=4.0.0 <4.59.0": ">=4.59.0",

@@ -30,12 +30,26 @@ describe("GraphLegend", () => {
     expect(screen.getByText("High")).toBeInTheDocument();
   });
 
-  it("shows Depends on edge description when open", () => {
+  it("shows all edge types when open", () => {
     render(<GraphLegend />);
 
     fireEvent.click(screen.getByText("Legend"));
 
     expect(screen.getByText("Depends on")).toBeInTheDocument();
+    expect(screen.getByText("Contains (parent)")).toBeInTheDocument();
+    expect(screen.getByText("Related")).toBeInTheDocument();
+    expect(screen.getByText("Spawned by")).toBeInTheDocument();
+  });
+
+  it("shows Groups section with Phase and Scope entries when open", () => {
+    render(<GraphLegend />);
+
+    fireEvent.click(screen.getByText("Legend"));
+
+    expect(screen.getByText("Groups")).toBeInTheDocument();
+    expect(screen.getByText("Phase")).toBeInTheDocument();
+    expect(screen.getByText("Scope (isolated)")).toBeInTheDocument();
+    expect(screen.queryByText("Parent tasks")).not.toBeInTheDocument();
   });
 
   it("closes panel when close button is clicked", () => {

@@ -1070,3 +1070,145 @@ func TestGet_PhaseOmittedWhenEmpty_YAML(t *testing.T) {
 		t.Error("Expected phase to be omitted from YAML when empty")
 	}
 }
+
+func createRelatedTestFiles(t *testing.T) string {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+
+	tasks := map[string]string{
+		"r01-alpha.md": `---
+id: "r01"
+title: "Alpha task"
+status: pending
+priority: medium
+related: ["r02"]
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+
+# Alpha task
+`,
+		"r02-beta.md": `---
+id: "r02"
+title: "Beta task"
+status: in-progress
+priority: high
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+
+# Beta task
+`,
+		"r03-gamma.md": `---
+id: "r03"
+title: "Gamma task"
+status: pending
+priority: low
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+
+# Gamma task
+`,
+	}
+
+	for filename, content := range tasks {
+		path := filepath.Join(tmpDir, filename)
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			t.Fatalf("Failed to create test file %s: %v", filename, err)
+		}
+	}
+
+	return tmpDir
+}
+
+func TestGet_RelatedText(t *testing.T) {
+	tmpDir := createRelatedTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+
+	output := captureGetOutput(t, "r01")
+
+	if !strings.Contains(output, "Related:") {
+		t.Error("Expected output to contain 'Related:' section")
+	}
+	if !strings.Contains(output, "r02") {
+		t.Error("Expected output to show related task r02")
+	}
+}
+
+func TestGet_RelatedBidirectional(t *testing.T) {
+	tmpDir := createRelatedTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+
+	// r02 does not list r01 in its related field, but r01 lists r02.
+	// r02's output should still show r01 as related (reverse relation).
+	output := captureGetOutput(t, "r02")
+
+	if !strings.Contains(output, "Related:") {
+		t.Error("Expected bidirectional related: r02 should show r01 as related")
+	}
+	if !strings.Contains(output, "r01") {
+		t.Error("Expected r02 output to contain reverse-related task r01")
+	}
+}
+
+func TestGet_RelatedOmittedWhenEmpty(t *testing.T) {
+	tmpDir := createRelatedTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+
+	// r03 has no related tasks in either direction.
+	output := captureGetOutput(t, "r03")
+
+	if strings.Contains(output, "Related:") {
+		t.Error("Expected 'Related:' section to be omitted when task has no related tasks")
+	}
+}
+
+func TestGet_RelatedJSON(t *testing.T) {
+	tmpDir := createRelatedTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+	getFormat = "json"
+
+	output := captureGetOutput(t, "r01")
+
+	var result getOutput
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		t.Fatalf("Failed to parse JSON output: %v\nOutput: %s", err, output)
+	}
+
+	if len(result.Related) != 1 {
+		t.Fatalf("Expected 1 related entry, got %d", len(result.Related))
+	}
+	if result.Related[0].ID != "r02" {
+		t.Errorf("Expected related[0].ID = 'r02', got %q", result.Related[0].ID)
+	}
+}
+
+func TestGet_RelatedJSON_Bidirectional(t *testing.T) {
+	tmpDir := createRelatedTestFiles(t)
+	resetGetFlags()
+	taskDir = tmpDir
+	getFormat = "json"
+
+	output := captureGetOutput(t, "r02")
+
+	var result getOutput
+	if err := json.Unmarshal([]byte(output), &result); err != nil {
+		t.Fatalf("Failed to parse JSON output: %v\nOutput: %s", err, output)
+	}
+
+	if len(result.Related) != 1 {
+		t.Fatalf("Expected 1 reverse-related entry for r02, got %d", len(result.Related))
+	}
+	if result.Related[0].ID != "r01" {
+		t.Errorf("Expected reverse-related ID 'r01', got %q", result.Related[0].ID)
+	}
+}

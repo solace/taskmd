@@ -10,11 +10,10 @@ const STATUS_BG: Record<string, string> = {
   cancelled: "bg-gray-50 border-gray-300 dark:bg-gray-800 dark:border-gray-600",
 };
 
-const PRIORITY_BORDER: Record<string, string> = {
-  critical: "border-l-4 border-l-red-500",
-  high: "border-l-4 border-l-orange-400",
-  medium: "",
-  low: "",
+// Priority ring: CSS box-shadow values for inline style (avoids dynamic Tailwind class purging).
+const PRIORITY_RING: Record<string, string> = {
+  critical: "0 0 0 2px #ef4444",  // red-500
+  high: "0 0 0 1.5px #fb923c",    // orange-400
 };
 
 interface TaskNodeData {
@@ -24,24 +23,35 @@ interface TaskNodeData {
   taskId: string;
   highlighted?: boolean;
   dimmed?: boolean;
+  scopeTint?: string;
+  touches?: string[];
 }
 
 export const TaskNode = memo(function TaskNode({ data }: { data: TaskNodeData }) {
   const bg = STATUS_BG[data.status] ?? "bg-gray-50 border-gray-300 dark:bg-gray-800 dark:border-gray-600";
-  const priorityBorder = data.priority ? (PRIORITY_BORDER[data.priority] ?? "") : "";
-  const highlight = data.highlighted ? "ring-2 ring-blue-500" : "";
   const dim = data.dimmed ? "opacity-40" : "";
+  const highlightShadow = data.highlighted ? "0 0 0 2px #3b82f6" : undefined;
+
+  const priorityRing = data.priority ? (PRIORITY_RING[data.priority] ?? undefined) : undefined;
+  const boxShadow = highlightShadow ?? priorityRing;
 
   return (
     <>
       <Handle type="target" position={Position.Top} className="!bg-gray-400 dark:!bg-gray-500 !w-2 !h-2" />
       <div
-        className={`w-[200px] rounded-md border shadow-sm px-3 py-2 cursor-pointer transition-opacity duration-200 ${bg} ${priorityBorder} ${highlight} ${dim}`}
+        className={`relative w-[200px] rounded-md border shadow-sm px-3 py-2 cursor-pointer transition-opacity duration-200 ${bg} ${dim}`}
+        style={boxShadow ? { boxShadow } : undefined}
       >
         <div className="text-[10px] text-gray-500 dark:text-gray-400 font-mono">{data.taskId}</div>
         <div className="text-xs font-medium text-gray-800 dark:text-gray-200 truncate" title={data.label}>
           {data.label}
         </div>
+        {data.scopeTint && (
+          <div
+            className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+            style={{ backgroundColor: data.scopeTint }}
+          />
+        )}
       </div>
       <Handle type="source" position={Position.Bottom} className="!bg-gray-400 dark:!bg-gray-500 !w-2 !h-2" />
     </>

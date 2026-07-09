@@ -53,7 +53,7 @@ tags:
 
 func TestHandleTasks(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tasks", nil)
 	rec := httptest.NewRecorder()
@@ -81,7 +81,7 @@ func TestHandleTasks(t *testing.T) {
 
 func TestHandleTaskByID_Success(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tasks/001", nil)
 	req.SetPathValue("id", "001")
@@ -134,7 +134,7 @@ Done.
 `
 	createWorklogFile(t, dir, "001", worklogContent)
 
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tasks/001", nil)
 	req.SetPathValue("id", "001")
@@ -164,7 +164,7 @@ Done.
 
 func TestHandleTaskByID_EmptyID(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tasks/", nil)
 	rec := httptest.NewRecorder()
@@ -178,7 +178,7 @@ func TestHandleTaskByID_EmptyID(t *testing.T) {
 
 func TestHandleTaskByID_NotFound(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tasks/999", nil)
 	req.SetPathValue("id", "999")
@@ -193,7 +193,7 @@ func TestHandleTaskByID_NotFound(t *testing.T) {
 
 func TestHandleBoard(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/board?groupBy=status", nil)
 	rec := httptest.NewRecorder()
@@ -216,7 +216,7 @@ func TestHandleBoard(t *testing.T) {
 
 func TestHandleBoardDefaultGroupBy(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/board", nil)
 	rec := httptest.NewRecorder()
@@ -230,7 +230,7 @@ func TestHandleBoardDefaultGroupBy(t *testing.T) {
 
 func TestHandleBoardInvalidGroupBy(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/board?groupBy=invalid", nil)
 	rec := httptest.NewRecorder()
@@ -255,7 +255,7 @@ func TestHandleBoardPhaseGrouping_ConfigOrder(t *testing.T) {
 		os.WriteFile(filepath.Join(dir, tc.file), []byte(tc.content), 0644)
 	}
 
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 	phases := []PhaseInfo{
 		{ID: "gamma", Name: "Gamma"},
 		{ID: "alpha", Name: "Alpha"},
@@ -295,7 +295,7 @@ func TestHandleBoardPhaseGrouping_NilPhases(t *testing.T) {
 	os.WriteFile(filepath.Join(dir, "001.md"), []byte("---\nid: \"001\"\ntitle: \"T1\"\nstatus: pending\nphase: beta\n---\n"), 0644)
 	os.WriteFile(filepath.Join(dir, "002.md"), []byte("---\nid: \"002\"\ntitle: \"T2\"\nstatus: pending\nphase: alpha\n---\n"), 0644)
 
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/board?groupBy=phase", nil)
 	rec := httptest.NewRecorder()
@@ -323,7 +323,7 @@ func TestHandleBoardPhaseGrouping_NilPhases(t *testing.T) {
 
 func TestHandleGraph(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/graph", nil)
 	rec := httptest.NewRecorder()
@@ -349,7 +349,7 @@ func TestHandleGraph(t *testing.T) {
 
 func TestHandleGraphMermaid(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/graph/mermaid", nil)
 	rec := httptest.NewRecorder()
@@ -373,7 +373,7 @@ func TestHandleGraphMermaid(t *testing.T) {
 
 func TestHandleStats(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/stats", nil)
 	rec := httptest.NewRecorder()
@@ -408,7 +408,7 @@ func TestHandleStats(t *testing.T) {
 
 func TestHandleValidate(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/validate", nil)
 	rec := httptest.NewRecorder()
@@ -429,7 +429,7 @@ func TestHandleValidate(t *testing.T) {
 
 func TestHandleUpdateTask_Success(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	body := strings.NewReader(`{"status":"completed"}`)
 	req := httptest.NewRequest(http.MethodPut, "/api/tasks/001", body)
@@ -459,7 +459,7 @@ func TestHandleUpdateTask_Success(t *testing.T) {
 
 func TestHandleUpdateTask_EmptyID(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	body := strings.NewReader(`{"status":"completed"}`)
 	req := httptest.NewRequest(http.MethodPut, "/api/tasks/", body)
@@ -475,7 +475,7 @@ func TestHandleUpdateTask_EmptyID(t *testing.T) {
 
 func TestHandleUpdateTask_NotFound(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	body := strings.NewReader(`{"status":"completed"}`)
 	req := httptest.NewRequest(http.MethodPut, "/api/tasks/999", body)
@@ -491,7 +491,7 @@ func TestHandleUpdateTask_NotFound(t *testing.T) {
 
 func TestHandleUpdateTask_InvalidStatus(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	body := strings.NewReader(`{"status":"invalid"}`)
 	req := httptest.NewRequest(http.MethodPut, "/api/tasks/001", body)
@@ -515,7 +515,7 @@ func TestHandleUpdateTask_InvalidStatus(t *testing.T) {
 
 func TestHandleUpdateTask_InvalidJSON(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	body := strings.NewReader(`not json`)
 	req := httptest.NewRequest(http.MethodPut, "/api/tasks/001", body)
@@ -531,7 +531,7 @@ func TestHandleUpdateTask_InvalidJSON(t *testing.T) {
 
 func TestHandleUpdateTask_Title(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	body := strings.NewReader(`{"title":"New Title"}`)
 	req := httptest.NewRequest(http.MethodPut, "/api/tasks/001", body)
@@ -552,7 +552,7 @@ func TestHandleUpdateTask_Title(t *testing.T) {
 
 func TestHandleUpdateTask_Body(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	body := strings.NewReader(`{"body":"# Updated\n\nNew body content."}`)
 	req := httptest.NewRequest(http.MethodPut, "/api/tasks/001", body)
@@ -577,7 +577,7 @@ func TestHandleUpdateTask_Body(t *testing.T) {
 
 func TestHandleUpdateTask_Tags(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	body := strings.NewReader(`{"tags":["new-a","new-b"]}`)
 	req := httptest.NewRequest(http.MethodPut, "/api/tasks/001", body)
@@ -606,7 +606,7 @@ func TestHandleUpdateTask_Tags(t *testing.T) {
 
 func TestHandleUpdateTask_Type(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	body := strings.NewReader(`{"type":"feature"}`)
 	req := httptest.NewRequest(http.MethodPut, "/api/tasks/001", body)
@@ -627,7 +627,7 @@ func TestHandleUpdateTask_Type(t *testing.T) {
 
 func TestHandleUpdateTask_InvalidType(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	body := strings.NewReader(`{"type":"invalid"}`)
 	req := httptest.NewRequest(http.MethodPut, "/api/tasks/001", body)
@@ -651,7 +651,7 @@ func TestHandleUpdateTask_InvalidType(t *testing.T) {
 
 func TestHandleUpdateTask_PartialUpdate(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	// Only update priority, everything else should be preserved
 	body := strings.NewReader(`{"priority":"low"}`)
@@ -727,7 +727,7 @@ func TestHandleConfig_ReadOnly(t *testing.T) {
 
 func TestHandleUpdateTask_ReadOnly(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	body := strings.NewReader(`{"status":"completed"}`)
 	req := httptest.NewRequest(http.MethodPut, "/api/tasks/001", body)
@@ -753,7 +753,7 @@ func TestHandleUpdateTask_ReadOnly(t *testing.T) {
 
 func TestHandleNext(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/next", nil)
 	rec := httptest.NewRecorder()
@@ -789,7 +789,7 @@ func TestHandleNext(t *testing.T) {
 
 func TestHandleNext_WithLimit(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/next?limit=1", nil)
 	rec := httptest.NewRecorder()
@@ -823,7 +823,7 @@ priority: high
 `
 	os.WriteFile(filepath.Join(dir, "001.md"), []byte(task), 0644)
 
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/next", nil)
 	rec := httptest.NewRecorder()
@@ -859,7 +859,7 @@ priority: medium
 		os.WriteFile(filepath.Join(dir, fmt.Sprintf("%03d.md", i)), []byte(task), 0644)
 	}
 
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/next", nil)
 	rec := httptest.NewRecorder()
@@ -954,7 +954,7 @@ func findTrackTask(result tracks.Result, id string) *tracks.TrackTask {
 
 func TestHandleTracks(t *testing.T) {
 	dir := createTracksTestDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 	result := fetchTracksResult(t, dp, "")
 
 	if len(result.Tracks) < 1 {
@@ -971,7 +971,7 @@ func TestHandleTracks(t *testing.T) {
 
 func TestHandleTracks_EffortAndTouches(t *testing.T) {
 	dir := createTracksTestDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 	result := fetchTracksResult(t, dp, "")
 
 	task := findTrackTask(result, "010")
@@ -989,7 +989,7 @@ func TestHandleTracks_EffortAndTouches(t *testing.T) {
 
 func TestHandleTracks_WithFilters(t *testing.T) {
 	dir := createTracksTestDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tracks?filter=priority%3Dhigh", nil)
 	rec := httptest.NewRecorder()
@@ -1029,7 +1029,7 @@ func TestHandleTracks_WithLimit(t *testing.T) {
 		os.WriteFile(filepath.Join(dir, tc.file), []byte(tc.content), 0644)
 	}
 
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	// Without limit, should have 2 tracks (different scopes -> parallel)
 	noLimit := fetchTracksResult(t, dp, "")
@@ -1048,7 +1048,7 @@ func TestHandleTracks_WithLimit(t *testing.T) {
 
 func TestHandleSearch_Success(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/search?q=Task", nil)
 	rec := httptest.NewRecorder()
@@ -1071,7 +1071,7 @@ func TestHandleSearch_Success(t *testing.T) {
 
 func TestHandleSearch_EmptyQuery(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/search", nil)
 	rec := httptest.NewRecorder()
@@ -1085,7 +1085,7 @@ func TestHandleSearch_EmptyQuery(t *testing.T) {
 
 func TestHandleSearch_NoResults(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/search?q=zzzznonexistent", nil)
 	rec := httptest.NewRecorder()
@@ -1121,7 +1121,7 @@ func createWorklogFile(t *testing.T, dir, taskID, content string) {
 
 func TestHandleWorklog_NoWorklog(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tasks/001/worklog", nil)
 	req.SetPathValue("id", "001")
@@ -1155,7 +1155,7 @@ Completed initial implementation.
 `
 	createWorklogFile(t, dir, "001", worklogContent)
 
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tasks/001/worklog", nil)
 	req.SetPathValue("id", "001")
@@ -1189,7 +1189,7 @@ Completed initial implementation.
 
 func TestHandleWorklog_TaskNotFound(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tasks/999/worklog", nil)
 	req.SetPathValue("id", "999")
@@ -1204,7 +1204,7 @@ func TestHandleWorklog_TaskNotFound(t *testing.T) {
 
 func TestHandleWorklog_EmptyID(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/tasks//worklog", nil)
 	// Don't set path value to simulate empty ID
@@ -1260,7 +1260,7 @@ func TestHandleFileUpdateError_OtherError(t *testing.T) {
 
 func TestHandleSearch_CaseInsensitive(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/search?q=TASK", nil)
 	rec := httptest.NewRecorder()
@@ -1354,13 +1354,13 @@ func TestHandleTasks_WithProject(t *testing.T) {
 	defaultDir := createTestTaskDir(t)
 	projectDir := createProjectTaskDir(t)
 
-	defaultDP := NewDataProvider(defaultDir, false)
+	defaultDP := NewDataProvider(defaultDir, false, nil)
 	resolver := NewProjectResolver(func(id string) (string, []PhaseInfo, error) {
 		if id == "proj-a" {
 			return projectDir, nil, nil
 		}
 		return "", nil, ErrProjectNotFound
-	}, false)
+	}, false, nil)
 
 	handler := setupProjectMiddleware(resolver, handleTasks(defaultDP))
 
@@ -1387,10 +1387,10 @@ func TestHandleTasks_WithProject(t *testing.T) {
 
 func TestHandleTasks_WithoutProject_ReturnsDefault(t *testing.T) {
 	defaultDir := createTestTaskDir(t)
-	defaultDP := NewDataProvider(defaultDir, false)
+	defaultDP := NewDataProvider(defaultDir, false, nil)
 	resolver := NewProjectResolver(func(_ string) (string, []PhaseInfo, error) {
 		return "", nil, ErrProjectNotFound
-	}, false)
+	}, false, nil)
 
 	handler := setupProjectMiddleware(resolver, handleTasks(defaultDP))
 
@@ -1414,10 +1414,10 @@ func TestHandleTasks_WithoutProject_ReturnsDefault(t *testing.T) {
 
 func TestProjectNotFound_Returns404(t *testing.T) {
 	defaultDir := createTestTaskDir(t)
-	defaultDP := NewDataProvider(defaultDir, false)
+	defaultDP := NewDataProvider(defaultDir, false, nil)
 	resolver := NewProjectResolver(func(_ string) (string, []PhaseInfo, error) {
 		return "", nil, ErrProjectNotFound
-	}, false)
+	}, false, nil)
 
 	handler := setupProjectMiddleware(resolver, handleTasks(defaultDP))
 
@@ -1448,7 +1448,7 @@ func TestHandleConfig_WithProject(t *testing.T) {
 			return projectDir, projectPhases, nil
 		}
 		return "", nil, ErrProjectNotFound
-	}, false)
+	}, false, nil)
 
 	cfg := Config{ReadOnly: false, Version: "test", Phases: defaultPhases}
 	handler := setupProjectMiddleware(resolver, handleConfig(cfg))
@@ -1498,7 +1498,7 @@ func TestHandleBoard_WithProject(t *testing.T) {
 	projectDir := createProjectTaskDir(t)
 	defaultDir := createTestTaskDir(t)
 
-	defaultDP := NewDataProvider(defaultDir, false)
+	defaultDP := NewDataProvider(defaultDir, false, nil)
 	defaultPhases := []PhaseInfo{{ID: "default-phase"}}
 
 	resolver := NewProjectResolver(func(id string) (string, []PhaseInfo, error) {
@@ -1506,7 +1506,7 @@ func TestHandleBoard_WithProject(t *testing.T) {
 			return projectDir, []PhaseInfo{{ID: "proj-phase"}}, nil
 		}
 		return "", nil, ErrProjectNotFound
-	}, false)
+	}, false, nil)
 
 	handler := setupProjectMiddleware(resolver, handleBoard(defaultDP, defaultPhases))
 

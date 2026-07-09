@@ -28,6 +28,8 @@ type UpdateRequest struct {
 	Completed    *string   // completed date (YYYY-MM-DD)
 	CancelledAt  *string   // cancelled date (YYYY-MM-DD)
 	Dependencies *[]string // replace dependencies entirely
+	Related      *[]string // replace related entirely
+	SpawnedBy    *string   // set/clear spawned_by
 	RemoveFields []string  // field keys to remove entirely from frontmatter
 	Body         *string
 }
@@ -128,6 +130,11 @@ func UpdateTaskFile(filePath string, req UpdateRequest) error {
 		lines, closeIdx = applyListFieldUpdates(lines, openIdx, closeIdx, "dependencies", *req.Dependencies)
 	}
 
+	// Apply related updates.
+	if req.Related != nil {
+		lines, closeIdx = applyListFieldUpdates(lines, openIdx, closeIdx, "related", *req.Related)
+	}
+
 	// Apply body update — replace everything after closing ---.
 	if req.Body != nil {
 		lines = replaceBody(lines, closeIdx, *req.Body)
@@ -166,6 +173,9 @@ func buildScalarUpdates(req UpdateRequest) []scalarUpdate {
 	}
 	if req.Phase != nil {
 		updates = append(updates, scalarUpdate{key: "phase", value: *req.Phase})
+	}
+	if req.SpawnedBy != nil {
+		updates = append(updates, scalarUpdate{key: "spawned_by", value: *req.SpawnedBy})
 	}
 	if req.Completed != nil {
 		updates = append(updates, scalarUpdate{key: "completed_at", value: *req.Completed})
@@ -499,7 +509,7 @@ func ReplaceID(filePath, newID string) error {
 }
 
 // referenceFields are the frontmatter field prefixes where task ID cross-references appear.
-var referenceFields = []string{"parent:", "dependencies:"}
+var referenceFields = []string{"parent:", "dependencies:", "related:", "spawned_by:"}
 
 // ReplaceReference replaces occurrences of oldID with newID in dependency and parent
 // fields within a task file's frontmatter.

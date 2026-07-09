@@ -1513,3 +1513,70 @@ func TestValidateConfig_PhasesIsKnownKey(t *testing.T) {
 		}
 	}
 }
+
+func TestValidate_MissingRelated(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task 1", Related: []string{"999"}},
+	}
+
+	v := NewValidator(false)
+	result := v.Validate(tasks)
+
+	if result.Errors != 1 {
+		t.Errorf("expected 1 error for missing related task, got %d", result.Errors)
+	}
+
+	found := false
+	for _, issue := range result.Issues {
+		if issue.TaskID == "001" && issue.Level == LevelError {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected missing related error for task 001")
+	}
+}
+
+func TestValidate_RelatedSelfReference(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task 1", Related: []string{"001"}},
+	}
+
+	v := NewValidator(false)
+	result := v.Validate(tasks)
+
+	if result.Warnings != 1 {
+		t.Errorf("expected 1 warning for self-referencing related, got %d", result.Warnings)
+	}
+}
+
+func TestValidate_ValidRelated(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task 1", Related: []string{"002"}},
+		{ID: "002", Title: "Task 2"},
+	}
+
+	v := NewValidator(false)
+	result := v.Validate(tasks)
+
+	if result.Errors != 0 {
+		t.Errorf("expected no errors for valid related, got %d", result.Errors)
+	}
+	if result.Warnings != 0 {
+		t.Errorf("expected no warnings for valid related, got %d", result.Warnings)
+	}
+}
+
+func TestValidate_RelatedExternalID(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "001", Title: "Task 1", Related: []string{"082"}},
+	}
+
+	v := NewValidator(false)
+	v.SetExternalIDs(map[string]bool{"082": true})
+	result := v.Validate(tasks)
+
+	if result.Errors != 0 {
+		t.Errorf("expected 0 errors when related is an external ID, got %d", result.Errors)
+	}
+}

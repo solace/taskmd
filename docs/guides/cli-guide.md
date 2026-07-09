@@ -441,6 +441,39 @@ taskmd graph --root 022 --downstream
 
 # Show full subgraph
 taskmd graph --root 022
+
+# Limit traversal depth (direct dependents only)
+taskmd graph --root 022 --downstream --depth 1
+
+# Two hops out
+taskmd graph --root 022 --depth 2
+```
+
+**Edge visibility presets:**
+```bash
+# Dependencies only (no related/spawned-by noise)
+taskmd graph --preset deps-only
+
+# Dependencies + related edges
+taskmd graph --preset related
+
+# Dependencies + spawned-by edges (provenance)
+taskmd graph --preset provenance
+
+# All edges + subgraph grouping (mirrors web default view)
+taskmd graph --preset full --format mermaid
+```
+
+**Multigraph structure flags:**
+```bash
+# Group tasks by phase/scope in Mermaid and DOT
+taskmd graph --subgraphs --format mermaid
+
+# Show parent→child edges
+taskmd graph --parent-edges --format mermaid
+
+# Combine: full structural view
+taskmd graph --preset full --format dot | dot -Tsvg > graph.svg
 ```
 
 **Output to file:**
@@ -461,13 +494,29 @@ taskmd graph --format json --out graph.json
 | `--root` | | Start graph from specific task ID |
 | `--upstream` | `false` | Show only dependencies (ancestors) |
 | `--downstream` | `false` | Show only dependents (descendants) |
+| `--depth` | `0` | Limit `--root` traversal to N hops (requires `--root`; 0 = unlimited) |
 | `--focus` | | Highlight specific task ID |
+| `--preset` | | Edge visibility preset: `deps-only`, `related`, `provenance`, `full` |
+| `--subgraphs` | `false` | Group tasks by phase/scope in Mermaid and DOT output |
+| `--parent-edges` | `false` | Render parent→child edges in all output formats |
 | `--filter` | | Filter tasks (repeatable, AND logic) |
 | `--status` | | Shortcut for `--filter status=<value>` |
 | `--priority` | | Shortcut for `--filter priority=<value>` |
 | `--phase` | | Filter by phase |
 | `--scope` | | Filter by scope; supports wildcards (e.g. `cli`, `cli*`) |
 | `--out`, `-o` | | Write output to file |
+
+**Preset reference:**
+
+| Preset | Related edges | Spawned-by edges | Parent edges | Subgraphs |
+|--------|:---:|:---:|:---:|:---:|
+| *(default)* | ✅ | ✅ | — | — |
+| `deps-only` | — | — | — | — |
+| `related` | ✅ | — | — | — |
+| `provenance` | — | ✅ | — | — |
+| `full` | ✅ | ✅ | ✅ | ✅ |
+
+Explicit flags (`--parent-edges`, `--subgraphs`) override the preset.
 
 **Examples:**
 ```bash
@@ -477,17 +526,23 @@ taskmd graph --format ascii
 # Generate PNG with Graphviz
 taskmd graph --format dot | dot -Tpng > graph.png
 
-# Mermaid for documentation
-taskmd graph --format mermaid > docs/dependencies.mmd
+# Mermaid for documentation (deps only, no noise)
+taskmd graph --preset deps-only --format mermaid > docs/dependencies.mmd
+
+# Full structural diagram with phase grouping
+taskmd graph --preset full --format mermaid > docs/full-graph.mmd
 
 # Find what blocks task 025
 taskmd graph --root 025 --upstream --format ascii
 
-# See impact of task 010
-taskmd graph --root 010 --downstream --format ascii
+# See immediate impact of task 010 (one hop)
+taskmd graph --root 010 --downstream --depth 1 --format ascii
 
 # Active tasks only
 taskmd graph --exclude-status completed --format mermaid
+
+# Clean deps-only view for sharing
+taskmd graph --preset deps-only --format json > graph.json
 ```
 
 ### stats - Project Metrics

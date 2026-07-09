@@ -33,19 +33,21 @@ type projectContext struct {
 
 // ProjectResolver caches DataProviders per project ID.
 type ProjectResolver struct {
-	resolve ProjectResolverFunc
-	verbose bool
+	resolve    ProjectResolverFunc
+	verbose    bool
+	ignoreDirs []string
 
 	mu    sync.RWMutex
 	cache map[string]*projectContext
 }
 
 // NewProjectResolver creates a resolver with lazy caching.
-func NewProjectResolver(resolve ProjectResolverFunc, verbose bool) *ProjectResolver {
+func NewProjectResolver(resolve ProjectResolverFunc, verbose bool, ignoreDirs []string) *ProjectResolver {
 	return &ProjectResolver{
-		resolve: resolve,
-		verbose: verbose,
-		cache:   make(map[string]*projectContext),
+		resolve:    resolve,
+		verbose:    verbose,
+		ignoreDirs: ignoreDirs,
+		cache:      make(map[string]*projectContext),
 	}
 }
 
@@ -72,7 +74,7 @@ func (pr *ProjectResolver) get(id string) (*projectContext, error) {
 	}
 
 	ctx := &projectContext{
-		dp:     NewDataProvider(scanDir, pr.verbose),
+		dp:     NewDataProvider(scanDir, pr.verbose, pr.ignoreDirs),
 		phases: phases,
 	}
 	pr.cache[id] = ctx

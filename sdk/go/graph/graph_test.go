@@ -199,7 +199,7 @@ func TestToMermaid(t *testing.T) {
 	}
 
 	g := NewGraph(tasks)
-	output := g.ToMermaid("T2")
+	output := g.ToMermaid(RenderOptions{FocusTaskID: "T2", ShowRelated: true, ShowSpawnedBy: true})
 
 	if !strings.Contains(output, "graph TD") {
 		t.Error("Expected mermaid output to contain 'graph TD'")
@@ -239,7 +239,7 @@ func TestToDot(t *testing.T) {
 	}
 
 	g := NewGraph(tasks)
-	output := g.ToDot("T2")
+	output := g.ToDot(RenderOptions{FocusTaskID: "T2", ShowRelated: true, ShowSpawnedBy: true})
 
 	if !strings.Contains(output, "digraph tasks") {
 		t.Error("Expected DOT output to contain 'digraph tasks'")
@@ -279,7 +279,7 @@ func TestToASCII(t *testing.T) {
 	}
 
 	g := NewGraph(tasks)
-	output := g.ToASCII("T1", true, nil)
+	output := g.ToASCII("T1", true, nil, DefaultRenderOptions())
 
 	if !strings.Contains(output, "T1") {
 		t.Error("Expected ASCII output to contain T1")
@@ -318,7 +318,7 @@ func TestToJSON(t *testing.T) {
 	}
 
 	g := NewGraph(tasks)
-	jsonOutput := g.ToJSON()
+	jsonOutput := g.ToJSON(DefaultRenderOptions())
 
 	nodes, ok := jsonOutput["nodes"].([]map[string]any)
 	if !ok {
@@ -348,7 +348,7 @@ func TestToASCII_NilFormatter_PlainText(t *testing.T) {
 	tasks := createTestTasks()
 	g := NewGraph(tasks)
 
-	output := g.ToASCII("T1", true, nil)
+	output := g.ToASCII("T1", true, nil, DefaultRenderOptions())
 
 	// Verify plain text output (no ANSI codes)
 	if strings.Contains(output, "\033[") {
@@ -403,7 +403,7 @@ func TestToASCII_WithFormatter(t *testing.T) {
 		},
 	}
 
-	output := g.ToASCII("T1", true, f)
+	output := g.ToASCII("T1", true, f, DefaultRenderOptions())
 
 	if !strings.Contains(output, "<ID:T1>") {
 		t.Errorf("Expected formatted ID for T1, got:\n%s", output)
@@ -430,7 +430,7 @@ func TestToASCII_WithFormatter(t *testing.T) {
 		{ID: "C", Title: "Child2", Status: model.StatusPending, Dependencies: []string{"A"}},
 	}
 	gMulti := NewGraph(tasksMulti)
-	outputMulti := gMulti.ToASCII("A", true, f)
+	outputMulti := gMulti.ToASCII("A", true, f, DefaultRenderOptions())
 
 	if !strings.Contains(outputMulti, "<C:├── >") {
 		t.Errorf("Expected formatted ├── connector, got:\n%s", outputMulti)
@@ -452,7 +452,7 @@ func TestToASCII_SingleChildChain_ShowsIndentation(t *testing.T) {
 	g := NewGraph(tasks)
 
 	// Without a specified root — auto-detected roots
-	output := g.ToASCII("", true, nil)
+	output := g.ToASCII("", true, nil, DefaultRenderOptions())
 
 	// B should be indented under A with a tree connector
 	if !strings.Contains(output, "└── [B]") {
@@ -465,7 +465,7 @@ func TestToASCII_SingleChildChain_ShowsIndentation(t *testing.T) {
 	}
 
 	// With a specified root
-	outputRooted := g.ToASCII("A", true, nil)
+	outputRooted := g.ToASCII("A", true, nil, DefaultRenderOptions())
 
 	if !strings.Contains(outputRooted, "└── [B]") {
 		t.Errorf("Expected B to be indented under A with └── connector (rooted), got:\n%s", outputRooted)
@@ -513,10 +513,177 @@ func TestToASCII_WithFormatter_Reference(t *testing.T) {
 		},
 	}
 
-	output := g.ToASCII("T1", true, f)
+	output := g.ToASCII("T1", true, f, DefaultRenderOptions())
 
 	// T4 appears under both T2 and T3, so the second occurrence should have "(see above)"
 	if !strings.Contains(output, "<REF:(see above)>") {
 		t.Errorf("Expected formatted reference text, got:\n%s", output)
+	}
+}
+
+func TestNewGraph_RelatedEdges(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "A", Title: "Task A", Related: []string{"B", "C"}},
+		{ID: "B", Title: "Task B", Related: []string{"A"}},
+		{ID: "C", Title: "Task C"},
+		{ID: "D", Title: "Task D", Related: []string{"A"}},
+	}
+	g := NewGraph(tasks)
+
+	// A-B is bidirectionally declared — should appear once
+	// A-C is unidirectional — should appear once
+	// A-D is unidirectionally declared by D — should appear once
+	if len(g.RelatedEdges) != 3 {
+		t.Errorf("expected 3 deduplicated related edges, got %d: %v", len(g.RelatedEdges), g.RelatedEdges)
+	}
+
+	// RelatedMap should be bidirectional
+	if len(g.RelatedMap["A"]) != 3 {
+		t.Errorf("expected A to have 3 related tasks, got %d: %v", len(g.RelatedMap["A"]), g.RelatedMap["A"])
+	}
+	if len(g.RelatedMap["B"]) != 1 {
+		t.Errorf("expected B to have 1 related task, got %d: %v", len(g.RelatedMap["B"]), g.RelatedMap["B"])
+	}
+}
+
+func TestNewGraph_RelatedEdges_IgnoresMissingTasks(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "A", Title: "Task A", Related: []string{"B", "MISSING"}},
+		{ID: "B", Title: "Task B"},
+	}
+	g := NewGraph(tasks)
+
+	if len(g.RelatedEdges) != 1 {
+		t.Errorf("expected 1 related edge (ignoring missing ref), got %d", len(g.RelatedEdges))
+	}
+}
+
+func TestToMermaid_RelatedEdges(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "A", Title: "Task A", Related: []string{"B"}},
+		{ID: "B", Title: "Task B"},
+	}
+	g := NewGraph(tasks)
+	output := g.ToMermaid(DefaultRenderOptions())
+
+	if !strings.Contains(output, "A -.- B") {
+		t.Errorf("expected dashed undirected edge 'A -.- B' in mermaid output, got:\n%s", output)
+	}
+}
+
+func TestToDot_RelatedEdges(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "A", Title: "Task A", Related: []string{"B"}},
+		{ID: "B", Title: "Task B"},
+	}
+	g := NewGraph(tasks)
+	output := g.ToDot(DefaultRenderOptions())
+
+	if !strings.Contains(output, "style=dashed") {
+		t.Errorf("expected dashed style in dot output, got:\n%s", output)
+	}
+	if !strings.Contains(output, "dir=none") {
+		t.Errorf("expected dir=none in dot output, got:\n%s", output)
+	}
+}
+
+func TestToASCII_RelatedAnnotation(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "A", Title: "Root", Related: []string{"B"}},
+		{ID: "B", Title: "Other"},
+	}
+	g := NewGraph(tasks)
+	output := g.ToASCII("", true, nil, DefaultRenderOptions())
+
+	if !strings.Contains(output, "~ B") {
+		t.Errorf("expected '~ B' related annotation in ASCII output, got:\n%s", output)
+	}
+}
+
+func TestToJSON_RelatedEdges(t *testing.T) {
+	tasks := []*model.Task{
+		{ID: "A", Title: "Task A", Related: []string{"B"}},
+		{ID: "B", Title: "Task B"},
+	}
+	g := NewGraph(tasks)
+	result := g.ToJSON(DefaultRenderOptions())
+
+	relatedEdges, ok := result["relatedEdges"].([]map[string]string)
+	if !ok {
+		t.Fatalf("expected relatedEdges to be []map[string]string, got %T", result["relatedEdges"])
+	}
+	if len(relatedEdges) != 1 {
+		t.Fatalf("expected 1 related edge, got %d", len(relatedEdges))
+	}
+	if relatedEdges[0]["a"] != "A" || relatedEdges[0]["b"] != "B" {
+		t.Errorf("unexpected related edge: %v", relatedEdges[0])
+	}
+}
+
+// depthChain builds a linear chain: n0 -> n1 -> n2 -> n3
+func depthChain() *Graph {
+	return NewGraph([]*model.Task{
+		{ID: "n0", Dependencies: []string{}},
+		{ID: "n1", Dependencies: []string{"n0"}},
+		{ID: "n2", Dependencies: []string{"n1"}},
+		{ID: "n3", Dependencies: []string{"n2"}},
+	})
+}
+
+func TestGetDownstreamN_Depth1(t *testing.T) {
+	g := depthChain()
+	got := g.GetDownstreamN("n0", 1)
+	if len(got) != 1 || !got["n1"] {
+		t.Errorf("expected {n1}, got %v", got)
+	}
+}
+
+func TestGetDownstreamN_Depth2(t *testing.T) {
+	g := depthChain()
+	got := g.GetDownstreamN("n0", 2)
+	if len(got) != 2 || !got["n1"] || !got["n2"] {
+		t.Errorf("expected {n1, n2}, got %v", got)
+	}
+}
+
+func TestGetDownstreamN_DepthExceedsChain(t *testing.T) {
+	g := depthChain()
+	got := g.GetDownstreamN("n0", 100)
+	if len(got) != 3 {
+		t.Errorf("expected all 3 descendants, got %v", got)
+	}
+}
+
+func TestGetDownstreamN_Depth0_IsUnlimited(t *testing.T) {
+	g := depthChain()
+	unlimited := g.GetDownstream("n0")
+	byN := g.GetDownstreamN("n0", 0)
+	if len(byN) != len(unlimited) {
+		t.Errorf("depth 0 should equal unlimited: got %v vs %v", byN, unlimited)
+	}
+}
+
+func TestGetUpstreamN_Depth1(t *testing.T) {
+	g := depthChain()
+	got := g.GetUpstreamN("n3", 1)
+	if len(got) != 1 || !got["n2"] {
+		t.Errorf("expected {n2}, got %v", got)
+	}
+}
+
+func TestGetUpstreamN_Depth2(t *testing.T) {
+	g := depthChain()
+	got := g.GetUpstreamN("n3", 2)
+	if len(got) != 2 || !got["n2"] || !got["n1"] {
+		t.Errorf("expected {n2, n1}, got %v", got)
+	}
+}
+
+func TestGetUpstreamN_Depth0_IsUnlimited(t *testing.T) {
+	g := depthChain()
+	unlimited := g.GetUpstream("n3")
+	byN := g.GetUpstreamN("n3", 0)
+	if len(byN) != len(unlimited) {
+		t.Errorf("depth 0 should equal unlimited: got %v vs %v", byN, unlimited)
 	}
 }

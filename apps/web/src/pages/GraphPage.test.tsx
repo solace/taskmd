@@ -2,16 +2,54 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { createGraphData } from "../test-utils/fixtures.ts";
 
+vi.mock("react-router-dom", () => ({ useNavigate: () => vi.fn() }));
 vi.mock("../hooks/use-graph.ts", () => ({ useGraph: vi.fn() }));
 vi.mock("../hooks/use-phase.tsx", () => ({ usePhase: () => ({ phase: null }) }));
 vi.mock("../hooks/use-project.ts", () => ({ useProject: () => ({ project: null }) }));
+vi.mock("../hooks/use-config.ts", () => ({ useConfig: () => ({ scopes: [], phases: [], readonly: false, version: "" }) }));
 interface GraphNode { id: string; [key: string]: unknown }
 interface GraphData { nodes?: GraphNode[]; edges?: unknown[] }
-vi.mock("../components/graph/useGraphLayout.ts", () => ({
-  useGraphLayout: (data: GraphData | undefined) => ({
-    nodes: data?.nodes?.map((n: GraphNode) => ({ id: n.id, data: n })) ?? [],
+vi.mock("../components/graph/hooks/useElkLayout.ts", () => ({
+  useElkLayout: (data: GraphData | undefined) => ({
+    nodes: data?.nodes?.map((n: GraphNode) => ({ id: n.id, type: "task", data: n })) ?? [],
     edges: data?.edges ?? [],
+    isLayouting: false,
   }),
+}));
+vi.mock("../components/graph/hooks/useGraphState.ts", () => ({
+  useGraphState: () => ({
+    state: {
+      preset: "default",
+      overlays: { related: false, spawnedBy: false },
+      showParentEdges: true,
+      clustering: true,
+      colorBy: null,
+      focusNodeId: null,
+      focusDepth: 2,
+    },
+    dispatch: vi.fn(),
+  }),
+}));
+vi.mock("../components/graph/GraphPresetSelector.tsx", () => ({
+  GraphPresetSelector: () => <div data-testid="graph-preset-selector" />,
+}));
+vi.mock("../components/graph/GraphFocusControls.tsx", () => ({
+  GraphFocusControls: () => null,
+}));
+vi.mock("../components/graph/layout/focus.ts", () => ({
+  bfsSubgraph: (data: unknown) => data,
+}));
+vi.mock("../components/graph/layout/elk-layout.ts", () => ({
+  buildOverlayEdges: () => [],
+}));
+vi.mock("../components/graph/GraphOverlayToggles.tsx", () => ({
+  GraphOverlayToggles: () => <div data-testid="graph-overlay-toggles" />,
+}));
+vi.mock("../components/graph/GraphColorBy.tsx", () => ({
+  GraphColorBy: () => null,
+}));
+vi.mock("../components/graph/graph-colors.ts", () => ({
+  scopeColor: () => "#8b5cf6",
 }));
 vi.mock("@xyflow/react", () => ({
   ReactFlowProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

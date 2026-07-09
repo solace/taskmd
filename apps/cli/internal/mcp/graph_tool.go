@@ -72,7 +72,7 @@ func handleGraph(_ context.Context, _ *gomcp.CallToolRequest, input GraphInput) 
 		g = g.FilterTasks(combined)
 	}
 
-	graphJSON := g.ToJSON()
+	graphJSON := g.ToJSON(graph.DefaultRenderOptions())
 
 	data, err := json.Marshal(graphJSON)
 	if err != nil {

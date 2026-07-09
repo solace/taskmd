@@ -115,6 +115,8 @@ func resetSetFlags() {
 	setOwner = ""
 	setParent = ""
 	setDependsOn = ""
+	setRelated = ""
+	setSpawnedBy = ""
 	setPhase = ""
 	setDone = false
 	setDryRun = false
@@ -128,7 +130,7 @@ func resetSetFlags() {
 	taskDir = "."
 
 	// Reset cobra flag Changed state to avoid test interference
-	for _, name := range []string{"status", "parent", "depends-on", "phase"} {
+	for _, name := range []string{"status", "parent", "depends-on", "phase", "related", "spawned-by"} {
 		if f := setCmd.Flags().Lookup(name); f != nil {
 			f.Changed = false
 		}
@@ -2162,5 +2164,106 @@ created: 2026-02-08
 	}
 	if strings.Contains(s, "completed_at:") {
 		t.Errorf("Expected completed_at to be cleared when cancelling, got:\n%s", s)
+	}
+}
+
+func TestSet_Related(t *testing.T) {
+	tmpDir := createSetTestFiles(t)
+	resetSetFlags()
+	taskDir = tmpDir
+	setTaskID = "001"
+	setRelated = "002,003"
+
+	setCmd.Flags().Set("related", "002,003")
+	defer func() { setCmd.Flags().Lookup("related").Changed = false }()
+
+	output, err := captureSetOutput(t)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(output, "related:") {
+		t.Errorf("Expected confirmation to mention 'related', got: %s", output)
+	}
+
+	content, _ := os.ReadFile(filepath.Join(tmpDir, "001-setup.md"))
+	s := string(content)
+	if !strings.Contains(s, "002") {
+		t.Errorf("Expected file to contain related task 002, got:\n%s", s)
+	}
+	if !strings.Contains(s, "003") {
+		t.Errorf("Expected file to contain related task 003, got:\n%s", s)
+	}
+}
+
+func TestSet_Related_Clear(t *testing.T) {
+	tmpDir := t.TempDir()
+	resetSetFlags()
+
+	content := `---
+id: "099"
+title: "Task with related"
+status: pending
+priority: medium
+related:
+  - "001"
+  - "002"
+dependencies: []
+tags: []
+created: 2026-02-08
+---
+
+# Task with related
+`
+	path := filepath.Join(tmpDir, "099-related.md")
+	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+
+	taskDir = tmpDir
+	setTaskID = "099"
+	setRelated = ""
+
+	setCmd.Flags().Set("related", "")
+	defer func() { setCmd.Flags().Lookup("related").Changed = false }()
+
+	_, err := captureSetOutput(t)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	updated, _ := os.ReadFile(path)
+	if strings.Contains(string(updated), `"001"`) || strings.Contains(string(updated), `"002"`) {
+		t.Errorf("Expected related to be cleared, got:\n%s", string(updated))
+	}
+}
+
+func TestSet_Related_WithOtherFlags(t *testing.T) {
+	tmpDir := createSetTestFiles(t)
+	resetSetFlags()
+	taskDir = tmpDir
+	setTaskID = "001"
+	setRelated = "002"
+	setStatus = "in-progress"
+
+	setCmd.Flags().Set("related", "002")
+	defer func() { setCmd.Flags().Lookup("related").Changed = false }()
+
+	output, err := captureSetOutput(t)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !strings.Contains(output, "status") {
+		t.Errorf("Expected status change in output, got: %s", output)
+	}
+
+	content, _ := os.ReadFile(filepath.Join(tmpDir, "001-setup.md"))
+	s := string(content)
+	if !strings.Contains(s, "status: in-progress") {
+		t.Errorf("Expected status to be updated, got:\n%s", s)
+	}
+	if !strings.Contains(s, "002") {
+		t.Errorf("Expected related task 002 in file, got:\n%s", s)
 	}
 }

@@ -146,6 +146,8 @@ type dependencyInfo struct {
 	Blocks    []depEntry `json:"blocks" yaml:"blocks"`
 	Parent    *depEntry  `json:"parent,omitempty" yaml:"parent,omitempty"`
 	Children  []depEntry `json:"children,omitempty" yaml:"children,omitempty"`
+	Related   []depEntry `json:"related,omitempty" yaml:"related,omitempty"`
+	SpawnedBy *depEntry  `json:"spawned_by,omitempty" yaml:"spawned_by,omitempty"`
 }
 
 // depEntry is a single dependency reference.
@@ -380,12 +382,45 @@ func buildDependencyInfo(task *model.Task, allTasks []*model.Task) dependencyInf
 		}
 		info.Parent = &entry
 	}
+	if task.SpawnedBy != "" {
+		entry := depEntry{ID: task.SpawnedBy}
+		if s, ok := taskMap[task.SpawnedBy]; ok {
+			entry.Title = s.Title
+			entry.Status = string(s.Status)
+		}
+		info.SpawnedBy = &entry
+	}
 	for _, t := range allTasks {
 		if t.Parent == task.ID {
 			entry := depEntry{ID: t.ID, Title: t.Title, Status: string(t.Status)}
 			info.Children = append(info.Children, entry)
 		}
 	}
+
+	// Build related: union of explicit related field (both directions)
+	relatedSeen := make(map[string]bool)
+	for _, relID := range task.Related {
+		if relatedSeen[relID] {
+			continue
+		}
+		relatedSeen[relID] = true
+		entry := depEntry{ID: relID}
+		if rel, ok := taskMap[relID]; ok {
+			entry.Title = rel.Title
+			entry.Status = string(rel.Status)
+		}
+		info.Related = append(info.Related, entry)
+	}
+	// Include reverse relations: tasks that list this task as related
+	for _, t := range allTasks {
+		for _, relID := range t.Related {
+			if relID == task.ID && !relatedSeen[t.ID] {
+				relatedSeen[t.ID] = true
+				info.Related = append(info.Related, depEntry{ID: t.ID, Title: t.Title, Status: string(t.Status)})
+			}
+		}
+	}
+
 	return info
 }
 
@@ -418,6 +453,9 @@ func outputGetText(task *model.Task, deps dependencyInfo, ctxFiles []taskcontext
 	if deps.Parent != nil {
 		fmt.Fprintf(w, "%s %s\n", formatLabel("Parent:", r), formatDepEntry(*deps.Parent, r))
 	}
+	if deps.SpawnedBy != nil {
+		fmt.Fprintf(w, "%s %s\n", formatLabel("Spawned by:", r), formatDepEntry(*deps.SpawnedBy, r))
+	}
 	if !task.Created.IsZero() {
 		fmt.Fprintf(w, "%s %s\n", formatLabel("Created:", r), task.Created.Format("2006-01-02"))
 	}
@@ -426,6 +464,7 @@ func outputGetText(task *model.Task, deps dependencyInfo, ctxFiles []taskcontext
 	printDescription(w, task.Body, r, getRawMarkdown)
 	printDependencies(w, deps, r)
 	printChildren(w, deps.Children, r)
+	printRelated(w, deps.Related, r)
 	printGetContextFiles(w, ctxFiles, r)
 	return nil
 }
@@ -514,6 +553,20 @@ func printChildren(w io.Writer, children []depEntry, r *lipgloss.Renderer) {
 	}
 }
 
+func printRelated(w io.Writer, related []depEntry, r *lipgloss.Renderer) {
+	if len(related) == 0 {
+		return
+	}
+	fmt.Fprintf(w, "\n%s\n", formatLabel("Related:", r))
+	for _, rel := range related {
+		entry := formatDepEntry(rel, r)
+		if rel.Status != "" {
+			entry += " " + formatStatus(rel.Status, r)
+		}
+		fmt.Fprintf(w, "  %s\n", entry)
+	}
+}
+
 func formatDepList(entries []depEntry, r *lipgloss.Renderer) string {
 	parts := make([]string, len(entries))
 	for i, e := range entries {
@@ -538,11 +591,13 @@ type getOutput struct {
 	Tags         []string                `json:"tags" yaml:"tags"`
 	PRs          []string                `json:"pr,omitempty" yaml:"pr,omitempty"`
 	Parent       *depEntry               `json:"parent,omitempty" yaml:"parent,omitempty"`
+	SpawnedBy    *depEntry               `json:"spawned_by,omitempty" yaml:"spawned_by,omitempty"`
 	Created      string                  `json:"created,omitempty" yaml:"created,omitempty"`
 	FilePath     string                  `json:"file_path" yaml:"file_path"`
 	Content      string                  `json:"content" yaml:"content"`
 	Dependencies getDepsJSON             `json:"dependencies" yaml:"dependencies"`
 	Children     []depEntry              `json:"children,omitempty" yaml:"children,omitempty"`
+	Related      []depEntry              `json:"related,omitempty" yaml:"related,omitempty"`
 	ContextFiles []taskcontext.FileEntry `json:"context_files,omitempty" yaml:"context_files,omitempty"`
 	Worklog      *worklogInfo            `json:"worklog,omitempty" yaml:"worklog,omitempty"`
 }
@@ -575,8 +630,10 @@ func buildGetOutput(task *model.Task, deps dependencyInfo, ctxFiles []taskcontex
 			DependsOn: deps.DependsOn,
 			Blocks:    deps.Blocks,
 		},
-		Children: deps.Children,
-		Worklog:  wl,
+		Children:  deps.Children,
+		Related:   deps.Related,
+		SpawnedBy: deps.SpawnedBy,
+		Worklog:   wl,
 	}
 	if len(ctxFiles) > 0 {
 		out.ContextFiles = ctxFiles

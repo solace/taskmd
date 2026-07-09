@@ -8,7 +8,7 @@ import (
 
 func TestDataProvider_GetTasks(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	tasks, err := dp.GetTasks()
 	if err != nil {
@@ -22,7 +22,7 @@ func TestDataProvider_GetTasks(t *testing.T) {
 
 func TestDataProvider_Cache(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	// First call should scan
 	tasks1, err := dp.GetTasks()
@@ -43,7 +43,7 @@ func TestDataProvider_Cache(t *testing.T) {
 
 func TestDataProvider_Invalidate(t *testing.T) {
 	dir := createTestTaskDir(t)
-	dp := NewDataProvider(dir, false)
+	dp := NewDataProvider(dir, false, nil)
 
 	// Initial scan
 	tasks1, err := dp.GetTasks()

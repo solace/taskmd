@@ -59,7 +59,7 @@ describe("computeGraphLayout", () => {
     expect(childA.position.y).toBe(childB.position.y);
   });
 
-  it("maps edges with correct source/target and type", () => {
+  it("maps dependency edges with correct source/target and type", () => {
     const data: GraphData = {
       nodes: [
         { id: "a", title: "A", status: "pending" },
@@ -71,11 +71,30 @@ describe("computeGraphLayout", () => {
     const result = computeGraphLayout(data);
     expect(result.edges).toHaveLength(1);
     expect(result.edges[0]).toMatchObject({
-      id: "e-0",
+      id: "dep-0",
       source: "a",
       target: "b",
       type: "smoothstep",
     });
+  });
+
+  it("adds parent edges and positions children below parent", () => {
+    const data: GraphData = {
+      nodes: [
+        { id: "p", title: "Parent", status: "pending" },
+        { id: "c", title: "Child", status: "pending", parent: "p" },
+      ],
+      edges: [],
+    };
+
+    const result = computeGraphLayout(data);
+    // One parent composition edge
+    expect(result.edges).toHaveLength(1);
+    expect(result.edges[0]).toMatchObject({ id: "par-c", source: "p", target: "c" });
+    // Child should be below parent in TB layout
+    const parent = result.nodes.find((n) => n.id === "p")!;
+    const child = result.nodes.find((n) => n.id === "c")!;
+    expect(parent.position.y).toBeLessThan(child.position.y);
   });
 
   it("exports NODE_WIDTH and NODE_HEIGHT constants", () => {
