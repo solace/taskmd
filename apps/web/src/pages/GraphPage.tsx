@@ -119,9 +119,9 @@ export function GraphPage() {
 
   const edges = useMemo((): Edge[] => {
     if (!focusedData || isZoomedOut) return structuralEdges;
-    const overlays = buildOverlayEdges(focusedData, state.overlays.related, state.overlays.spawnedBy);
+    const overlays = buildOverlayEdges(focusedData, state.overlays.seeAlso, state.overlays.spawnedBy);
     return overlays.length === 0 ? structuralEdges : [...structuralEdges, ...overlays];
-  }, [structuralEdges, focusedData, state.overlays.related, state.overlays.spawnedBy, isZoomedOut]);
+  }, [structuralEdges, focusedData, state.overlays.seeAlso, state.overlays.spawnedBy, isZoomedOut]);
 
   const toggleStatus = useCallback((status: string) => {
     setSelectedStatuses((prev) => {
@@ -181,9 +181,9 @@ export function GraphPage() {
           />
           {showOverlayToggles && (
             <GraphOverlayToggles
-              showRelated={state.overlays.related}
+              showSeeAlso={state.overlays.seeAlso}
               showSpawnedBy={state.overlays.spawnedBy}
-              onToggleRelated={() => dispatch({ type: "TOGGLE_RELATED" })}
+              onToggleSeeAlso={() => dispatch({ type: "TOGGLE_SEE_ALSO" })}
               onToggleSpawnedBy={() => dispatch({ type: "TOGGLE_SPAWNED_BY" })}
               lodHidden={isZoomedOut}
             />

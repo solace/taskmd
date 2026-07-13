@@ -68,9 +68,8 @@ describe("GraphView", () => {
       { id: "1", position: { x: 0, y: 0 }, data: { label: "Task A", taskId: "001" } },
       { id: "2", position: { x: 100, y: 0 }, data: { label: "Task B", taskId: "002" } },
     ];
-    const matchedNodeIds = new Set(["1"]);
     renderWithProviders(
-      <GraphView nodes={nodes} edges={[]} searchActive={true} matchedNodeIds={matchedNodeIds} />,
+      <GraphView nodes={nodes} edges={[]} />,
     );
     const flow = screen.getByTestId("react-flow");
     expect(flow).toBeInTheDocument();
@@ -83,9 +82,8 @@ describe("GraphView", () => {
     const nodes = [
       { id: "1", position: { x: 0, y: 0 }, data: { label: "Task A", taskId: "001" } },
     ];
-    const matchedNodeIds = new Set(["1"]);
     renderWithProviders(
-      <GraphView nodes={nodes} edges={[]} searchActive={false} matchedNodeIds={matchedNodeIds} />,
+      <GraphView nodes={nodes} edges={[]} />,
     );
     expect(screen.getByTestId("react-flow")).toHaveAttribute("data-nodes", "1");
   });

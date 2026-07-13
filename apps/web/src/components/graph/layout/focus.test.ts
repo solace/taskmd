@@ -67,17 +67,19 @@ describe("bfsSubgraph", () => {
     expect(ids).not.toContain("x");
   });
 
-  it("traverses related edges bidirectionally", () => {
+  it("traverses see_also edges in the declared direction only", () => {
     const data: GraphData = {
       nodes: [
         { id: "a", title: "A", status: "pending" },
         { id: "b", title: "B", status: "pending" },
       ],
       edges: [],
-      relatedEdges: [{ a: "a", b: "b" }],
+      seeAlsoEdges: [{ from: "a", to: "b" }],
     };
+    // a declares b as see_also — b is reachable from a
     expect(bfsSubgraph(data, "a", 1).nodes.map((n) => n.id)).toContain("b");
-    expect(bfsSubgraph(data, "b", 1).nodes.map((n) => n.id)).toContain("a");
+    // b does not declare a — a is not reachable from b via see_also
+    expect(bfsSubgraph(data, "b", 1).nodes.map((n) => n.id)).not.toContain("a");
   });
 
   it("traverses spawned-by edges bidirectionally", () => {

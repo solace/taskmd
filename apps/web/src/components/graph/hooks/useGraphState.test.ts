@@ -8,7 +8,7 @@ describe("useGraphState", () => {
     expect(result.current.state.preset).toBe("default");
     expect(result.current.state.showParentEdges).toBe(true);
     expect(result.current.state.clustering).toBe(true);
-    expect(result.current.state.overlays.related).toBe(false);
+    expect(result.current.state.overlays.seeAlso).toBe(false);
     expect(result.current.state.overlays.spawnedBy).toBe(false);
     expect(result.current.state.colorBy).toBeNull();
   });
@@ -18,33 +18,24 @@ describe("useGraphState", () => {
     act(() => result.current.dispatch({ type: "SET_PRESET", preset: "deps-only" }));
     expect(result.current.state.showParentEdges).toBe(false);
     expect(result.current.state.clustering).toBe(false);
-    expect(result.current.state.overlays.related).toBe(false);
+    expect(result.current.state.overlays.seeAlso).toBe(false);
     expect(result.current.state.overlays.spawnedBy).toBe(false);
-  });
-
-  it("related preset enables related overlay, disables parent edges and clustering", () => {
-    const { result } = renderHook(() => useGraphState());
-    act(() => result.current.dispatch({ type: "SET_PRESET", preset: "related" }));
-    expect(result.current.state.overlays.related).toBe(true);
-    expect(result.current.state.overlays.spawnedBy).toBe(false);
-    expect(result.current.state.showParentEdges).toBe(false);
-    expect(result.current.state.clustering).toBe(false);
   });
 
   it("provenance preset enables spawnedBy overlay, disables parent edges and clustering", () => {
     const { result } = renderHook(() => useGraphState());
     act(() => result.current.dispatch({ type: "SET_PRESET", preset: "provenance" }));
     expect(result.current.state.overlays.spawnedBy).toBe(true);
-    expect(result.current.state.overlays.related).toBe(false);
+    expect(result.current.state.overlays.seeAlso).toBe(false);
     expect(result.current.state.showParentEdges).toBe(false);
   });
 
-  it("TOGGLE_RELATED flips the related overlay", () => {
+  it("TOGGLE_SEE_ALSO flips the seeAlso overlay", () => {
     const { result } = renderHook(() => useGraphState());
-    act(() => result.current.dispatch({ type: "TOGGLE_RELATED" }));
-    expect(result.current.state.overlays.related).toBe(true);
-    act(() => result.current.dispatch({ type: "TOGGLE_RELATED" }));
-    expect(result.current.state.overlays.related).toBe(false);
+    act(() => result.current.dispatch({ type: "TOGGLE_SEE_ALSO" }));
+    expect(result.current.state.overlays.seeAlso).toBe(true);
+    act(() => result.current.dispatch({ type: "TOGGLE_SEE_ALSO" }));
+    expect(result.current.state.overlays.seeAlso).toBe(false);
   });
 
   it("TOGGLE_SPAWNED_BY flips the spawnedBy overlay", () => {
@@ -63,10 +54,10 @@ describe("useGraphState", () => {
 
   it("switching presets resets overlays atomically — no intermediate state", () => {
     const { result } = renderHook(() => useGraphState());
-    act(() => result.current.dispatch({ type: "TOGGLE_RELATED" }));
-    expect(result.current.state.overlays.related).toBe(true);
+    act(() => result.current.dispatch({ type: "TOGGLE_SEE_ALSO" }));
+    expect(result.current.state.overlays.seeAlso).toBe(true);
     act(() => result.current.dispatch({ type: "SET_PRESET", preset: "deps-only" }));
-    expect(result.current.state.overlays.related).toBe(false);
+    expect(result.current.state.overlays.seeAlso).toBe(false);
     expect(result.current.state.preset).toBe("deps-only");
   });
 
@@ -81,14 +72,14 @@ describe("useGraphState", () => {
   it("colorBy is preserved across preset changes", () => {
     const { result } = renderHook(() => useGraphState());
     act(() => result.current.dispatch({ type: "SET_COLOR_BY", scope: "api" }));
-    act(() => result.current.dispatch({ type: "SET_PRESET", preset: "related" }));
+    act(() => result.current.dispatch({ type: "SET_PRESET", preset: "provenance" }));
     expect(result.current.state.colorBy).toBe("api");
   });
 
   it("focus preset enables all overlays and parent edges, disables clustering", () => {
     const { result } = renderHook(() => useGraphState());
     act(() => result.current.dispatch({ type: "SET_PRESET", preset: "focus" }));
-    expect(result.current.state.overlays.related).toBe(true);
+    expect(result.current.state.overlays.seeAlso).toBe(true);
     expect(result.current.state.overlays.spawnedBy).toBe(true);
     expect(result.current.state.showParentEdges).toBe(true);
     expect(result.current.state.clustering).toBe(false);

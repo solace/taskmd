@@ -1644,7 +1644,7 @@ id: "g01"
 title: "Alpha"
 status: pending
 priority: medium
-related: ["g02"]
+see_also: ["g02"]
 dependencies: []
 tags: []
 created: 2026-02-08
@@ -1685,7 +1685,7 @@ created: 2026-02-08
 	return tmpDir
 }
 
-func TestGraphCommand_Related_JSON(t *testing.T) {
+func TestGraphCommand_SeeAlso_JSON(t *testing.T) {
 	tmpDir := createRelatedGraphTestFiles(t)
 	resetGraphFlags()
 	graphAll = true
@@ -1693,25 +1693,24 @@ func TestGraphCommand_Related_JSON(t *testing.T) {
 	output := captureGraphOutput(t, []string{tmpDir})
 	result := parseGraphJSON(t, output)
 
-	relatedEdges, ok := result["relatedEdges"].([]any)
+	seeAlsoEdges, ok := result["seeAlsoEdges"].([]any)
 	if !ok {
-		t.Fatalf("Expected 'relatedEdges' array in JSON output, got: %T", result["relatedEdges"])
+		t.Fatalf("Expected 'seeAlsoEdges' array in JSON output, got: %T", result["seeAlsoEdges"])
 	}
 
-	if len(relatedEdges) != 1 {
-		t.Fatalf("Expected 1 related edge, got %d", len(relatedEdges))
+	if len(seeAlsoEdges) != 1 {
+		t.Fatalf("Expected 1 see_also edge, got %d", len(seeAlsoEdges))
 	}
 
-	edge := relatedEdges[0].(map[string]any)
-	a, b := edge["a"].(string), edge["b"].(string)
+	edge := seeAlsoEdges[0].(map[string]any)
+	from, to := edge["from"].(string), edge["to"].(string)
 
-	// Pair is stored lexicographically (a <= b)
-	if !((a == "g01" && b == "g02") || (a == "g02" && b == "g01")) {
-		t.Errorf("Expected related edge between g01 and g02, got %s and %s", a, b)
+	if from != "g01" || to != "g02" {
+		t.Errorf("Expected directed see_also edge g01->g02, got %s->%s", from, to)
 	}
 }
 
-func TestGraphCommand_Related_Mermaid(t *testing.T) {
+func TestGraphCommand_SeeAlso_Mermaid(t *testing.T) {
 	tmpDir := createRelatedGraphTestFiles(t)
 	resetGraphFlags()
 	graphFormat = "mermaid"
@@ -1719,12 +1718,12 @@ func TestGraphCommand_Related_Mermaid(t *testing.T) {
 
 	output := captureGraphOutput(t, []string{tmpDir})
 
-	if !strings.Contains(output, "-.-") {
-		t.Errorf("Expected Mermaid related edge syntax '-.-', got output:\n%s", output)
+	if !strings.Contains(output, "-.->") {
+		t.Errorf("Expected Mermaid see_also edge syntax '.->', got output:\n%s", output)
 	}
 }
 
-func TestGraphCommand_Related_DOT(t *testing.T) {
+func TestGraphCommand_SeeAlso_DOT(t *testing.T) {
 	tmpDir := createRelatedGraphTestFiles(t)
 	resetGraphFlags()
 	graphFormat = "dot"
@@ -1733,14 +1732,14 @@ func TestGraphCommand_Related_DOT(t *testing.T) {
 	output := captureGraphOutput(t, []string{tmpDir})
 
 	if !strings.Contains(output, "style=dashed") {
-		t.Errorf("Expected DOT related edge to contain 'style=dashed', got:\n%s", output)
+		t.Errorf("Expected DOT see_also edge to contain 'style=dashed', got:\n%s", output)
 	}
-	if !strings.Contains(output, "dir=none") {
-		t.Errorf("Expected DOT related edge to contain 'dir=none', got:\n%s", output)
+	if strings.Contains(output, "dir=none") {
+		t.Errorf("Expected directed edge (no dir=none) in DOT output, got:\n%s", output)
 	}
 }
 
-func TestGraphCommand_Related_ASCII(t *testing.T) {
+func TestGraphCommand_SeeAlso_ASCII(t *testing.T) {
 	tmpDir := createRelatedGraphTestFiles(t)
 	resetGraphFlags()
 	graphFormat = "ascii"
@@ -1749,7 +1748,7 @@ func TestGraphCommand_Related_ASCII(t *testing.T) {
 	output := captureGraphOutput(t, []string{tmpDir})
 
 	if !strings.Contains(output, "~") {
-		t.Errorf("Expected ASCII output to contain '~' annotation for related tasks, got:\n%s", output)
+		t.Errorf("Expected ASCII output to contain '~' annotation for see_also tasks, got:\n%s", output)
 	}
 }
 
@@ -1937,8 +1936,8 @@ func TestGraphCommand_Preset_DepsOnly_JSON(t *testing.T) {
 	output := captureGraphOutput(t, []string{tmpDir})
 	result := parseGraphJSON(t, output)
 
-	if _, ok := result["relatedEdges"]; ok {
-		t.Error("Expected relatedEdges to be omitted with --preset deps-only")
+	if _, ok := result["seeAlsoEdges"]; ok {
+		t.Error("Expected seeAlsoEdges to be omitted with --preset deps-only")
 	}
 	if _, ok := result["spawnedByEdges"]; ok {
 		t.Error("Expected spawnedByEdges to be omitted with --preset deps-only")
@@ -1954,11 +1953,8 @@ func TestGraphCommand_Preset_DepsOnly_Mermaid(t *testing.T) {
 
 	output := captureGraphOutput(t, []string{tmpDir})
 
-	if strings.Contains(output, "-.-") {
-		t.Error("Expected no related edges (-.-) with --preset deps-only")
-	}
 	if strings.Contains(output, "-.->") {
-		t.Error("Expected no spawned-by edges (-.->)  with --preset deps-only")
+		t.Error("Expected no see_also or spawned-by edges (.->) with --preset deps-only")
 	}
 }
 
@@ -1993,24 +1989,7 @@ func TestGraphCommand_Preset_DepsOnly_ASCII(t *testing.T) {
 	}
 }
 
-func TestGraphCommand_Preset_Related_SuppressesSpawnedBy(t *testing.T) {
-	tmpDir := createRelatedGraphTestFiles(t)
-	resetGraphFlags()
-	graphPreset = "related"
-	graphAll = true
-
-	output := captureGraphOutput(t, []string{tmpDir})
-	result := parseGraphJSON(t, output)
-
-	if _, ok := result["relatedEdges"]; !ok {
-		t.Error("Expected relatedEdges to be present with --preset related")
-	}
-	if _, ok := result["spawnedByEdges"]; ok {
-		t.Error("Expected spawnedByEdges to be omitted with --preset related")
-	}
-}
-
-func TestGraphCommand_Preset_Provenance_SuppressesRelated(t *testing.T) {
+func TestGraphCommand_Preset_Provenance_SuppressesSeeAlso(t *testing.T) {
 	tmpDir := createRelatedGraphTestFiles(t)
 	resetGraphFlags()
 	graphPreset = "provenance"
@@ -2019,8 +1998,8 @@ func TestGraphCommand_Preset_Provenance_SuppressesRelated(t *testing.T) {
 	output := captureGraphOutput(t, []string{tmpDir})
 	result := parseGraphJSON(t, output)
 
-	if _, ok := result["relatedEdges"]; ok {
-		t.Error("Expected relatedEdges to be omitted with --preset provenance")
+	if _, ok := result["seeAlsoEdges"]; ok {
+		t.Error("Expected seeAlsoEdges to be omitted with --preset provenance")
 	}
 	if _, ok := result["spawnedByEdges"]; !ok {
 		t.Error("Expected spawnedByEdges to be present with --preset provenance")

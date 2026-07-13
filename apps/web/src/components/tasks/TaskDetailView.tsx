@@ -90,13 +90,13 @@ export function TaskDetailView({ task, worklogEntries, readonly, onEdit }: TaskD
         </div>
       )}
 
-      {task.related && task.related.length > 0 && (
+      {task.see_also && task.see_also.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">Related</h3>
+          <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mb-2">See also</h3>
           <div className="flex gap-2 flex-wrap" data-arrow-nav>
-            {task.related.map((rel) => (
-              <Link key={rel} to={`/tasks/${rel}`} className="min-h-[44px] sm:min-h-0 inline-flex items-center px-2 py-1 text-xs font-mono bg-purple-50 rounded hover:bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:text-purple-300">
-                {rel}
+            {task.see_also.map((ref) => (
+              <Link key={ref} to={`/tasks/${ref}`} className="min-h-[44px] sm:min-h-0 inline-flex items-center px-2 py-1 text-xs font-mono bg-purple-50 rounded hover:bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 dark:text-purple-300">
+                {ref}
               </Link>
             ))}
           </div>

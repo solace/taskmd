@@ -37,7 +37,7 @@ describe("GraphLegend", () => {
 
     expect(screen.getByText("Depends on")).toBeInTheDocument();
     expect(screen.getByText("Contains (parent)")).toBeInTheDocument();
-    expect(screen.getByText("Related")).toBeInTheDocument();
+    expect(screen.getByText("See also")).toBeInTheDocument();
     expect(screen.getByText("Spawned by")).toBeInTheDocument();
   });
 

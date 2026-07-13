@@ -48,9 +48,8 @@ Supported formats:
 Multiple --filter flags are combined with AND logic.
 
 Edge visibility presets (--preset):
-  deps-only   Show only dependency edges (hide related and spawned-by)
-  related     Show deps + related edges (hide spawned-by)
-  provenance  Show deps + spawned-by edges (hide related)
+  deps-only   Show only dependency edges (hide see_also and spawned-by)
+  provenance  Show deps + spawned-by edges (hide see_also)
   full        Show all edges including parent, and enable subgraph grouping
 
 Multigraph flags:
@@ -101,7 +100,7 @@ func init() {
 	graphCmd.Flags().StringVar(&graphPriority, "priority", "", "shortcut for --filter priority=<value>")
 	graphCmd.Flags().StringVar(&graphPhase, "phase", "", "filter by phase")
 	graphCmd.Flags().IntVar(&graphDepth, "depth", 0, "limit --root traversal to N hops (requires --root; 0 means unlimited)")
-	graphCmd.Flags().StringVar(&graphPreset, "preset", "", "edge visibility preset: deps-only, related, provenance, full")
+	graphCmd.Flags().StringVar(&graphPreset, "preset", "", "edge visibility preset: deps-only, provenance, full")
 	graphCmd.Flags().BoolVar(&graphParentEdges, "parent-edges", false, "render parent→child edges (Mermaid, DOT, ASCII, JSON)")
 	graphCmd.Flags().BoolVar(&graphSubgraphs, "subgraphs", false, "group tasks by phase/scope in Mermaid and DOT output")
 }
@@ -250,17 +249,15 @@ func runGraph(cmd *cobra.Command, args []string) error {
 	opts := graph.DefaultRenderOptions()
 	switch graphPreset {
 	case "deps-only":
-		opts.ShowRelated, opts.ShowSpawnedBy = false, false
-	case "related":
-		opts.ShowSpawnedBy = false
+		opts.ShowSeeAlso, opts.ShowSpawnedBy = false, false
 	case "provenance":
-		opts.ShowRelated = false
+		opts.ShowSeeAlso = false
 	case "full":
 		opts.ShowParent, opts.Subgraphs = true, true
 	case "":
 		// no preset — keep defaults
 	default:
-		return fmt.Errorf("unknown preset %q (supported: deps-only, related, provenance, full)", graphPreset)
+		return fmt.Errorf("unknown preset %q (supported: deps-only, provenance, full)", graphPreset)
 	}
 	if graphParentEdges {
 		opts.ShowParent = true

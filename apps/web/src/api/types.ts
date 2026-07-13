@@ -6,7 +6,7 @@ export interface Task {
   effort: string;
   type: string;
   dependencies: string[] | null;
-  related?: string[] | null;
+  see_also?: string[] | null;
   tags: string[] | null;
   phase: string;
   group: string;
@@ -45,14 +45,14 @@ export interface BoardTask {
 export interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
-  relatedEdges?: GraphRelatedEdge[];
+  seeAlsoEdges?: GraphSeeAlsoEdge[];
   spawnedByEdges?: GraphSpawnedByEdge[];
   cycles?: string[][];
 }
 
-export interface GraphRelatedEdge {
-  a: string;
-  b: string;
+export interface GraphSeeAlsoEdge {
+  from: string;
+  to: string;
 }
 
 export interface GraphSpawnedByEdge {

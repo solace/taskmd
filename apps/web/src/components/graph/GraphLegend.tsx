@@ -34,14 +34,15 @@ const EDGE_ITEMS = [
     ),
   },
   {
-    label: "Related",
+    label: "See also",
     svg: (
       <svg width="32" height="12" viewBox="0 0 32 12" aria-hidden="true">
         <line
-          x1="0" y1="6" x2="32" y2="6"
+          x1="0" y1="6" x2="22" y2="6"
           stroke="#a855f7" strokeWidth="1.5"
           strokeDasharray="5 4"
         />
+        <polygon points="22,3 30,6 22,9" fill="#a855f7" />
       </svg>
     ),
   },

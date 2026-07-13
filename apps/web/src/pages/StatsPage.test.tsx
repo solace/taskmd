@@ -41,7 +41,7 @@ const mockUseConfig = vi.mocked(useConfig);
 describe("StatsPage", () => {
   beforeEach(() => {
     mockUseTasks.mockReturnValue({ data: undefined } as ReturnType<typeof useTasks>);
-    mockUseConfig.mockReturnValue({ phases: [], readonly: false, version: "1.0.0" } as ReturnType<typeof useConfig>);
+    mockUseConfig.mockReturnValue({ phases: [], scopes: [], readonly: false, version: "1.0.0" } as ReturnType<typeof useConfig>);
   });
 
   it("renders loading state", () => {
@@ -125,6 +125,7 @@ describe("StatsPage", () => {
         { id: "mvp", name: "MVP", description: "" },
         { id: "v2", name: "V2", description: "" },
       ],
+      scopes: [],
       readonly: false,
       version: "1.0.0",
     } as ReturnType<typeof useConfig>);

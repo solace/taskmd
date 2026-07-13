@@ -199,7 +199,7 @@ func TestToMermaid(t *testing.T) {
 	}
 
 	g := NewGraph(tasks)
-	output := g.ToMermaid(RenderOptions{FocusTaskID: "T2", ShowRelated: true, ShowSpawnedBy: true})
+	output := g.ToMermaid(RenderOptions{FocusTaskID: "T2", ShowSeeAlso: true, ShowSpawnedBy: true})
 
 	if !strings.Contains(output, "graph TD") {
 		t.Error("Expected mermaid output to contain 'graph TD'")
@@ -239,7 +239,7 @@ func TestToDot(t *testing.T) {
 	}
 
 	g := NewGraph(tasks)
-	output := g.ToDot(RenderOptions{FocusTaskID: "T2", ShowRelated: true, ShowSpawnedBy: true})
+	output := g.ToDot(RenderOptions{FocusTaskID: "T2", ShowSeeAlso: true, ShowSpawnedBy: true})
 
 	if !strings.Contains(output, "digraph tasks") {
 		t.Error("Expected DOT output to contain 'digraph tasks'")
@@ -521,59 +521,49 @@ func TestToASCII_WithFormatter_Reference(t *testing.T) {
 	}
 }
 
-func TestNewGraph_RelatedEdges(t *testing.T) {
+func TestNewGraph_SeeAlsoEdges(t *testing.T) {
 	tasks := []*model.Task{
-		{ID: "A", Title: "Task A", Related: []string{"B", "C"}},
-		{ID: "B", Title: "Task B", Related: []string{"A"}},
+		{ID: "A", Title: "Task A", SeeAlso: []string{"B", "C"}},
+		{ID: "B", Title: "Task B", SeeAlso: []string{"A"}},
 		{ID: "C", Title: "Task C"},
-		{ID: "D", Title: "Task D", Related: []string{"A"}},
+		{ID: "D", Title: "Task D", SeeAlso: []string{"A"}},
 	}
 	g := NewGraph(tasks)
 
-	// A-B is bidirectionally declared — should appear once
-	// A-C is unidirectional — should appear once
-	// A-D is unidirectionally declared by D — should appear once
-	if len(g.RelatedEdges) != 3 {
-		t.Errorf("expected 3 deduplicated related edges, got %d: %v", len(g.RelatedEdges), g.RelatedEdges)
-	}
-
-	// RelatedMap should be bidirectional
-	if len(g.RelatedMap["A"]) != 3 {
-		t.Errorf("expected A to have 3 related tasks, got %d: %v", len(g.RelatedMap["A"]), g.RelatedMap["A"])
-	}
-	if len(g.RelatedMap["B"]) != 1 {
-		t.Errorf("expected B to have 1 related task, got %d: %v", len(g.RelatedMap["B"]), g.RelatedMap["B"])
+	// A->B, A->C, B->A, D->A — 4 directed edges
+	if len(g.SeeAlsoEdges) != 4 {
+		t.Errorf("expected 4 directed see_also edges, got %d: %v", len(g.SeeAlsoEdges), g.SeeAlsoEdges)
 	}
 }
 
-func TestNewGraph_RelatedEdges_IgnoresMissingTasks(t *testing.T) {
+func TestNewGraph_SeeAlsoEdges_IgnoresMissingTasks(t *testing.T) {
 	tasks := []*model.Task{
-		{ID: "A", Title: "Task A", Related: []string{"B", "MISSING"}},
+		{ID: "A", Title: "Task A", SeeAlso: []string{"B", "MISSING"}},
 		{ID: "B", Title: "Task B"},
 	}
 	g := NewGraph(tasks)
 
-	if len(g.RelatedEdges) != 1 {
-		t.Errorf("expected 1 related edge (ignoring missing ref), got %d", len(g.RelatedEdges))
+	if len(g.SeeAlsoEdges) != 1 {
+		t.Errorf("expected 1 see_also edge (ignoring missing ref), got %d", len(g.SeeAlsoEdges))
 	}
 }
 
-func TestToMermaid_RelatedEdges(t *testing.T) {
+func TestToMermaid_SeeAlsoEdges(t *testing.T) {
 	tasks := []*model.Task{
-		{ID: "A", Title: "Task A", Related: []string{"B"}},
+		{ID: "A", Title: "Task A", SeeAlso: []string{"B"}},
 		{ID: "B", Title: "Task B"},
 	}
 	g := NewGraph(tasks)
 	output := g.ToMermaid(DefaultRenderOptions())
 
-	if !strings.Contains(output, "A -.- B") {
-		t.Errorf("expected dashed undirected edge 'A -.- B' in mermaid output, got:\n%s", output)
+	if !strings.Contains(output, "A -.-> B") {
+		t.Errorf("expected dashed directed edge 'A -.-> B' in mermaid output, got:\n%s", output)
 	}
 }
 
-func TestToDot_RelatedEdges(t *testing.T) {
+func TestToDot_SeeAlsoEdges(t *testing.T) {
 	tasks := []*model.Task{
-		{ID: "A", Title: "Task A", Related: []string{"B"}},
+		{ID: "A", Title: "Task A", SeeAlso: []string{"B"}},
 		{ID: "B", Title: "Task B"},
 	}
 	g := NewGraph(tasks)
@@ -582,41 +572,41 @@ func TestToDot_RelatedEdges(t *testing.T) {
 	if !strings.Contains(output, "style=dashed") {
 		t.Errorf("expected dashed style in dot output, got:\n%s", output)
 	}
-	if !strings.Contains(output, "dir=none") {
-		t.Errorf("expected dir=none in dot output, got:\n%s", output)
+	if strings.Contains(output, "dir=none") {
+		t.Errorf("expected directed edge (no dir=none) in dot output, got:\n%s", output)
 	}
 }
 
-func TestToASCII_RelatedAnnotation(t *testing.T) {
+func TestToASCII_SeeAlsoAnnotation(t *testing.T) {
 	tasks := []*model.Task{
-		{ID: "A", Title: "Root", Related: []string{"B"}},
+		{ID: "A", Title: "Root", SeeAlso: []string{"B"}},
 		{ID: "B", Title: "Other"},
 	}
 	g := NewGraph(tasks)
 	output := g.ToASCII("", true, nil, DefaultRenderOptions())
 
 	if !strings.Contains(output, "~ B") {
-		t.Errorf("expected '~ B' related annotation in ASCII output, got:\n%s", output)
+		t.Errorf("expected '~ B' see_also annotation in ASCII output, got:\n%s", output)
 	}
 }
 
-func TestToJSON_RelatedEdges(t *testing.T) {
+func TestToJSON_SeeAlsoEdges(t *testing.T) {
 	tasks := []*model.Task{
-		{ID: "A", Title: "Task A", Related: []string{"B"}},
+		{ID: "A", Title: "Task A", SeeAlso: []string{"B"}},
 		{ID: "B", Title: "Task B"},
 	}
 	g := NewGraph(tasks)
 	result := g.ToJSON(DefaultRenderOptions())
 
-	relatedEdges, ok := result["relatedEdges"].([]map[string]string)
+	seeAlsoEdges, ok := result["seeAlsoEdges"].([]map[string]string)
 	if !ok {
-		t.Fatalf("expected relatedEdges to be []map[string]string, got %T", result["relatedEdges"])
+		t.Fatalf("expected seeAlsoEdges to be []map[string]string, got %T", result["seeAlsoEdges"])
 	}
-	if len(relatedEdges) != 1 {
-		t.Fatalf("expected 1 related edge, got %d", len(relatedEdges))
+	if len(seeAlsoEdges) != 1 {
+		t.Fatalf("expected 1 see_also edge, got %d", len(seeAlsoEdges))
 	}
-	if relatedEdges[0]["a"] != "A" || relatedEdges[0]["b"] != "B" {
-		t.Errorf("unexpected related edge: %v", relatedEdges[0])
+	if seeAlsoEdges[0]["from"] != "A" || seeAlsoEdges[0]["to"] != "B" {
+		t.Errorf("unexpected see_also edge: %v", seeAlsoEdges[0])
 	}
 }
 

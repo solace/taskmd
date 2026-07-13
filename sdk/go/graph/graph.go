@@ -57,7 +57,7 @@ func (f *ASCIIFormatter) applyReference(text string) string {
 // Use DefaultRenderOptions() to get current-behaviour defaults.
 type RenderOptions struct {
 	FocusTaskID   string
-	ShowRelated   bool
+	ShowSeeAlso   bool
 	ShowSpawnedBy bool
 	ShowParent    bool
 	Subgraphs     bool
@@ -65,7 +65,7 @@ type RenderOptions struct {
 
 // DefaultRenderOptions returns options that reproduce the existing output exactly.
 func DefaultRenderOptions() RenderOptions {
-	return RenderOptions{ShowRelated: true, ShowSpawnedBy: true}
+	return RenderOptions{ShowSeeAlso: true, ShowSpawnedBy: true}
 }
 
 // Graph represents a task dependency graph
@@ -74,10 +74,8 @@ type Graph struct {
 	TaskMap      map[string]*model.Task
 	Adjacency    map[string][]string // task ID -> list of dependent task IDs
 	RevAdjacency map[string][]string // task ID -> list of dependency task IDs
-	// RelatedEdges holds deduplicated undirected related pairs. Each pair [a,b] has a <= b lexicographically.
-	RelatedEdges [][2]string
-	// RelatedMap holds all related task IDs for a given task ID (both directions).
-	RelatedMap map[string][]string
+	// SeeAlsoEdges holds directed context-pointer edges: [from, to] meaning "from" lists "to" as see_also.
+	SeeAlsoEdges [][2]string
 	// SpawnedByEdges holds directed provenance edges: [child, source] meaning child was spawned by source.
 	SpawnedByEdges [][2]string
 	// ParentEdges holds directed parent→child pairs where both tasks exist in the graph: [child, parent].
@@ -91,7 +89,6 @@ func NewGraph(tasks []*model.Task) *Graph {
 		TaskMap:      make(map[string]*model.Task),
 		Adjacency:    make(map[string][]string),
 		RevAdjacency: make(map[string][]string),
-		RelatedMap:   make(map[string][]string),
 	}
 
 	// Build task map
@@ -110,46 +107,25 @@ func NewGraph(tasks []*model.Task) *Graph {
 		}
 	}
 
-	// Build related edges (deduplicated undirected pairs, only between tasks in this graph)
-	relatedSet := make(map[string]bool)
-	relatedMapSet := make(map[string]map[string]bool)
+	// Build see_also edges (directed, only between tasks in this graph)
+	seeAlsoSet := make(map[string]bool)
 	for _, task := range tasks {
-		for _, relID := range task.Related {
-			if _, exists := g.TaskMap[relID]; !exists {
+		for _, toID := range task.SeeAlso {
+			if _, exists := g.TaskMap[toID]; !exists {
 				continue // skip references to tasks not in this (possibly filtered) graph
 			}
-			// Canonical edge key: lower ID first
-			a, b := task.ID, relID
-			if a > b {
-				a, b = b, a
+			edgeKey := task.ID + ":" + toID
+			if !seeAlsoSet[edgeKey] {
+				seeAlsoSet[edgeKey] = true
+				g.SeeAlsoEdges = append(g.SeeAlsoEdges, [2]string{task.ID, toID})
 			}
-			edgeKey := a + ":" + b
-			if !relatedSet[edgeKey] {
-				relatedSet[edgeKey] = true
-				g.RelatedEdges = append(g.RelatedEdges, [2]string{a, b})
-			}
-			// Build bidirectional lookup
-			if relatedMapSet[task.ID] == nil {
-				relatedMapSet[task.ID] = make(map[string]bool)
-			}
-			if relatedMapSet[relID] == nil {
-				relatedMapSet[relID] = make(map[string]bool)
-			}
-			relatedMapSet[task.ID][relID] = true
-			relatedMapSet[relID][task.ID] = true
 		}
 	}
-	for id, relSet := range relatedMapSet {
-		for relID := range relSet {
-			g.RelatedMap[id] = append(g.RelatedMap[id], relID)
+	sort.Slice(g.SeeAlsoEdges, func(i, j int) bool {
+		if g.SeeAlsoEdges[i][0] != g.SeeAlsoEdges[j][0] {
+			return g.SeeAlsoEdges[i][0] < g.SeeAlsoEdges[j][0]
 		}
-		sort.Strings(g.RelatedMap[id])
-	}
-	sort.Slice(g.RelatedEdges, func(i, j int) bool {
-		if g.RelatedEdges[i][0] != g.RelatedEdges[j][0] {
-			return g.RelatedEdges[i][0] < g.RelatedEdges[j][0]
-		}
-		return g.RelatedEdges[i][1] < g.RelatedEdges[j][1]
+		return g.SeeAlsoEdges[i][1] < g.SeeAlsoEdges[j][1]
 	})
 
 	// Build spawned_by edges (directed: child -> source)
@@ -483,10 +459,10 @@ func (g *Graph) ToMermaid(opts RenderOptions) string {
 		}
 	}
 
-	// Define related edges (dashed, undirected)
-	if opts.ShowRelated {
-		for _, pair := range g.RelatedEdges {
-			sb.WriteString(fmt.Sprintf("    %s -.- %s\n", pair[0], pair[1]))
+	// Define see_also edges (dashed directed: from -.-> to)
+	if opts.ShowSeeAlso {
+		for _, pair := range g.SeeAlsoEdges {
+			sb.WriteString(fmt.Sprintf("    %s -.-> %s\n", pair[0], pair[1]))
 		}
 	}
 
@@ -578,10 +554,10 @@ func (g *Graph) ToDot(opts RenderOptions) string {
 		}
 	}
 
-	// Define related edges (dashed, undirected)
-	if opts.ShowRelated {
-		for _, pair := range g.RelatedEdges {
-			sb.WriteString(fmt.Sprintf("    %s -> %s [style=dashed, dir=none];\n", pair[0], pair[1]))
+	// Define see_also edges (dashed directed: from -> to)
+	if opts.ShowSeeAlso {
+		for _, pair := range g.SeeAlsoEdges {
+			sb.WriteString(fmt.Sprintf("    %s -> %s [style=dashed];\n", pair[0], pair[1]))
 		}
 	}
 
@@ -623,9 +599,15 @@ func (g *Graph) ToASCII(rootTaskID string, downstream bool, f *ASCIIFormatter, o
 					connector = "└── "
 				}
 				annotation := ""
-				if opts.ShowRelated {
-					if related := g.RelatedMap[taskID]; len(related) > 0 {
-						annotation += " ~ " + strings.Join(related, ", ")
+				if opts.ShowSeeAlso && len(task.SeeAlso) > 0 {
+					var visible []string
+					for _, id := range task.SeeAlso {
+						if _, ok := g.TaskMap[id]; ok {
+							visible = append(visible, id)
+						}
+					}
+					if len(visible) > 0 {
+						annotation += " ~ " + strings.Join(visible, ", ")
 					}
 				}
 				if opts.ShowSpawnedBy && task.SpawnedBy != "" {
@@ -673,9 +655,15 @@ func (g *Graph) ToASCII(rootTaskID string, downstream bool, f *ASCIIFormatter, o
 		formattedTitle := f.applyTitle(task.Title, string(task.Status))
 
 		annotation := ""
-		if opts.ShowRelated {
-			if related := g.RelatedMap[taskID]; len(related) > 0 {
-				annotation += " ~ " + strings.Join(related, ", ")
+		if opts.ShowSeeAlso && len(task.SeeAlso) > 0 {
+			var visible []string
+			for _, id := range task.SeeAlso {
+				if _, ok := g.TaskMap[id]; ok {
+					visible = append(visible, id)
+				}
+			}
+			if len(visible) > 0 {
+				annotation += " ~ " + strings.Join(visible, ", ")
 			}
 		}
 		if opts.ShowSpawnedBy && task.SpawnedBy != "" {
@@ -815,13 +803,13 @@ func (g *Graph) ToJSON(opts RenderOptions) map[string]any {
 		}
 	}
 
-	// Build related edges
-	var relatedEdges []map[string]string
-	if opts.ShowRelated {
-		for _, pair := range g.RelatedEdges {
-			relatedEdges = append(relatedEdges, map[string]string{
-				"a": pair[0],
-				"b": pair[1],
+	// Build see_also edges
+	var seeAlsoEdges []map[string]string
+	if opts.ShowSeeAlso {
+		for _, pair := range g.SeeAlsoEdges {
+			seeAlsoEdges = append(seeAlsoEdges, map[string]string{
+				"from": pair[0],
+				"to":   pair[1],
 			})
 		}
 	}
@@ -848,8 +836,8 @@ func (g *Graph) ToJSON(opts RenderOptions) map[string]any {
 		"nodes": nodes,
 		"edges": edges,
 	}
-	if opts.ShowRelated {
-		result["relatedEdges"] = relatedEdges
+	if opts.ShowSeeAlso {
+		result["seeAlsoEdges"] = seeAlsoEdges
 	}
 	if opts.ShowSpawnedBy {
 		result["spawnedByEdges"] = spawnedByEdges

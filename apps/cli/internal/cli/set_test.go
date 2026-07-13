@@ -115,7 +115,7 @@ func resetSetFlags() {
 	setOwner = ""
 	setParent = ""
 	setDependsOn = ""
-	setRelated = ""
+	setSeeAlso = ""
 	setSpawnedBy = ""
 	setPhase = ""
 	setDone = false
@@ -130,7 +130,7 @@ func resetSetFlags() {
 	taskDir = "."
 
 	// Reset cobra flag Changed state to avoid test interference
-	for _, name := range []string{"status", "parent", "depends-on", "phase", "related", "spawned-by"} {
+	for _, name := range []string{"status", "parent", "depends-on", "phase", "see-also", "spawned-by"} {
 		if f := setCmd.Flags().Lookup(name); f != nil {
 			f.Changed = false
 		}
@@ -2167,45 +2167,45 @@ created: 2026-02-08
 	}
 }
 
-func TestSet_Related(t *testing.T) {
+func TestSet_SeeAlso(t *testing.T) {
 	tmpDir := createSetTestFiles(t)
 	resetSetFlags()
 	taskDir = tmpDir
 	setTaskID = "001"
-	setRelated = "002,003"
+	setSeeAlso = "002,003"
 
-	setCmd.Flags().Set("related", "002,003")
-	defer func() { setCmd.Flags().Lookup("related").Changed = false }()
+	setCmd.Flags().Set("see-also", "002,003")
+	defer func() { setCmd.Flags().Lookup("see-also").Changed = false }()
 
 	output, err := captureSetOutput(t)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.Contains(output, "related:") {
-		t.Errorf("Expected confirmation to mention 'related', got: %s", output)
+	if !strings.Contains(output, "see_also:") {
+		t.Errorf("Expected confirmation to mention 'see_also', got: %s", output)
 	}
 
 	content, _ := os.ReadFile(filepath.Join(tmpDir, "001-setup.md"))
 	s := string(content)
 	if !strings.Contains(s, "002") {
-		t.Errorf("Expected file to contain related task 002, got:\n%s", s)
+		t.Errorf("Expected file to contain see_also task 002, got:\n%s", s)
 	}
 	if !strings.Contains(s, "003") {
-		t.Errorf("Expected file to contain related task 003, got:\n%s", s)
+		t.Errorf("Expected file to contain see_also task 003, got:\n%s", s)
 	}
 }
 
-func TestSet_Related_Clear(t *testing.T) {
+func TestSet_SeeAlso_Clear(t *testing.T) {
 	tmpDir := t.TempDir()
 	resetSetFlags()
 
 	content := `---
 id: "099"
-title: "Task with related"
+title: "Task with see_also"
 status: pending
 priority: medium
-related:
+see_also:
   - "001"
   - "002"
 dependencies: []
@@ -2213,19 +2213,19 @@ tags: []
 created: 2026-02-08
 ---
 
-# Task with related
+# Task with see_also
 `
-	path := filepath.Join(tmpDir, "099-related.md")
+	path := filepath.Join(tmpDir, "099-see-also.md")
 	if err := os.WriteFile(path, []byte(content), 0644); err != nil {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
 
 	taskDir = tmpDir
 	setTaskID = "099"
-	setRelated = ""
+	setSeeAlso = ""
 
-	setCmd.Flags().Set("related", "")
-	defer func() { setCmd.Flags().Lookup("related").Changed = false }()
+	setCmd.Flags().Set("see-also", "")
+	defer func() { setCmd.Flags().Lookup("see-also").Changed = false }()
 
 	_, err := captureSetOutput(t)
 	if err != nil {
@@ -2234,20 +2234,20 @@ created: 2026-02-08
 
 	updated, _ := os.ReadFile(path)
 	if strings.Contains(string(updated), `"001"`) || strings.Contains(string(updated), `"002"`) {
-		t.Errorf("Expected related to be cleared, got:\n%s", string(updated))
+		t.Errorf("Expected see_also to be cleared, got:\n%s", string(updated))
 	}
 }
 
-func TestSet_Related_WithOtherFlags(t *testing.T) {
+func TestSet_SeeAlso_WithOtherFlags(t *testing.T) {
 	tmpDir := createSetTestFiles(t)
 	resetSetFlags()
 	taskDir = tmpDir
 	setTaskID = "001"
-	setRelated = "002"
+	setSeeAlso = "002"
 	setStatus = "in-progress"
 
-	setCmd.Flags().Set("related", "002")
-	defer func() { setCmd.Flags().Lookup("related").Changed = false }()
+	setCmd.Flags().Set("see-also", "002")
+	defer func() { setCmd.Flags().Lookup("see-also").Changed = false }()
 
 	output, err := captureSetOutput(t)
 	if err != nil {
@@ -2264,6 +2264,6 @@ func TestSet_Related_WithOtherFlags(t *testing.T) {
 		t.Errorf("Expected status to be updated, got:\n%s", s)
 	}
 	if !strings.Contains(s, "002") {
-		t.Errorf("Expected related task 002 in file, got:\n%s", s)
+		t.Errorf("Expected see_also task 002 in file, got:\n%s", s)
 	}
 }

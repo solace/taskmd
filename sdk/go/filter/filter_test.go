@@ -361,38 +361,38 @@ func TestApply_PhaseFilter(t *testing.T) {
 	})
 }
 
-func TestApply_RelatedFilter(t *testing.T) {
+func TestApply_SeeAlsoFilter(t *testing.T) {
 	tasks := []*model.Task{
-		{ID: "001", Title: "Task A", Related: []string{"002", "003"}},
-		{ID: "002", Title: "Task B", Related: []string{"001"}},
+		{ID: "001", Title: "Task A", SeeAlso: []string{"002", "003"}},
+		{ID: "002", Title: "Task B", SeeAlso: []string{"001"}},
 		{ID: "003", Title: "Task C"},
 	}
 
-	t.Run("related=true returns tasks with related", func(t *testing.T) {
-		filtered, err := Apply(tasks, []string{"related=true"})
+	t.Run("see_also=true returns tasks with see_also", func(t *testing.T) {
+		filtered, err := Apply(tasks, []string{"see_also=true"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if len(filtered) != 2 {
-			t.Fatalf("expected 2 tasks with related, got %d", len(filtered))
+			t.Fatalf("expected 2 tasks with see_also, got %d", len(filtered))
 		}
 	})
 
-	t.Run("related=false returns tasks without related", func(t *testing.T) {
-		filtered, err := Apply(tasks, []string{"related=false"})
+	t.Run("see_also=false returns tasks without see_also", func(t *testing.T) {
+		filtered, err := Apply(tasks, []string{"see_also=false"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 		if len(filtered) != 1 {
-			t.Fatalf("expected 1 task without related, got %d", len(filtered))
+			t.Fatalf("expected 1 task without see_also, got %d", len(filtered))
 		}
 		if filtered[0].ID != "003" {
 			t.Errorf("expected task 003, got %s", filtered[0].ID)
 		}
 	})
 
-	t.Run("related=<id> returns tasks that list that id", func(t *testing.T) {
-		filtered, err := Apply(tasks, []string{"related=001"})
+	t.Run("see_also=<id> returns tasks that list that id", func(t *testing.T) {
+		filtered, err := Apply(tasks, []string{"see_also=001"})
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}

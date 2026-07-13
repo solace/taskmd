@@ -43,19 +43,20 @@ export function buildStructuralEdges(data: GraphData, options: LayoutOptions = {
 
 export function buildOverlayEdges(
   data: GraphData,
-  showRelated: boolean,
+  showSeeAlso: boolean,
   showSpawnedBy: boolean,
 ): Edge[] {
   const edges: Edge[] = [];
 
-  if (showRelated) {
-    for (const [i, rel] of (data.relatedEdges ?? []).entries()) {
+  if (showSeeAlso) {
+    for (const [i, sa] of (data.seeAlsoEdges ?? []).entries()) {
       edges.push({
-        id: `rel-${i}`,
-        source: rel.a,
-        target: rel.b,
+        id: `see-${i}`,
+        source: sa.from,
+        target: sa.to,
         type: "straight",
         style: { strokeDasharray: "5 4", stroke: "#a855f7", strokeWidth: 1.5, opacity: 0.65 },
+        markerEnd: { type: "arrow" as const },
         zIndex: 1,
       });
     }

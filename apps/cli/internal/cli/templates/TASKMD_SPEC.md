@@ -32,7 +32,7 @@ Description and subtasks go here.
 | `effort` | enum | No | `small`, `medium`, `large` |
 | `type` | enum | No | `feature`, `bug`, `improvement`, `chore`, `docs` |
 | `dependencies` | array | No | List of task ID strings (e.g., `["001", "015"]`) |
-| `related` | array | No | List of task ID strings for conceptual connections (non-blocking, bidirectional) |
+| `see_also` | array | No | List of task ID strings for context pointers (directed, non-blocking) |
 | `tags` | array | No | Lowercase, hyphen-separated strings |
 | `group` | string | No | Logical grouping (derived from directory if omitted) |
 | `owner` | string | No | Free-form assignee name or identifier |
@@ -112,16 +112,16 @@ pending → in-progress → in-review → completed
 dependencies: ["001", "015"]
 ```
 
-**`related`** — List of task IDs that are conceptually connected to this task, without implying any ordering or blocking. Use this to surface thematic or contextual connections between tasks that aren't formal dependencies.
+**`see_also`** — List of task IDs this task points to for context. Use this to surface thematic or background references that aren't formal dependencies or structural relations.
 
 ```yaml
-related: ["058", "063"]
+see_also: ["058", "063"]
 ```
 
 - **Non-blocking**: no effect on task actionability or `next` scoring
-- **Bidirectional by convention**: if task A lists B as related, B is considered related to A even if B doesn't list A. Both directions are shown in `taskmd get` output and in the dependency graph.
-- **Validated**: related IDs must reference existing tasks; self-references produce a warning
-- **Graph rendering**: displayed as dashed/dotted edges (distinct from dependency arrows)
+- **Directed**: only the task that declares `see_also` shows the reference; the target task is not affected
+- **Validated**: IDs must reference existing tasks; self-references produce a warning
+- **Graph rendering**: displayed as dashed directed edges (overlay, off by default; toggle via `--preset full` or the graph overlay controls)
 
 **`tags`** — Labels for categorization and filtering. Use lowercase, hyphen-separated strings:
 
@@ -184,7 +184,7 @@ The `context` command merges files from both `touches` (via scope resolution) an
 
 - Must reference an existing task ID; self-references produce a warning
 - No effect on actionability or `next` scoring
-- **Graph rendering**: displayed as dotted directed arrows (distinct from dependency arrows and related lines)
+- **Graph rendering**: displayed as dotted directed arrows (distinct from dependency arrows and see_also lines)
 
 ```yaml
 spawned_by: "045"

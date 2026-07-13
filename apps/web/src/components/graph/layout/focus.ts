@@ -17,8 +17,10 @@ function buildAdjacency(data: GraphData): Map<string, Set<string>> {
   for (const node of data.nodes) {
     if (node.parent && nodeIds.has(node.parent)) link(node.id, node.parent);
   }
-  for (const rel of data.relatedEdges ?? []) {
-    link(rel.a, rel.b);
+  // see_also is directed: only follow from→to (not reverse)
+  for (const sa of data.seeAlsoEdges ?? []) {
+    if (!adj.has(sa.from)) adj.set(sa.from, new Set());
+    adj.get(sa.from)!.add(sa.to);
   }
   for (const sp of data.spawnedByEdges ?? []) {
     link(sp.child, sp.source);
@@ -29,7 +31,7 @@ function buildAdjacency(data: GraphData): Map<string, Set<string>> {
 
 /**
  * Returns a subgraph containing only nodes reachable from `startId`
- * within `depth` hops across all edge types (dep, parent, related, spawned-by).
+ * within `depth` hops across all edge types (dep, parent, see_also, spawned-by).
  */
 export function bfsSubgraph(data: GraphData, startId: string, depth: number): GraphData {
   const nodeIds = new Set(data.nodes.map((n) => n.id));
@@ -56,7 +58,7 @@ export function bfsSubgraph(data: GraphData, startId: string, depth: number): Gr
   return {
     nodes: data.nodes.filter((n) => visited.has(n.id)),
     edges: data.edges.filter((e) => visited.has(e.from) && visited.has(e.to)),
-    relatedEdges: (data.relatedEdges ?? []).filter((e) => visited.has(e.a) && visited.has(e.b)),
+    seeAlsoEdges: (data.seeAlsoEdges ?? []).filter((e) => visited.has(e.from) && visited.has(e.to)),
     spawnedByEdges: (data.spawnedByEdges ?? []).filter((e) => visited.has(e.child) && visited.has(e.source)),
   };
 }

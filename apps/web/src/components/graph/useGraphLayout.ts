@@ -78,16 +78,15 @@ export function computeGraphLayout(data: GraphData): { nodes: Node[]; edges: Edg
     }
   }
 
-  // UML association (related, undirected): dashed purple line, no arrowheads
-  for (const [i, rel] of (data.relatedEdges ?? []).entries()) {
+  // See also (directed): dashed purple line, open arrowhead
+  for (const [i, sa] of (data.seeAlsoEdges ?? []).entries()) {
     edges.push({
-      id: `rel-${i}`,
-      source: rel.a,
-      target: rel.b,
+      id: `see-${i}`,
+      source: sa.from,
+      target: sa.to,
       type: "straight",
       style: { strokeDasharray: "5 4", stroke: "#a855f7", strokeWidth: 1.5 },
-      markerEnd: undefined,
-      markerStart: undefined,
+      markerEnd: { type: "arrow" as const },
     });
   }
 

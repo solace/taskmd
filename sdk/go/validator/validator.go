@@ -129,8 +129,8 @@ func (v *Validator) Validate(tasks []*model.Task) *ValidationResult {
 	v.checkMissingParent(tasks, taskMap, result)
 	v.checkParentSelfReference(tasks, result)
 	v.checkParentCycles(tasks, taskMap, result)
-	v.checkMissingRelated(tasks, taskMap, result)
-	v.checkRelatedSelfReference(tasks, result)
+	v.checkMissingSeeAlso(tasks, taskMap, result)
+	v.checkSeeAlsoSelfReference(tasks, result)
 	v.checkMissingSpawnedBy(tasks, taskMap, result)
 	v.checkSpawnedBySelfReference(tasks, result)
 
@@ -361,28 +361,28 @@ func (v *Validator) checkParentCycles(tasks []*model.Task, taskMap map[string]*m
 	}
 }
 
-// checkMissingRelated checks that related task IDs reference existing tasks.
-func (v *Validator) checkMissingRelated(tasks []*model.Task, taskMap map[string]*model.Task, result *ValidationResult) {
+// checkMissingSeeAlso checks that see_also task IDs reference existing tasks.
+func (v *Validator) checkMissingSeeAlso(tasks []*model.Task, taskMap map[string]*model.Task, result *ValidationResult) {
 	for _, task := range tasks {
-		for _, relID := range task.Related {
-			if _, exists := taskMap[relID]; !exists {
-				if v.externalIDs[relID] {
+		for _, toID := range task.SeeAlso {
+			if _, exists := taskMap[toID]; !exists {
+				if v.externalIDs[toID] {
 					continue
 				}
 				result.AddIssue(LevelError, task.ID, task.FilePath,
-					fmt.Sprintf("related references non-existent task: '%s'", relID))
+					fmt.Sprintf("see_also references non-existent task: '%s'", toID))
 			}
 		}
 	}
 }
 
-// checkRelatedSelfReference warns if a task lists itself as related.
-func (v *Validator) checkRelatedSelfReference(tasks []*model.Task, result *ValidationResult) {
+// checkSeeAlsoSelfReference warns if a task lists itself in see_also.
+func (v *Validator) checkSeeAlsoSelfReference(tasks []*model.Task, result *ValidationResult) {
 	for _, task := range tasks {
-		for _, relID := range task.Related {
-			if relID == task.ID {
+		for _, toID := range task.SeeAlso {
+			if toID == task.ID {
 				result.AddIssue(LevelWarning, task.ID, task.FilePath,
-					"task references itself as related")
+					"task references itself in see_also")
 			}
 		}
 	}

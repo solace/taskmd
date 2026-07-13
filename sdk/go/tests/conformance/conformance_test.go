@@ -385,7 +385,7 @@ func TestConformance_Graph(t *testing.T) {
 	}
 
 	g := graph.NewGraph(nonCompleted)
-	jsonData := g.ToJSON()
+	jsonData := g.ToJSON(graph.DefaultRenderOptions())
 
 	// Check nodes
 	nodes, ok := jsonData["nodes"].([]map[string]any)

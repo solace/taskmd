@@ -1071,7 +1071,7 @@ func TestGet_PhaseOmittedWhenEmpty_YAML(t *testing.T) {
 	}
 }
 
-func createRelatedTestFiles(t *testing.T) string {
+func createSeeAlsoTestFiles(t *testing.T) string {
 	t.Helper()
 
 	tmpDir := t.TempDir()
@@ -1082,7 +1082,7 @@ id: "r01"
 title: "Alpha task"
 status: pending
 priority: medium
-related: ["r02"]
+see_also: ["r02"]
 dependencies: []
 tags: []
 created: 2026-02-08
@@ -1126,53 +1126,48 @@ created: 2026-02-08
 	return tmpDir
 }
 
-func TestGet_RelatedText(t *testing.T) {
-	tmpDir := createRelatedTestFiles(t)
+func TestGet_SeeAlsoText(t *testing.T) {
+	tmpDir := createSeeAlsoTestFiles(t)
 	resetGetFlags()
 	taskDir = tmpDir
 
 	output := captureGetOutput(t, "r01")
 
-	if !strings.Contains(output, "Related:") {
-		t.Error("Expected output to contain 'Related:' section")
+	if !strings.Contains(output, "See also:") {
+		t.Error("Expected output to contain 'See also:' section")
 	}
 	if !strings.Contains(output, "r02") {
-		t.Error("Expected output to show related task r02")
+		t.Error("Expected output to show see_also task r02")
 	}
 }
 
-func TestGet_RelatedBidirectional(t *testing.T) {
-	tmpDir := createRelatedTestFiles(t)
+func TestGet_SeeAlsoDirectedOnly(t *testing.T) {
+	tmpDir := createSeeAlsoTestFiles(t)
 	resetGetFlags()
 	taskDir = tmpDir
 
-	// r02 does not list r01 in its related field, but r01 lists r02.
-	// r02's output should still show r01 as related (reverse relation).
+	// r02 does not list r01 in see_also — no reverse lookup expected.
 	output := captureGetOutput(t, "r02")
 
-	if !strings.Contains(output, "Related:") {
-		t.Error("Expected bidirectional related: r02 should show r01 as related")
-	}
-	if !strings.Contains(output, "r01") {
-		t.Error("Expected r02 output to contain reverse-related task r01")
+	if strings.Contains(output, "See also:") {
+		t.Error("Expected 'See also:' section to be omitted for r02 (directed, not bidirectional)")
 	}
 }
 
-func TestGet_RelatedOmittedWhenEmpty(t *testing.T) {
-	tmpDir := createRelatedTestFiles(t)
+func TestGet_SeeAlsoOmittedWhenEmpty(t *testing.T) {
+	tmpDir := createSeeAlsoTestFiles(t)
 	resetGetFlags()
 	taskDir = tmpDir
 
-	// r03 has no related tasks in either direction.
 	output := captureGetOutput(t, "r03")
 
-	if strings.Contains(output, "Related:") {
-		t.Error("Expected 'Related:' section to be omitted when task has no related tasks")
+	if strings.Contains(output, "See also:") {
+		t.Error("Expected 'See also:' section to be omitted when task has no see_also entries")
 	}
 }
 
-func TestGet_RelatedJSON(t *testing.T) {
-	tmpDir := createRelatedTestFiles(t)
+func TestGet_SeeAlsoJSON(t *testing.T) {
+	tmpDir := createSeeAlsoTestFiles(t)
 	resetGetFlags()
 	taskDir = tmpDir
 	getFormat = "json"
@@ -1184,16 +1179,16 @@ func TestGet_RelatedJSON(t *testing.T) {
 		t.Fatalf("Failed to parse JSON output: %v\nOutput: %s", err, output)
 	}
 
-	if len(result.Related) != 1 {
-		t.Fatalf("Expected 1 related entry, got %d", len(result.Related))
+	if len(result.SeeAlso) != 1 {
+		t.Fatalf("Expected 1 see_also entry, got %d", len(result.SeeAlso))
 	}
-	if result.Related[0].ID != "r02" {
-		t.Errorf("Expected related[0].ID = 'r02', got %q", result.Related[0].ID)
+	if result.SeeAlso[0].ID != "r02" {
+		t.Errorf("Expected see_also[0].ID = 'r02', got %q", result.SeeAlso[0].ID)
 	}
 }
 
-func TestGet_RelatedJSON_Bidirectional(t *testing.T) {
-	tmpDir := createRelatedTestFiles(t)
+func TestGet_SeeAlsoJSON_DirectedOnly(t *testing.T) {
+	tmpDir := createSeeAlsoTestFiles(t)
 	resetGetFlags()
 	taskDir = tmpDir
 	getFormat = "json"
@@ -1205,10 +1200,7 @@ func TestGet_RelatedJSON_Bidirectional(t *testing.T) {
 		t.Fatalf("Failed to parse JSON output: %v\nOutput: %s", err, output)
 	}
 
-	if len(result.Related) != 1 {
-		t.Fatalf("Expected 1 reverse-related entry for r02, got %d", len(result.Related))
-	}
-	if result.Related[0].ID != "r01" {
-		t.Errorf("Expected reverse-related ID 'r01', got %q", result.Related[0].ID)
+	if len(result.SeeAlso) != 0 {
+		t.Fatalf("Expected 0 see_also entries for r02 (directed only), got %d", len(result.SeeAlso))
 	}
 }

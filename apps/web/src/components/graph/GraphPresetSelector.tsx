@@ -3,7 +3,6 @@ import type { Preset } from "./hooks/useGraphState.ts";
 const PRESETS: { value: Preset; label: string }[] = [
   { value: "default",    label: "Default" },
   { value: "deps-only",  label: "Deps only" },
-  { value: "related",    label: "Related" },
   { value: "provenance", label: "Provenance" },
   { value: "focus",      label: "Focus" },
 ];

@@ -146,7 +146,7 @@ type Task struct {
 	Effort       Effort       `yaml:"effort" json:"effort,omitempty"`
 	Type         TaskType     `yaml:"type" json:"type,omitempty"`
 	Dependencies []string     `yaml:"dependencies" json:"dependencies"`
-	Related      []string     `yaml:"related,omitempty" json:"related,omitempty"`
+	SeeAlso      []string     `yaml:"see_also,omitempty" json:"see_also,omitempty"`
 	Tags         []string     `yaml:"tags" json:"tags"`
 	Touches      []string     `yaml:"touches" json:"touches,omitempty"`
 	Context      []string     `yaml:"context" json:"context,omitempty"`

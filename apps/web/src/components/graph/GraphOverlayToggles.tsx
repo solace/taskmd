@@ -1,25 +1,26 @@
 interface GraphOverlayTogglesProps {
-  showRelated: boolean;
+  showSeeAlso: boolean;
   showSpawnedBy: boolean;
-  onToggleRelated: () => void;
+  onToggleSeeAlso: () => void;
   onToggleSpawnedBy: () => void;
   lodHidden?: boolean;
 }
 
 export function GraphOverlayToggles({
-  showRelated,
+  showSeeAlso,
   showSpawnedBy,
-  onToggleRelated,
+  onToggleSeeAlso,
   onToggleSpawnedBy,
   lodHidden,
 }: GraphOverlayTogglesProps) {
-  const anyActive = showRelated || showSpawnedBy;
+  const anyActive = showSeeAlso || showSpawnedBy;
   return (
     <div className="flex items-center gap-1.5">
       <span className="text-xs text-gray-400 dark:text-gray-500 mr-0.5">Overlays:</span>
-      <OverlayButton active={showRelated} onClick={onToggleRelated} label="Related">
+      <OverlayButton active={showSeeAlso} onClick={onToggleSeeAlso} label="See also">
         <svg width="20" height="8" viewBox="0 0 20 8" aria-hidden="true" className="shrink-0">
-          <line x1="0" y1="4" x2="20" y2="4" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 3" />
+          <line x1="0" y1="4" x2="14" y2="4" stroke="currentColor" strokeWidth="1.5" strokeDasharray="4 3" />
+          <polyline points="12,1 18,4 12,7" fill="none" stroke="currentColor" strokeWidth="1.5" />
         </svg>
       </OverlayButton>
       <OverlayButton active={showSpawnedBy} onClick={onToggleSpawnedBy} label="Spawned by">

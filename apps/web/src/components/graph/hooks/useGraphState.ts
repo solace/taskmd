@@ -1,10 +1,10 @@
 import { useReducer } from "react";
 
-export type Preset = "default" | "deps-only" | "related" | "provenance" | "focus";
+export type Preset = "default" | "deps-only" | "provenance" | "focus";
 
 export interface GraphState {
   preset: Preset;
-  overlays: { related: boolean; spawnedBy: boolean };
+  overlays: { seeAlso: boolean; spawnedBy: boolean };
   showParentEdges: boolean;
   clustering: boolean;
   colorBy: string | null;
@@ -14,7 +14,7 @@ export interface GraphState {
 
 export type GraphAction =
   | { type: "SET_PRESET"; preset: Preset }
-  | { type: "TOGGLE_RELATED" }
+  | { type: "TOGGLE_SEE_ALSO" }
   | { type: "TOGGLE_SPAWNED_BY" }
   | { type: "SET_COLOR_BY"; scope: string | null }
   | { type: "SET_FOCUS"; nodeId: string }
@@ -22,11 +22,10 @@ export type GraphAction =
   | { type: "SET_FOCUS_DEPTH"; depth: 1 | 2 | 3 };
 
 const PRESET_CONFIG: Record<Preset, Pick<GraphState, "overlays" | "showParentEdges" | "clustering">> = {
-  "default":    { overlays: { related: false, spawnedBy: false }, showParentEdges: true,  clustering: true  },
-  "deps-only":  { overlays: { related: false, spawnedBy: false }, showParentEdges: false, clustering: false },
-  "related":    { overlays: { related: true,  spawnedBy: false }, showParentEdges: false, clustering: false },
-  "provenance": { overlays: { related: false, spawnedBy: true  }, showParentEdges: false, clustering: false },
-  "focus":      { overlays: { related: true,  spawnedBy: true  }, showParentEdges: true,  clustering: false },
+  "default":    { overlays: { seeAlso: false, spawnedBy: false }, showParentEdges: true,  clustering: true  },
+  "deps-only":  { overlays: { seeAlso: false, spawnedBy: false }, showParentEdges: false, clustering: false },
+  "provenance": { overlays: { seeAlso: false, spawnedBy: true  }, showParentEdges: false, clustering: false },
+  "focus":      { overlays: { seeAlso: true,  spawnedBy: true  }, showParentEdges: true,  clustering: false },
 };
 
 const INITIAL_STATE: GraphState = {
@@ -46,8 +45,8 @@ function graphReducer(state: GraphState, action: GraphAction): GraphState {
         ...PRESET_CONFIG[action.preset],
         focusNodeId: action.preset === "focus" ? state.focusNodeId : null,
       };
-    case "TOGGLE_RELATED":
-      return { ...state, overlays: { ...state.overlays, related: !state.overlays.related } };
+    case "TOGGLE_SEE_ALSO":
+      return { ...state, overlays: { ...state.overlays, seeAlso: !state.overlays.seeAlso } };
     case "TOGGLE_SPAWNED_BY":
       return { ...state, overlays: { ...state.overlays, spawnedBy: !state.overlays.spawnedBy } };
     case "SET_COLOR_BY":

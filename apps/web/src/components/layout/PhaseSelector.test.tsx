@@ -35,6 +35,7 @@ describe("PhaseSelector", () => {
   it("renders nothing when no phases configured", () => {
     mockUseConfig.mockReturnValue({
       phases: [],
+      scopes: [],
       readonly: false,
       version: "1.0",
     });
@@ -48,6 +49,7 @@ describe("PhaseSelector", () => {
         { id: "phase-a", name: "Phase A", description: "" },
         { id: "phase-b", name: "Phase B", description: "" },
       ],
+      scopes: [],
       readonly: false,
       version: "1.0",
     });
@@ -64,6 +66,7 @@ describe("PhaseSelector", () => {
       phases: [
         { id: "phase-a", name: "Phase A", description: "" },
       ],
+      scopes: [],
       readonly: false,
       version: "1.0",
     });
@@ -78,6 +81,7 @@ describe("PhaseSelector", () => {
       phases: [
         { id: "phase-a", name: "Phase A", description: "" },
       ],
+      scopes: [],
       readonly: false,
       version: "1.0",
     });

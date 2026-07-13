@@ -8,7 +8,7 @@ const twoNodes: GraphData = {
     { id: "b", title: "B", status: "pending" },
   ],
   edges: [],
-  relatedEdges: [{ a: "a", b: "b" }],
+  seeAlsoEdges: [{ from: "a", to: "b" }],
   spawnedByEdges: [{ child: "b", source: "a" }],
 };
 
@@ -17,10 +17,10 @@ describe("buildOverlayEdges", () => {
     expect(buildOverlayEdges(twoNodes, false, false)).toHaveLength(0);
   });
 
-  it("returns related edges when showRelated is true", () => {
+  it("returns see_also edges when showSeeAlso is true", () => {
     const edges = buildOverlayEdges(twoNodes, true, false);
     expect(edges).toHaveLength(1);
-    expect(edges[0].id).toBe("rel-0");
+    expect(edges[0].id).toBe("see-0");
     expect(edges[0].source).toBe("a");
     expect(edges[0].target).toBe("b");
     expect(edges[0].type).toBe("straight");
@@ -38,7 +38,7 @@ describe("buildOverlayEdges", () => {
     expect(buildOverlayEdges(twoNodes, true, true)).toHaveLength(2);
   });
 
-  it("handles missing relatedEdges/spawnedByEdges gracefully", () => {
+  it("handles missing seeAlsoEdges/spawnedByEdges gracefully", () => {
     const data: GraphData = { nodes: [], edges: [] };
     expect(buildOverlayEdges(data, true, true)).toHaveLength(0);
   });

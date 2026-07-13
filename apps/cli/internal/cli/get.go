@@ -146,7 +146,7 @@ type dependencyInfo struct {
 	Blocks    []depEntry `json:"blocks" yaml:"blocks"`
 	Parent    *depEntry  `json:"parent,omitempty" yaml:"parent,omitempty"`
 	Children  []depEntry `json:"children,omitempty" yaml:"children,omitempty"`
-	Related   []depEntry `json:"related,omitempty" yaml:"related,omitempty"`
+	SeeAlso   []depEntry `json:"see_also,omitempty" yaml:"see_also,omitempty"`
 	SpawnedBy *depEntry  `json:"spawned_by,omitempty" yaml:"spawned_by,omitempty"`
 }
 
@@ -397,28 +397,14 @@ func buildDependencyInfo(task *model.Task, allTasks []*model.Task) dependencyInf
 		}
 	}
 
-	// Build related: union of explicit related field (both directions)
-	relatedSeen := make(map[string]bool)
-	for _, relID := range task.Related {
-		if relatedSeen[relID] {
-			continue
+	// Build see_also: explicit directed references only
+	for _, toID := range task.SeeAlso {
+		entry := depEntry{ID: toID}
+		if ref, ok := taskMap[toID]; ok {
+			entry.Title = ref.Title
+			entry.Status = string(ref.Status)
 		}
-		relatedSeen[relID] = true
-		entry := depEntry{ID: relID}
-		if rel, ok := taskMap[relID]; ok {
-			entry.Title = rel.Title
-			entry.Status = string(rel.Status)
-		}
-		info.Related = append(info.Related, entry)
-	}
-	// Include reverse relations: tasks that list this task as related
-	for _, t := range allTasks {
-		for _, relID := range t.Related {
-			if relID == task.ID && !relatedSeen[t.ID] {
-				relatedSeen[t.ID] = true
-				info.Related = append(info.Related, depEntry{ID: t.ID, Title: t.Title, Status: string(t.Status)})
-			}
-		}
+		info.SeeAlso = append(info.SeeAlso, entry)
 	}
 
 	return info
@@ -464,7 +450,7 @@ func outputGetText(task *model.Task, deps dependencyInfo, ctxFiles []taskcontext
 	printDescription(w, task.Body, r, getRawMarkdown)
 	printDependencies(w, deps, r)
 	printChildren(w, deps.Children, r)
-	printRelated(w, deps.Related, r)
+	printSeeAlso(w, deps.SeeAlso, r)
 	printGetContextFiles(w, ctxFiles, r)
 	return nil
 }
@@ -553,15 +539,15 @@ func printChildren(w io.Writer, children []depEntry, r *lipgloss.Renderer) {
 	}
 }
 
-func printRelated(w io.Writer, related []depEntry, r *lipgloss.Renderer) {
-	if len(related) == 0 {
+func printSeeAlso(w io.Writer, seeAlso []depEntry, r *lipgloss.Renderer) {
+	if len(seeAlso) == 0 {
 		return
 	}
-	fmt.Fprintf(w, "\n%s\n", formatLabel("Related:", r))
-	for _, rel := range related {
-		entry := formatDepEntry(rel, r)
-		if rel.Status != "" {
-			entry += " " + formatStatus(rel.Status, r)
+	fmt.Fprintf(w, "\n%s\n", formatLabel("See also:", r))
+	for _, ref := range seeAlso {
+		entry := formatDepEntry(ref, r)
+		if ref.Status != "" {
+			entry += " " + formatStatus(ref.Status, r)
 		}
 		fmt.Fprintf(w, "  %s\n", entry)
 	}
@@ -597,7 +583,7 @@ type getOutput struct {
 	Content      string                  `json:"content" yaml:"content"`
 	Dependencies getDepsJSON             `json:"dependencies" yaml:"dependencies"`
 	Children     []depEntry              `json:"children,omitempty" yaml:"children,omitempty"`
-	Related      []depEntry              `json:"related,omitempty" yaml:"related,omitempty"`
+	SeeAlso      []depEntry              `json:"see_also,omitempty" yaml:"see_also,omitempty"`
 	ContextFiles []taskcontext.FileEntry `json:"context_files,omitempty" yaml:"context_files,omitempty"`
 	Worklog      *worklogInfo            `json:"worklog,omitempty" yaml:"worklog,omitempty"`
 }
@@ -631,7 +617,7 @@ func buildGetOutput(task *model.Task, deps dependencyInfo, ctxFiles []taskcontex
 			Blocks:    deps.Blocks,
 		},
 		Children:  deps.Children,
-		Related:   deps.Related,
+		SeeAlso:   deps.SeeAlso,
 		SpawnedBy: deps.SpawnedBy,
 		Worklog:   wl,
 	}

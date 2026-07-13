@@ -23,6 +23,7 @@ describe("PhasesPage", () => {
       readonly: false,
       version: "1.0.0",
       phases: [],
+      scopes: [],
     });
   });
 

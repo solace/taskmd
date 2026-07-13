@@ -34,7 +34,7 @@ var (
 	setAddTouches    []string
 	setRemoveTouches []string
 	setDependsOn     string
-	setRelated       string
+	setSeeAlso       string
 	setSpawnedBy     string
 	setPhase         string
 )
@@ -80,7 +80,7 @@ func init() {
 	setCmd.Flags().StringArrayVar(&setAddTouches, "add-touches", nil, "add a scope identifier to touches (repeatable)")
 	setCmd.Flags().StringArrayVar(&setRemoveTouches, "remove-touches", nil, "remove a scope identifier from touches (repeatable)")
 	setCmd.Flags().StringVar(&setDependsOn, "depends-on", "", "set dependencies (comma-separated IDs, e.g. 010,015)")
-	setCmd.Flags().StringVar(&setRelated, "related", "", "set related tasks (comma-separated IDs, e.g. 058,063; empty string to clear)")
+	setCmd.Flags().StringVar(&setSeeAlso, "see-also", "", "set see_also tasks (comma-separated IDs, e.g. 058,063; empty string to clear)")
 	setCmd.Flags().StringVar(&setSpawnedBy, "spawned-by", "", "task ID this task was spawned from (use empty string to clear)")
 	setCmd.Flags().StringVar(&setPhase, "phase", "", "phase name (use empty string to clear)")
 }
@@ -255,9 +255,9 @@ func buildSetRequest(cmd *cobra.Command) (taskfile.UpdateRequest, error) {
 		req.Dependencies = &deps
 	}
 
-	if cmd.Flags().Changed("related") {
-		related := parseCommaSeparatedIDs(setRelated)
-		req.Related = &related
+	if cmd.Flags().Changed("see-also") {
+		seeAlso := parseCommaSeparatedIDs(setSeeAlso)
+		req.SeeAlso = &seeAlso
 	}
 
 	if cmd.Flags().Changed("spawned-by") {
@@ -269,7 +269,7 @@ func buildSetRequest(cmd *cobra.Command) (taskfile.UpdateRequest, error) {
 	}
 
 	if !hasUpdates(req) {
-		return taskfile.UpdateRequest{}, fmt.Errorf("nothing to update: provide --status, --priority, --effort, --type, --owner, --parent, --phase, --done, --add-tag, --remove-tag, --add-pr, --remove-pr, --add-touches, --remove-touches, --depends-on, --related, or --spawned-by")
+		return taskfile.UpdateRequest{}, fmt.Errorf("nothing to update: provide --status, --priority, --effort, --type, --owner, --parent, --phase, --done, --add-tag, --remove-tag, --add-pr, --remove-pr, --add-touches, --remove-touches, --depends-on, --see-also, or --spawned-by")
 	}
 
 	return req, nil
@@ -282,7 +282,7 @@ func hasUpdates(req taskfile.UpdateRequest) bool {
 	hasPRs := len(req.AddPRs) > 0 || len(req.RemPRs) > 0
 	hasTouches := len(req.AddTouches) > 0 || len(req.RemTouches) > 0
 	hasDeps := req.Dependencies != nil
-	hasRelated := req.Related != nil || req.SpawnedBy != nil
+	hasRelated := req.SeeAlso != nil || req.SpawnedBy != nil
 	return hasScalar || hasTags || hasPRs || hasTouches || hasDeps || hasRelated
 }
 
@@ -360,11 +360,11 @@ func buildChangeLog(task *model.Task, req taskfile.UpdateRequest) []changeEntry 
 		})
 	}
 
-	if req.Related != nil {
+	if req.SeeAlso != nil {
 		changes = append(changes, changeEntry{
-			field:    "related",
-			oldValue: "[" + strings.Join(task.Related, ", ") + "]",
-			newValue: "[" + strings.Join(*req.Related, ", ") + "]",
+			field:    "see_also",
+			oldValue: "[" + strings.Join(task.SeeAlso, ", ") + "]",
+			newValue: "[" + strings.Join(*req.SeeAlso, ", ") + "]",
 		})
 	}
 

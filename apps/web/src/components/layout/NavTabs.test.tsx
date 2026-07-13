@@ -24,7 +24,7 @@ describe("DesktopNav", () => {
   }
 
   it("renders all 8 navigation tabs when no phases configured", () => {
-    mockUseConfig.mockReturnValue({ phases: [], readonly: false, version: "1.0" });
+    mockUseConfig.mockReturnValue({ phases: [], scopes: [], readonly: false, version: "1.0" });
     renderDesktopNav();
     for (const label of baseTabLabels) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
@@ -35,6 +35,7 @@ describe("DesktopNav", () => {
   it("renders Phases tab when phases are configured", () => {
     mockUseConfig.mockReturnValue({
       phases: [{ id: "p1", name: "Phase 1", description: "" }],
+      scopes: [],
       readonly: false,
       version: "1.0",
     });
@@ -44,7 +45,7 @@ describe("DesktopNav", () => {
   });
 
   it("renders tabs with correct paths", () => {
-    mockUseConfig.mockReturnValue({ phases: [], readonly: false, version: "1.0" });
+    mockUseConfig.mockReturnValue({ phases: [], scopes: [], readonly: false, version: "1.0" });
     renderDesktopNav();
     expect(screen.getByRole("link", { name: "Tasks" })).toHaveAttribute("href", "/tasks");
     expect(screen.getByRole("link", { name: "Next Up" })).toHaveAttribute("href", "/next");
@@ -100,7 +101,7 @@ describe("MobileMenu", () => {
   }
 
   it("renders all 8 navigation tabs when no phases configured", () => {
-    mockUseConfig.mockReturnValue({ phases: [], readonly: false, version: "1.0" });
+    mockUseConfig.mockReturnValue({ phases: [], scopes: [], readonly: false, version: "1.0" });
     renderMobileMenu();
     for (const label of baseTabLabels) {
       expect(screen.getByRole("link", { name: label })).toBeInTheDocument();
@@ -110,6 +111,7 @@ describe("MobileMenu", () => {
   it("renders Phases tab when phases are configured", () => {
     mockUseConfig.mockReturnValue({
       phases: [{ id: "p1", name: "Phase 1", description: "" }],
+      scopes: [],
       readonly: false,
       version: "1.0",
     });
@@ -118,7 +120,7 @@ describe("MobileMenu", () => {
   });
 
   it("renders Docs and GitHub external links", () => {
-    mockUseConfig.mockReturnValue({ phases: [], readonly: false, version: "1.0" });
+    mockUseConfig.mockReturnValue({ phases: [], scopes: [], readonly: false, version: "1.0" });
     renderMobileMenu();
     expect(screen.getByText(/Docs/)).toBeInTheDocument();
     expect(screen.getByText(/GitHub/)).toBeInTheDocument();
