@@ -1,77 +1,57 @@
 import { describe, it, expect } from "vitest";
 import { classifyNodes } from "./cluster.ts";
-import type { GraphData } from "../../../api/types.ts";
+import type { GraphNode } from "../../../api/types.ts";
 
 describe("classifyNodes", () => {
   it("returns empty groups for empty candidates", () => {
-    const { scopeGroups, topLevel } = classifyNodes({ nodes: [], edges: [] }, []);
-    expect(scopeGroups.size).toBe(0);
+    const { groupMap, topLevel } = classifyNodes([]);
+    expect(groupMap.size).toBe(0);
     expect(topLevel).toHaveLength(0);
   });
 
-  it("puts isolated task with touches into scope group", () => {
-    const node = { id: "a", title: "A", status: "pending", touches: ["api"] };
-    const data: GraphData = { nodes: [node], edges: [] };
-    const { scopeGroups, topLevel } = classifyNodes(data, [node]);
-    expect(scopeGroups.get("api")).toEqual(["a"]);
+  it("puts task with group into groupMap", () => {
+    const node: GraphNode = { id: "a", title: "A", status: "pending", group: "cli" };
+    const { groupMap, topLevel } = classifyNodes([node]);
+    expect(groupMap.get("cli")).toEqual(["a"]);
     expect(topLevel).toHaveLength(0);
   });
 
-  it("uses first touches scope for multi-scope tasks", () => {
-    const node = { id: "a", title: "A", status: "pending", touches: ["web", "api"] };
-    const data: GraphData = { nodes: [node], edges: [] };
-    const { scopeGroups } = classifyNodes(data, [node]);
-    expect(scopeGroups.get("web")).toEqual(["a"]);
-    expect(scopeGroups.has("api")).toBe(false);
-  });
-
-  it("puts isolated task with no touches into topLevel", () => {
-    const node = { id: "a", title: "A", status: "pending" };
-    const data: GraphData = { nodes: [node], edges: [] };
-    const { topLevel } = classifyNodes(data, [node]);
+  it("puts task with no group into topLevel", () => {
+    const node: GraphNode = { id: "a", title: "A", status: "pending" };
+    const { topLevel } = classifyNodes([node]);
     expect(topLevel).toEqual(["a"]);
   });
 
-  it("puts nodes with dep edges into topLevel even if they have touches", () => {
-    const a = { id: "a", title: "A", status: "pending", touches: ["api"] };
-    const b = { id: "b", title: "B", status: "pending", touches: ["api"] };
-    const data: GraphData = { nodes: [a, b], edges: [{ from: "a", to: "b" }] };
-    const { scopeGroups, topLevel } = classifyNodes(data, [a, b]);
-    expect(scopeGroups.size).toBe(0);
-    expect(topLevel).toContain("a");
-    expect(topLevel).toContain("b");
+  it("groups multiple tasks with the same group together", () => {
+    const a: GraphNode = { id: "a", title: "A", status: "pending", group: "cli" };
+    const b: GraphNode = { id: "b", title: "B", status: "pending", group: "cli" };
+    const { groupMap } = classifyNodes([a, b]);
+    expect(groupMap.get("cli")).toEqual(["a", "b"]);
   });
 
-  it("puts child node into topLevel even if it has touches", () => {
-    const parent = { id: "p", title: "Parent", status: "pending" };
-    const child = { id: "c", title: "Child", status: "pending", parent: "p", touches: ["api"] };
-    const data: GraphData = { nodes: [parent, child], edges: [] };
-    const { topLevel } = classifyNodes(data, [child]);
-    expect(topLevel).toContain("c");
+  it("creates separate entries for different groups", () => {
+    const a: GraphNode = { id: "a", title: "A", status: "pending", group: "cli" };
+    const b: GraphNode = { id: "b", title: "B", status: "pending", group: "web" };
+    const { groupMap } = classifyNodes([a, b]);
+    expect(groupMap.get("cli")).toEqual(["a"]);
+    expect(groupMap.get("web")).toEqual(["b"]);
   });
 
-  it("groups multiple isolated tasks into same scope", () => {
-    const a = { id: "a", title: "A", status: "pending", touches: ["api"] };
-    const b = { id: "b", title: "B", status: "pending", touches: ["api"] };
-    const data: GraphData = { nodes: [a, b], edges: [] };
-    const { scopeGroups } = classifyNodes(data, [a, b]);
-    expect(scopeGroups.get("api")).toEqual(["a", "b"]);
+  it("handles group with subgroup separator", () => {
+    const a: GraphNode = { id: "a", title: "A", status: "pending", group: "cli/graph" };
+    const b: GraphNode = { id: "b", title: "B", status: "pending", group: "cli/output" };
+    const { groupMap } = classifyNodes([a, b]);
+    expect(groupMap.get("cli/graph")).toEqual(["a"]);
+    expect(groupMap.get("cli/output")).toEqual(["b"]);
   });
 
-  it("creates separate scope groups for different scopes", () => {
-    const a = { id: "a", title: "A", status: "pending", touches: ["api"] };
-    const b = { id: "b", title: "B", status: "pending", touches: ["web"] };
-    const data: GraphData = { nodes: [a, b], edges: [] };
-    const { scopeGroups } = classifyNodes(data, [a, b]);
-    expect(scopeGroups.get("api")).toEqual(["a"]);
-    expect(scopeGroups.get("web")).toEqual(["b"]);
-  });
-
-  it("ignores phase nodes — caller should pre-filter them out", () => {
-    // classifyNodes receives nonPhaseTasks from buildElkGraph; phase nodes are excluded upstream
-    const a = { id: "a", title: "A", status: "pending", touches: ["api"] };
-    const data: GraphData = { nodes: [a], edges: [] };
-    const { scopeGroups } = classifyNodes(data, [a]);
-    expect(scopeGroups.get("api")).toEqual(["a"]);
+  it("groups tasks with deps into their group regardless of connectivity", () => {
+    const a: GraphNode = { id: "a", title: "A", status: "pending", group: "cli" };
+    const b: GraphNode = { id: "b", title: "B", status: "pending", group: "cli" };
+    // Even if a→b dependency exists, both go into the group cluster
+    const { groupMap, topLevel } = classifyNodes([a, b]);
+    expect(groupMap.get("cli")).toContain("a");
+    expect(groupMap.get("cli")).toContain("b");
+    expect(topLevel).toHaveLength(0);
   });
 });

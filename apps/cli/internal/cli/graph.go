@@ -102,7 +102,7 @@ func init() {
 	graphCmd.Flags().IntVar(&graphDepth, "depth", 0, "limit --root traversal to N hops (requires --root; 0 means unlimited)")
 	graphCmd.Flags().StringVar(&graphPreset, "preset", "", "edge visibility preset: deps-only, provenance, full")
 	graphCmd.Flags().BoolVar(&graphParentEdges, "parent-edges", false, "render parent→child edges (Mermaid, DOT, ASCII, JSON)")
-	graphCmd.Flags().BoolVar(&graphSubgraphs, "subgraphs", false, "group tasks by phase/scope in Mermaid and DOT output")
+	graphCmd.Flags().BoolVar(&graphSubgraphs, "subgraphs", false, "group tasks by phase/group in Mermaid and DOT output")
 }
 
 //nolint:gocognit,gocyclo,funlen // TODO: refactor to reduce complexity

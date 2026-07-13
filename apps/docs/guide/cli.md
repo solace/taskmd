@@ -324,6 +324,10 @@ taskmd graph --focus 022 --format mermaid
 | `--priority` | | Shortcut for `--filter priority=<value>` |
 | `--phase` | | Filter by phase |
 | `--scope` | | Filter by scope; supports wildcards (e.g. `cli`, `cli*`) |
+| `--depth` | `0` | Limit `--root` traversal to N hops (0 = unlimited; requires `--root`) |
+| `--preset` | | Edge visibility preset: `deps-only`, `provenance`, `full` |
+| `--subgraphs` | `false` | Group tasks by phase/group in Mermaid and DOT output |
+| `--parent-edges` | `false` | Render parent→child edges in all output formats |
 | `--out`, `-o` | | Write output to file |
 
 **Output to file:**

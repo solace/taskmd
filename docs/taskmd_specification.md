@@ -131,7 +131,7 @@ tags:
   - api
 ```
 
-**`group`** — Logical grouping. If omitted, derived from the parent directory name. Root-level tasks have no group.
+**`group`** — Logical grouping. If omitted, derived from the parent directory name. Root-level tasks have no group. A `/` separator creates a two-level hierarchy for graph clustering (`theme/subgroup`): the part before the first `/` is the top-level cluster, the remainder is the sub-cluster. This is a rendering hint only — the field is a plain string for all other purposes (filtering, display, sorting). No more than one `/` is meaningful; additional slashes are treated as part of the sub-cluster label.
 
 **`owner`** — Free-form string for assigning a task to a person or team. Used for filtering and display; no validation is applied.
 

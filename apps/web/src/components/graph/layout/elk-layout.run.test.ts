@@ -80,18 +80,18 @@ describe("runElkLayout", () => {
     expect(result.nodes.indexOf(phase!)).toBeLessThan(result.nodes.indexOf(task!));
   });
 
-  it("scope cluster renders as container node with variant scope", async () => {
+  it("group cluster renders as container node with variant group", async () => {
     const data: GraphData = {
-      nodes: [{ id: "a", title: "A", status: "pending", touches: ["api"] }],
+      nodes: [{ id: "a", title: "A", status: "pending", group: "cli" }],
       edges: [],
     };
     const result = await runElkLayout(data);
-    const scope = result.nodes.find((n) => n.id === "__scope_api");
-    expect(scope).toBeDefined();
-    expect(scope!.type).toBe("container");
-    expect(scope!.data.variant).toBe("scope");
+    const grp = result.nodes.find((n) => n.id === "__grp_cli");
+    expect(grp).toBeDefined();
+    expect(grp!.type).toBe("container");
+    expect(grp!.data.variant).toBe("group");
     const task = result.nodes.find((n) => n.id === "a");
-    expect(task!.parentId).toBe("__scope_api");
+    expect(task!.parentId).toBe("__grp_cli");
   });
 
   it("dependency edges appear with id dep-0", async () => {

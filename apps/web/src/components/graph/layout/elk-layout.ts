@@ -29,19 +29,64 @@ function makeTaskElkNode(id: string): ElkNode {
   return { id, width: NODE_WIDTH, height: NODE_HEIGHT };
 }
 
-function buildPhaseCompounds(phaseMap: Map<string, string[]>): ElkNode[] {
-  return [...phaseMap.entries()].map(([phase, memberIds]) => ({
-    id: `__phase_${phase}`,
-    layoutOptions: { "elk.padding": CONTAINER_PADDING },
-    children: memberIds.map(makeTaskElkNode),
-  }));
+function buildPhaseCompounds(
+  phaseMap: Map<string, string[]>,
+  nodeMap: Map<string, GraphNode>,
+): ElkNode[] {
+  return [...phaseMap.entries()].map(([phase, memberIds]) => {
+    const grouped = new Map<string, string[]>();
+    const ungrouped: string[] = [];
+    for (const id of memberIds) {
+      const g = nodeMap.get(id)?.group;
+      if (g) {
+        const arr = grouped.get(g) ?? [];
+        arr.push(id);
+        grouped.set(g, arr);
+      } else {
+        ungrouped.push(id);
+      }
+    }
+    const children: ElkNode[] = [
+      ...ungrouped.map(makeTaskElkNode),
+      ...[...grouped.entries()].map(([g, ids]) => ({
+        id: `__phasegrp_${phase}/${g}`,
+        layoutOptions: { "elk.padding": CONTAINER_PADDING },
+        children: ids.map(makeTaskElkNode),
+      })),
+    ];
+    return { id: `__phase_${phase}`, layoutOptions: { "elk.padding": CONTAINER_PADDING }, children };
+  });
 }
 
-function buildScopeCompounds(scopeGroups: Map<string, string[]>): ElkNode[] {
-  return [...scopeGroups.entries()].map(([scope, memberIds]) => ({
-    id: `__scope_${scope}`,
+function buildGroupCompounds(groupMap: Map<string, string[]>): ElkNode[] {
+  const topMap = new Map<string, { flat: string[]; subs: Map<string, string[]> }>();
+  for (const [group, ids] of groupMap) {
+    const slashIdx = group.indexOf("/");
+    if (slashIdx === -1) {
+      const entry = topMap.get(group) ?? { flat: [] as string[], subs: new Map<string, string[]>() };
+      entry.flat.push(...ids);
+      topMap.set(group, entry);
+    } else {
+      const top = group.slice(0, slashIdx);
+      const sub = group.slice(slashIdx + 1);
+      const entry = topMap.get(top) ?? { flat: [] as string[], subs: new Map<string, string[]>() };
+      const subArr = entry.subs.get(sub) ?? ([] as string[]);
+      subArr.push(...ids);
+      entry.subs.set(sub, subArr);
+      topMap.set(top, entry);
+    }
+  }
+  return [...topMap.entries()].map(([top, { flat, subs }]) => ({
+    id: `__grp_${top}`,
     layoutOptions: { "elk.padding": CONTAINER_PADDING },
-    children: memberIds.map(makeTaskElkNode),
+    children: [
+      ...flat.map(makeTaskElkNode),
+      ...[...subs.entries()].map(([sub, ids]) => ({
+        id: `__grp_${top}/${sub}`,
+        layoutOptions: { "elk.padding": CONTAINER_PADDING },
+        children: ids.map(makeTaskElkNode),
+      })),
+    ],
   }));
 }
 
@@ -91,14 +136,14 @@ export function buildElkGraph(data: GraphData, options: LayoutOptions = {}): Elk
     }
   }
 
-  const { scopeGroups, topLevel } = classifyNodes(data, nonPhaseTasks);
+  const { groupMap, topLevel } = classifyNodes(nonPhaseTasks);
 
-  // When clustering is off, scope-grouped tasks fall to top level
-  const scopeFlat = clustering ? [] : [...scopeGroups.values()].flat();
+  // When clustering is off, group-clustered tasks fall to top level
+  const groupFlat = clustering ? [] : [...groupMap.values()].flat();
   const elkChildren: ElkNode[] = [
-    ...buildPhaseCompounds(phaseMap),
-    ...(clustering ? buildScopeCompounds(scopeGroups) : []),
-    ...[...topLevel, ...scopeFlat].map(makeTaskElkNode),
+    ...buildPhaseCompounds(phaseMap, nodeMap),
+    ...(clustering ? buildGroupCompounds(groupMap) : []),
+    ...[...topLevel, ...groupFlat].map(makeTaskElkNode),
   ];
 
   return {
@@ -119,15 +164,31 @@ function collectElkNodes(
   const x = elkNode.x ?? 0;
   const y = elkNode.y ?? 0;
 
-  if (id.startsWith("__phase_") || id.startsWith("__scope_")) {
+  if (id.startsWith("__phase_") || id.startsWith("__phasegrp_") || id.startsWith("__grp_")) {
     const isPhase = id.startsWith("__phase_");
-    const prefix = isPhase ? "__phase_" : "__scope_";
+    let label: string;
+    let variant: string;
+    if (isPhase) {
+      label = id.slice("__phase_".length);
+      variant = "phase";
+    } else if (id.startsWith("__phasegrp_")) {
+      // __phasegrp_{phase}/{group} — label is the group part after the first /
+      const val = id.slice("__phasegrp_".length);
+      label = val.slice(val.indexOf("/") + 1);
+      variant = "group";
+    } else {
+      // __grp_{top} or __grp_{top}/{sub} — label is the last path segment
+      const val = id.slice("__grp_".length);
+      const slashIdx = val.lastIndexOf("/");
+      label = slashIdx === -1 ? val : val.slice(slashIdx + 1);
+      variant = "group";
+    }
     const containerNode: Node = {
       id,
       type: "container",
       position: { x, y },
       style: { width: elkNode.width ?? 0, height: elkNode.height ?? 0 },
-      data: { label: id.slice(prefix.length), variant: isPhase ? "phase" : "scope" },
+      data: { label, variant },
       selectable: false,
       draggable: false,
     };

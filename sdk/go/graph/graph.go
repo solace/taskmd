@@ -312,92 +312,184 @@ func (g *Graph) FilterTasks(taskIDs map[string]bool) *Graph {
 	return NewGraph(filtered)
 }
 
-// classifyByGroup groups tasks into phase groups, scope groups, and top-level.
-// A task with a phase goes into its phase group regardless of connectivity.
-// An isolated task (no dep edges in or out, no parent, no phase) with touches goes into its first scope group.
+// sanitizeID replaces non-alphanumeric characters with underscores for use in graph node IDs.
+func sanitizeID(s string) string {
+	return strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			return r
+		}
+		return '_'
+	}, s)
+}
+
+// sortedStringKeys returns sorted keys of a string-keyed map.
+func sortedStringKeys[V any](m map[string]V) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// classifyByGroup groups tasks by phase (with group sub-clustering) and standalone group.
+// Tasks with a phase go into phaseGroups[phase][group] (group="" if unset).
+// Tasks with no phase but a group go into groups[group].
 // All others are top-level.
-func classifyByGroup(tasks []*model.Task, hasDepEdge map[string]bool) (phases, scopes map[string][]string, topLevel []string) {
-	phases = make(map[string][]string)
-	scopes = make(map[string][]string)
+func classifyByGroup(tasks []*model.Task) (phaseGroups map[string]map[string][]string, groups map[string][]string, topLevel []string) {
+	phaseGroups = make(map[string]map[string][]string)
+	groups = make(map[string][]string)
 	for _, task := range tasks {
 		switch {
 		case task.Phase != "":
-			phases[task.Phase] = append(phases[task.Phase], task.ID)
-		case !hasDepEdge[task.ID] && task.Parent == "" && len(task.Touches) > 0:
-			scope := task.Touches[0]
-			scopes[scope] = append(scopes[scope], task.ID)
+			if phaseGroups[task.Phase] == nil {
+				phaseGroups[task.Phase] = make(map[string][]string)
+			}
+			phaseGroups[task.Phase][task.Group] = append(phaseGroups[task.Phase][task.Group], task.ID)
+		case task.Group != "":
+			groups[task.Group] = append(groups[task.Group], task.ID)
 		default:
 			topLevel = append(topLevel, task.ID)
 		}
 	}
-	return phases, scopes, topLevel
+	return
 }
 
-// writeMermaidGroups emits subgraph blocks for phase and scope groups.
-func writeMermaidGroups(sb *strings.Builder, phases, scopes map[string][]string) {
-	phaseKeys := make([]string, 0, len(phases))
-	for k := range phases {
-		phaseKeys = append(phaseKeys, k)
-	}
-	sort.Strings(phaseKeys)
-	for _, phase := range phaseKeys {
-		ids := phases[phase]
-		sort.Strings(ids)
-		sb.WriteString(fmt.Sprintf("    subgraph phase_%s\n", phase))
-		for _, id := range ids {
-			sb.WriteString(fmt.Sprintf("        %s\n", id))
+// buildGroupTree converts a flat group→taskIDs map into a two-level tree keyed by
+// the parts before and after the first "/" in the group name.
+func buildGroupTree(groups map[string][]string) map[string]map[string][]string {
+	tree := make(map[string]map[string][]string)
+	for g, ids := range groups {
+		top, sub, _ := strings.Cut(g, "/")
+		if tree[top] == nil {
+			tree[top] = make(map[string][]string)
 		}
+		tree[top][sub] = append(tree[top][sub], ids...)
+	}
+	return tree
+}
+
+// writeMermaidGroups emits subgraph blocks for phase clusters (with group sub-subgraphs)
+// and standalone group clusters (with optional sub-subgraphs for "top/sub" group names).
+func writeMermaidGroups(sb *strings.Builder, phaseGroups map[string]map[string][]string, groups map[string][]string) {
+	for _, phase := range sortedStringKeys(phaseGroups) {
+		groupMap := phaseGroups[phase]
+		sb.WriteString(fmt.Sprintf("    subgraph phase_%s[\"%s\"]\n", sanitizeID(phase), phase))
+		writeMermaidPhaseBody(sb, groupMap, phase)
 		sb.WriteString("    end\n")
 	}
-
-	scopeKeys := make([]string, 0, len(scopes))
-	for k := range scopes {
-		scopeKeys = append(scopeKeys, k)
-	}
-	sort.Strings(scopeKeys)
-	for _, scope := range scopeKeys {
-		ids := scopes[scope]
-		sort.Strings(ids)
-		sb.WriteString(fmt.Sprintf("    subgraph scope_%s\n", scope))
-		for _, id := range ids {
-			sb.WriteString(fmt.Sprintf("        %s\n", id))
-		}
+	tree := buildGroupTree(groups)
+	for _, top := range sortedStringKeys(tree) {
+		subMap := tree[top]
+		sb.WriteString(fmt.Sprintf("    subgraph grp_%s[\"%s\"]\n", sanitizeID(top), top))
+		writeMermaidGroupBody(sb, subMap, top)
 		sb.WriteString("    end\n")
 	}
 }
 
-// writeDotGroups emits cluster subgraph blocks for phase and scope groups.
-func writeDotGroups(sb *strings.Builder, phases, scopes map[string][]string) {
-	phaseKeys := make([]string, 0, len(phases))
-	for k := range phases {
-		phaseKeys = append(phaseKeys, k)
+func writeMermaidPhaseBody(sb *strings.Builder, groupMap map[string][]string, phase string) {
+	ungrouped := groupMap[""]
+	sort.Strings(ungrouped)
+	for _, id := range ungrouped {
+		sb.WriteString(fmt.Sprintf("        %s\n", id))
 	}
-	sort.Strings(phaseKeys)
-	for _, phase := range phaseKeys {
-		ids := phases[phase]
+	for _, g := range sortedStringKeys(groupMap) {
+		if g == "" {
+			continue
+		}
+		ids := groupMap[g]
 		sort.Strings(ids)
-		sb.WriteString(fmt.Sprintf("    subgraph cluster_phase_%s {\n", phase))
+		safeKey := sanitizeID(phase) + "_" + sanitizeID(g)
+		sb.WriteString(fmt.Sprintf("        subgraph phasegrp_%s[\"%s\"]\n", safeKey, g))
+		for _, id := range ids {
+			sb.WriteString(fmt.Sprintf("            %s\n", id))
+		}
+		sb.WriteString("        end\n")
+	}
+}
+
+func writeMermaidGroupBody(sb *strings.Builder, subMap map[string][]string, top string) {
+	flat := subMap[""]
+	sort.Strings(flat)
+	for _, id := range flat {
+		sb.WriteString(fmt.Sprintf("        %s\n", id))
+	}
+	for _, sub := range sortedStringKeys(subMap) {
+		if sub == "" {
+			continue
+		}
+		ids := subMap[sub]
+		sort.Strings(ids)
+		safeKey := sanitizeID(top) + "_" + sanitizeID(sub)
+		sb.WriteString(fmt.Sprintf("        subgraph grp_%s[\"%s\"]\n", safeKey, sub))
+		for _, id := range ids {
+			sb.WriteString(fmt.Sprintf("            %s\n", id))
+		}
+		sb.WriteString("        end\n")
+	}
+}
+
+// writeDotGroups emits cluster subgraph blocks for phase clusters (with group sub-clusters)
+// and standalone group clusters (with optional sub-clusters for "top/sub" group names).
+func writeDotGroups(sb *strings.Builder, phaseGroups map[string]map[string][]string, groups map[string][]string) {
+	for _, phase := range sortedStringKeys(phaseGroups) {
+		groupMap := phaseGroups[phase]
+		sb.WriteString(fmt.Sprintf("    subgraph cluster_phase_%s {\n", sanitizeID(phase)))
 		sb.WriteString(fmt.Sprintf("        label=\"%s\";\n", phase))
-		for _, id := range ids {
-			sb.WriteString(fmt.Sprintf("        %s;\n", id))
-		}
+		writeDotPhaseBody(sb, groupMap, phase)
 		sb.WriteString("    }\n")
 	}
+	tree := buildGroupTree(groups)
+	for _, top := range sortedStringKeys(tree) {
+		subMap := tree[top]
+		sb.WriteString(fmt.Sprintf("    subgraph cluster_grp_%s {\n", sanitizeID(top)))
+		sb.WriteString(fmt.Sprintf("        label=\"%s\";\n", top))
+		writeDotGroupBody(sb, subMap, top)
+		sb.WriteString("    }\n")
+	}
+}
 
-	scopeKeys := make([]string, 0, len(scopes))
-	for k := range scopes {
-		scopeKeys = append(scopeKeys, k)
+func writeDotPhaseBody(sb *strings.Builder, groupMap map[string][]string, phase string) {
+	ungrouped := groupMap[""]
+	sort.Strings(ungrouped)
+	for _, id := range ungrouped {
+		sb.WriteString(fmt.Sprintf("        %s;\n", id))
 	}
-	sort.Strings(scopeKeys)
-	for _, scope := range scopeKeys {
-		ids := scopes[scope]
-		sort.Strings(ids)
-		sb.WriteString(fmt.Sprintf("    subgraph cluster_scope_%s {\n", scope))
-		sb.WriteString(fmt.Sprintf("        label=\"%s\";\n", scope))
-		for _, id := range ids {
-			sb.WriteString(fmt.Sprintf("        %s;\n", id))
+	for _, g := range sortedStringKeys(groupMap) {
+		if g == "" {
+			continue
 		}
-		sb.WriteString("    }\n")
+		ids := groupMap[g]
+		sort.Strings(ids)
+		safeKey := sanitizeID(phase) + "_" + sanitizeID(g)
+		sb.WriteString(fmt.Sprintf("        subgraph cluster_phasegrp_%s {\n", safeKey))
+		sb.WriteString(fmt.Sprintf("            label=\"%s\";\n", g))
+		for _, id := range ids {
+			sb.WriteString(fmt.Sprintf("            %s;\n", id))
+		}
+		sb.WriteString("        }\n")
+	}
+}
+
+func writeDotGroupBody(sb *strings.Builder, subMap map[string][]string, top string) {
+	flat := subMap[""]
+	sort.Strings(flat)
+	for _, id := range flat {
+		sb.WriteString(fmt.Sprintf("        %s;\n", id))
+	}
+	for _, sub := range sortedStringKeys(subMap) {
+		if sub == "" {
+			continue
+		}
+		ids := subMap[sub]
+		sort.Strings(ids)
+		safeKey := sanitizeID(top) + "_" + sanitizeID(sub)
+		sb.WriteString(fmt.Sprintf("        subgraph cluster_grp_%s {\n", safeKey))
+		sb.WriteString(fmt.Sprintf("            label=\"%s\";\n", sub))
+		for _, id := range ids {
+			sb.WriteString(fmt.Sprintf("            %s;\n", id))
+		}
+		sb.WriteString("        }\n")
 	}
 }
 
@@ -434,17 +526,10 @@ func (g *Graph) ToMermaid(opts RenderOptions) string {
 		sb.WriteString(fmt.Sprintf("    %s[\"%s: %s\"]%s\n", task.ID, task.ID, title, nodeStyle))
 	}
 
-	// Subgraph groupings (phase/scope)
+	// Subgraph groupings (phase/group)
 	if opts.Subgraphs {
-		hasDepEdge := make(map[string]bool)
-		for _, task := range g.Tasks {
-			for _, depID := range task.Dependencies {
-				hasDepEdge[task.ID] = true
-				hasDepEdge[depID] = true
-			}
-		}
-		phases, scopes, _ := classifyByGroup(g.Tasks, hasDepEdge)
-		writeMermaidGroups(&sb, phases, scopes)
+		phaseGroups, groups, _ := classifyByGroup(g.Tasks)
+		writeMermaidGroups(&sb, phaseGroups, groups)
 	}
 
 	// Define dependency edges
@@ -528,17 +613,10 @@ func (g *Graph) ToDot(opts RenderOptions) string {
 
 	sb.WriteString("\n")
 
-	// Subgraph groupings (phase/scope)
+	// Subgraph groupings (phase/group)
 	if opts.Subgraphs {
-		hasDepEdge := make(map[string]bool)
-		for _, task := range g.Tasks {
-			for _, depID := range task.Dependencies {
-				hasDepEdge[task.ID] = true
-				hasDepEdge[depID] = true
-			}
-		}
-		phases, scopes, _ := classifyByGroup(g.Tasks, hasDepEdge)
-		writeDotGroups(&sb, phases, scopes)
+		phaseGroups, groups, _ := classifyByGroup(g.Tasks)
+		writeDotGroups(&sb, phaseGroups, groups)
 		sb.WriteString("\n")
 	}
 

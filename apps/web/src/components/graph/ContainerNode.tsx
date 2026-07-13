@@ -1,6 +1,6 @@
 import { memo } from "react";
 
-type Variant = "phase" | "scope";
+type Variant = "phase" | "group";
 
 interface ContainerNodeData {
   label: string;
@@ -17,7 +17,7 @@ const VARIANT_STYLES: Record<Variant, { border: string; bg: string; text: string
     bg: "bg-indigo-50/40 dark:bg-indigo-900/10",
     text: "text-indigo-500 dark:text-indigo-400",
   },
-  scope: {
+  group: {
     border: "border-teal-300 dark:border-teal-600",
     bg: "bg-teal-50/40 dark:bg-teal-900/10",
     text: "text-teal-500 dark:text-teal-400",

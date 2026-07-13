@@ -1,11 +1,12 @@
 ---
-id: "01kxds1t6"
+id: "233"
 title: "Replace related with see_also for directional relationship"
 status: completed
 priority: medium
 dependencies: []
 tags: [refactor, cli, web, spec]
 created_at: 2026-07-13
+see_also: ["094"]
 ---
 
 # Replace `related` with `see_also` for Directional Relationship

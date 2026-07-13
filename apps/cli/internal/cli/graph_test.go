@@ -2176,12 +2176,12 @@ tags: []
 created: 2026-02-08
 ---
 `,
-		"s02-isolated-scope.md": `---
+		"s02-grouped.md": `---
 id: "s02"
-title: "Isolated scope task"
+title: "Grouped task"
 status: pending
 priority: medium
-touches: ["api"]
+group: "api"
 dependencies: []
 tags: []
 created: 2026-02-08
@@ -2218,8 +2218,8 @@ func TestGraphCommand_Subgraphs_Mermaid(t *testing.T) {
 	if !strings.Contains(output, "subgraph phase_v1") {
 		t.Errorf("Expected 'subgraph phase_v1' in Mermaid output, got:\n%s", output)
 	}
-	if !strings.Contains(output, "subgraph scope_api") {
-		t.Errorf("Expected 'subgraph scope_api' in Mermaid output, got:\n%s", output)
+	if !strings.Contains(output, "subgraph grp_api") {
+		t.Errorf("Expected 'subgraph grp_api' in Mermaid output, got:\n%s", output)
 	}
 }
 
@@ -2235,8 +2235,8 @@ func TestGraphCommand_Subgraphs_DOT(t *testing.T) {
 	if !strings.Contains(output, "cluster_phase_v1") {
 		t.Errorf("Expected 'cluster_phase_v1' in DOT output, got:\n%s", output)
 	}
-	if !strings.Contains(output, "cluster_scope_api") {
-		t.Errorf("Expected 'cluster_scope_api' in DOT output, got:\n%s", output)
+	if !strings.Contains(output, "cluster_grp_api") {
+		t.Errorf("Expected 'cluster_grp_api' in DOT output, got:\n%s", output)
 	}
 }
 

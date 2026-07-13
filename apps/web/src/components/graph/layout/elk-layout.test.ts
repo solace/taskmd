@@ -62,19 +62,19 @@ describe("buildElkGraph", () => {
     expect(parentEdge).toBeDefined();
   });
 
-  it("puts isolated tasks with touches into __scope compound", () => {
+  it("puts tasks with the same group into __grp compound", () => {
     const data: GraphData = {
       nodes: [
-        { id: "a", title: "A", status: "pending", touches: ["api"] },
-        { id: "b", title: "B", status: "pending", touches: ["api"] },
+        { id: "a", title: "A", status: "pending", group: "cli" },
+        { id: "b", title: "B", status: "pending", group: "cli" },
       ],
       edges: [],
     };
     const root = buildElkGraph(data);
     expect(root.children).toHaveLength(1);
-    const scope = root.children![0];
-    expect(scope.id).toBe("__scope_api");
-    expect(scope.children).toHaveLength(2);
+    const grp = root.children![0];
+    expect(grp.id).toBe("__grp_cli");
+    expect(grp.children).toHaveLength(2);
   });
 
   it("leaves isolated task with no touches at top level", () => {
